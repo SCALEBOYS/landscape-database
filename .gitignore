@@ -3,3 +3,4 @@ data/external/
 *.xlsx
 .DS_Store
 .env
+__pycache__/
