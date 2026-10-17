@@ -22,6 +22,8 @@ export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Prom
     title: { default: `${t.siteName} — ${t.tagline}`, template: `%s | ${t.siteName}` },
     description: t.tagline,
     alternates: { languages: { ja: "/ja", en: "/en" } },
+    // 本公開（12週目）までは検索エンジンに載せない。Vercel で NEXT_PUBLIC_SITE_INDEXABLE=true にすると解除
+    robots: process.env.NEXT_PUBLIC_SITE_INDEXABLE === "true" ? undefined : { index: false, follow: false },
   };
 }
 
