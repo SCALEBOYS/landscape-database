@@ -36,19 +36,32 @@ def db_url() -> str:
     sys.exit(".env に SUPABASE_DB_URL がありません。")
 
 
-def already_applied(cur) -> bool:
-    cur.execute("select to_regclass('public.projects') is not null")
-    return cur.fetchone()[0]
-
-
 def apply(conn) -> None:
+    """未適用のマイグレーションだけを流す。適用履歴は API に出ない private スキーマに記録する。
+    seed は初回（最初のマイグレーションを流したとき）だけ流す。"""
     with conn.transaction(), conn.cursor() as cur:
-        if already_applied(cur):
-            print("スキーマは適用済みのためスキップ")
-            return
-        for path in MIGRATIONS + SEEDS:
+        cur.execute("create schema if not exists private")
+        cur.execute("create table if not exists private.schema_migrations (name text primary key, applied_at timestamptz not null default now())")
+        cur.execute("select name from private.schema_migrations")
+        applied = {r[0] for r in cur.fetchall()}
+        # 履歴の仕組みを入れる前に初回スキーマを流した DB
+        cur.execute("select to_regclass('public.projects') is not null")
+        if not applied and cur.fetchone()[0]:
+            applied.add(MIGRATIONS[0].name)
+            cur.execute("insert into private.schema_migrations (name) values (%s)", (MIGRATIONS[0].name,))
+
+        first_run = not applied
+        pending = [m for m in MIGRATIONS if m.name not in applied]
+        for path in pending:
             cur.execute(path.read_text(encoding="utf-8"))
+            cur.execute("insert into private.schema_migrations (name) values (%s)", (path.name,))
             print(f"適用: {path.relative_to(ROOT)}")
+        if first_run:
+            for path in SEEDS:
+                cur.execute(path.read_text(encoding="utf-8"))
+                print(f"適用: {path.relative_to(ROOT)}")
+        if not pending:
+            print("マイグレーションはすべて適用済み")
 
 
 def check(label: str, ok: bool, detail: str = "") -> bool:
@@ -119,6 +132,12 @@ def verify(conn) -> bool:
             except psycopg.errors.InsufficientPrivilege:
                 cur.execute("rollback to savepoint w")
                 results.append(check("匿名: 書き込みは拒否される", True))
+            cur.execute("reset role")
+
+            cur.execute("set local role anon")
+            cur.execute("select slug, round(lat::numeric, 2), round(lng::numeric, 2) from project_points where slug like 'rls-test-%'")
+            pts = cur.fetchall()
+            results.append(check("匿名: 座標ビューも公開物件だけ", [p[0] for p in pts] == ["rls-test-published"], str(pts)))
             cur.execute("reset role")
 
             cur.execute("select st_distance(location, 'SRID=4326;POINT(135.5 34.70)'::geography)::int "
