@@ -1,0 +1,147 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
+
+import { requireUser } from "@/lib/supabase-server";
+
+import { AdminHeader, NotAdmin } from "../../AdminHeader";
+import type { ProjectPayload } from "../../actions";
+import { PhotoManager, type AdminPhoto } from "../../PhotoManager";
+import { ProjectForm } from "../../ProjectForm";
+
+export default function EditProjectPage(props: PageProps<"/admin/projects/[id]">) {
+  return (
+    <Suspense fallback={<p className="text-muted">読み込み中…</p>}>
+      <Editor {...props} />
+    </Suspense>
+  );
+}
+
+const EMPTY: ProjectPayload = {
+  id: null,
+  slug: "",
+  parent_id: null,
+  name_ja: "",
+  name_en: "",
+  use_category: "park",
+  prefecture: "大阪府",
+  municipality: "",
+  address_ja: "",
+  lat: "",
+  lng: "",
+  completed_year: "",
+  completion_note: "",
+  site_area_m2: "",
+  summary_ja: "",
+  summary_en: "",
+  summary_en_status: "none",
+  status: "draft",
+  designers: [],
+  awards: [],
+  sources: [],
+  plantings: [],
+  components: [],
+  notes: { impressions: "", rating: "", detail_notes: "", cost_notes: "", visit_notes: "" },
+};
+
+const s = (v: unknown) => (v === null || v === undefined ? "" : String(v));
+
+async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]">) {
+  const { id } = await params;
+  const { saved } = await searchParams;
+  const { supabase, user, isAdmin } = await requireUser();
+  if (!isAdmin) return <NotAdmin email={user.email ?? ""} />;
+
+  const [speciesRes, categoriesRes, parentsRes] = await Promise.all([
+    supabase.from("species").select("id, name_ja, scientific_name").order("name_ja"),
+    supabase.from("component_categories").select("id, kind, name_ja, sort_order").order("kind").order("sort_order"),
+    supabase.from("projects").select("id, name_ja").order("name_ja"),
+  ]);
+
+  let initial = EMPTY;
+  let photos: AdminPhoto[] = [];
+  if (id !== "new") {
+    const { data: p } = await supabase
+      .from("projects")
+      .select(
+        `*, lat_lng:project_points(lat, lng),
+         credits:project_credits(sort_order, party:parties(name_ja)),
+         awards:project_awards(award_name, award_year),
+         sources(url),
+         plantings:project_plantings(species_id, layer),
+         components:project_components(category_id, product_name, maker_name),
+         notes:project_private_notes(*),
+         photos(id, storage_path, taken_on, caption_ja, caption_en, people_checked, is_cover, sort_order)`,
+      )
+      .eq("id", id)
+      .maybeSingle();
+    if (!p) notFound();
+    const point = (p.lat_lng as { lat: number; lng: number }[] | null)?.[0];
+    const notes = (Array.isArray(p.notes) ? p.notes[0] : p.notes) as Record<string, unknown> | null;
+    initial = {
+      id: p.id,
+      slug: p.slug,
+      parent_id: p.parent_id,
+      name_ja: p.name_ja,
+      name_en: s(p.name_en),
+      use_category: p.use_category,
+      prefecture: p.prefecture,
+      municipality: s(p.municipality),
+      address_ja: s(p.address_ja),
+      lat: point ? String(point.lat) : "",
+      lng: point ? String(point.lng) : "",
+      completed_year: s(p.completed_year),
+      completion_note: s(p.completion_note),
+      site_area_m2: s(p.site_area_m2),
+      summary_ja: s(p.summary_ja),
+      summary_en: s(p.summary_en),
+      summary_en_status: p.summary_en_status,
+      status: p.status,
+      designers: (p.credits as { sort_order: number; party: { name_ja: string } }[])
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((c) => c.party.name_ja),
+      awards: (p.awards as { award_name: string; award_year: number | null }[]).map((a) => ({ award_name: a.award_name, award_year: s(a.award_year) })),
+      sources: (p.sources as { url: string }[]).map((x) => x.url),
+      plantings: p.plantings as ProjectPayload["plantings"],
+      components: (p.components as { category_id: string; product_name: string | null; maker_name: string | null }[]).map((c) => ({
+        category_id: c.category_id,
+        product_name: s(c.product_name),
+        maker_name: s(c.maker_name),
+      })),
+      notes: {
+        impressions: s(notes?.impressions),
+        rating: s(notes?.rating),
+        detail_notes: s(notes?.detail_notes),
+        cost_notes: s(notes?.cost_notes),
+        visit_notes: s(notes?.visit_notes),
+      },
+    };
+    photos = (p.photos as AdminPhoto[]).sort((a, b) => a.sort_order - b.sort_order);
+  }
+
+  return (
+    <>
+      <AdminHeader email={user.email ?? ""} />
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-xl">{initial.id ? initial.name_ja : "物件の新規登録"}</h1>
+        {initial.id && initial.status === "published" && (
+          <Link href={`/ja/projects/${initial.slug}`} className="text-sm text-accent hover:underline">
+            公開ページを見る
+          </Link>
+        )}
+      </div>
+      {saved && <p className="mb-4 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent">保存しました</p>}
+      <ProjectForm
+        initial={initial}
+        species={speciesRes.data ?? []}
+        categories={categoriesRes.data ?? []}
+        parents={(parentsRes.data ?? []).filter((x) => x.id !== initial.id)}
+      />
+      {initial.id ? (
+        <PhotoManager projectId={initial.id} projectSlug={initial.slug} photos={photos} supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!} />
+      ) : (
+        <p className="mt-8 text-sm text-muted">写真は、物件を一度保存した後に追加できます。</p>
+      )}
+    </>
+  );
+}
