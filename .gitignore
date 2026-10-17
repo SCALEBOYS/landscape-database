@@ -1,0 +1,5 @@
+# YList などの外部データ本体（利用条件未確認のためコミットしない）
+data/external/
+*.xlsx
+.DS_Store
+.env
