@@ -7,6 +7,7 @@ import { requireUser } from "@/lib/supabase-server";
 import { AdminHeader, NotAdmin } from "../../AdminHeader";
 import type { ProjectPayload } from "../../actions";
 import { PhotoManager, type AdminPhoto } from "../../PhotoManager";
+import type { PointOption } from "../../PointEditor";
 import { ProjectForm } from "../../ProjectForm";
 
 export default function EditProjectPage(props: PageProps<"/admin/projects/[id]">) {
@@ -45,6 +46,24 @@ const EMPTY: ProjectPayload = {
   notes: { impressions: "", rating: "", detail_notes: "", cost_notes: "", visit_notes: "" },
 };
 
+// ポイントに結びつけられる候補: この事例に保存済みの植栽（樹種）と構成要素（素材の分類）
+function pointOptions(
+  p: ProjectPayload,
+  species: { id: string; name_ja: string; scientific_name: string }[],
+  categories: { id: string; name_ja: string }[],
+): PointOption[] {
+  const sp = [...new Set(p.plantings.map((x) => x.species_id))].flatMap((id) => {
+    const found = species.find((x) => x.id === id);
+    return found ? [{ kind: "species" as const, id, label: `${found.name_ja}（${found.scientific_name}）` }] : [];
+  });
+  const cat = [...new Set(p.components.map((x) => x.category_id))].flatMap((id) => {
+    const found = categories.find((x) => x.id === id);
+    const products = p.components.filter((c) => c.category_id === id).map((c) => [c.product_name, c.maker_name].filter(Boolean).join(" / ")).filter(Boolean);
+    return found ? [{ kind: "category" as const, id, label: found.name_ja + (products.length ? `（${products.join("、")}）` : "") }] : [];
+  });
+  return [...sp, ...cat];
+}
+
 const s = (v: unknown) => (v === null || v === undefined ? "" : String(v));
 
 async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]">) {
@@ -74,7 +93,7 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
          components:project_components(category_id, product_name, maker_name),
          laws:project_laws(law_id, note_ja, source_url, sort_order),
          notes:project_private_notes(*),
-         photos(id, storage_path, taken_on, caption_ja, caption_en, people_checked, is_cover, sort_order)`,
+         photos(id, storage_path, taken_on, caption_ja, caption_en, people_checked, is_cover, sort_order, points:photo_points(id, x, y, species_id, category_id, note_ja, created_at))`,
       )
       .eq("id", id)
       .maybeSingle();
@@ -122,7 +141,9 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
         visit_notes: s(notes?.visit_notes),
       },
     };
-    photos = (p.photos as AdminPhoto[]).sort((a, b) => a.sort_order - b.sort_order);
+    photos = (p.photos as (AdminPhoto & { points: (AdminPhoto["points"][number] & { created_at: string })[] })[])
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map((ph) => ({ ...ph, points: [...ph.points].sort((a, b) => a.created_at.localeCompare(b.created_at)) }));
   }
 
   return (
@@ -145,7 +166,13 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
         parents={(parentsRes.data ?? []).filter((x) => x.id !== initial.id)}
       />
       {initial.id ? (
-        <PhotoManager projectId={initial.id} projectSlug={initial.slug} photos={photos} supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!} />
+        <PhotoManager
+          projectId={initial.id}
+          projectSlug={initial.slug}
+          photos={photos}
+          supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!}
+          pointOptions={pointOptions(initial, speciesRes.data ?? [], categoriesRes.data ?? [])}
+        />
       ) : (
         <p className="mt-8 text-sm text-muted">写真は、物件を一度保存した後に追加できます。</p>
       )}

@@ -37,7 +37,22 @@ export type Project = {
     maker_name: string | null;
     category: { kind: string; slug: string; name_ja: string; name_en: string };
   }[];
-  photos: { storage_path: string; is_cover: boolean; sort_order: number; caption_ja: string | null; caption_en: string | null }[];
+  photos: {
+    storage_path: string;
+    is_cover: boolean;
+    sort_order: number;
+    caption_ja: string | null;
+    caption_en: string | null;
+    points: {
+      x: number;
+      y: number;
+      note_ja: string | null;
+      note_en: string | null;
+      created_at: string;
+      species: SpeciesRef | null;
+      category: { kind: string; slug: string; name_ja: string; name_en: string } | null;
+    }[];
+  }[];
   awards: { award_name: string; award_year: number | null }[];
   sources: { url: string; title: string | null; kind: string }[];
   laws: { note_ja: string | null; note_en: string | null; source_url: string | null; sort_order: number; law: LawRef }[];
@@ -60,7 +75,8 @@ const PROJECT_SELECT = `
   credits:project_credits(role, sort_order, party:parties(slug, name_ja, name_en)),
   plantings:project_plantings(layer, species:species(slug, name_ja, name_en, scientific_name, growth_form)),
   components:project_components(product_name, maker_name, category:component_categories(kind, slug, name_ja, name_en)),
-  photos(storage_path, is_cover, sort_order, caption_ja, caption_en),
+  photos(storage_path, is_cover, sort_order, caption_ja, caption_en,
+    points:photo_points(x, y, note_ja, note_en, created_at, species:species(slug, name_ja, name_en, scientific_name), category:component_categories(kind, slug, name_ja, name_en))),
   awards:project_awards(award_name, award_year),
   sources(url, title, kind),
   laws:project_laws(note_ja, note_en, source_url, sort_order, law:laws(slug, kind, name_ja, name_en, short_ja, short_en, jurisdiction_ja, jurisdiction_en))

@@ -7,6 +7,7 @@ import { createBrowserSupabase } from "@/lib/supabase-browser";
 
 import { addPhoto, deletePhoto, updatePhoto } from "./actions";
 import { photoPath, stripExif } from "./photos";
+import { PointEditor, type AdminPoint, type PointOption } from "./PointEditor";
 
 export type AdminPhoto = {
   id: string;
@@ -17,6 +18,7 @@ export type AdminPhoto = {
   people_checked: boolean;
   is_cover: boolean;
   sort_order: number;
+  points: AdminPoint[];
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -26,12 +28,17 @@ export function PhotoManager({
   projectSlug,
   photos,
   supabaseUrl,
+  pointOptions,
 }: {
   projectId: string;
   projectSlug: string;
   photos: AdminPhoto[];
   supabaseUrl: string;
+  pointOptions: PointOption[];
 }) {
+  const [editing, setEditing] = useState<string | null>(null);
+  const srcOf = (ph: AdminPhoto) => `${supabaseUrl}/storage/v1/object/public/photos/${ph.storage_path}`;
+  const editingPhoto = photos.find((ph) => ph.id === editing);
   const router = useRouter();
   const [files, setFiles] = useState<File[]>([]);
   const [takenOn, setTakenOn] = useState(today());
@@ -115,7 +122,7 @@ export function PhotoManager({
           {photos.map((ph) => (
             <li key={ph.id} className="text-xs">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`${supabaseUrl}/storage/v1/object/public/photos/${ph.storage_path}`} alt={ph.caption_ja ?? ""} className="aspect-[4/3] w-full rounded object-cover" />
+              <img src={srcOf(ph)} alt={ph.caption_ja ?? ""} className="aspect-[16/9] w-full rounded object-cover" />
               <div className="mt-1 text-muted">{ph.taken_on}{ph.caption_ja ? ` · ${ph.caption_ja}` : ""}</div>
               <div className="mt-1 flex items-center gap-2">
                 <span className={`rounded px-1.5 py-0.5 ${ph.people_checked ? "bg-accent text-white" : "bg-amber-100 text-amber-900"}`}>
@@ -149,10 +156,16 @@ export function PhotoManager({
                   </button>
                 )}
               </div>
+              <button type="button" onClick={() => setEditing(editing === ph.id ? null : ph.id)} className="mt-1 text-accent underline-offset-2 hover:underline">
+                ポイント（{ph.points.length}）を{editing === ph.id ? "閉じる" : "編集"}
+              </button>
               {photoError?.id === ph.id && <p className="mt-1 text-red-700">{photoError.message}</p>}
             </li>
           ))}
         </ul>
+      )}
+      {editingPhoto && (
+        <PointEditor key={editingPhoto.id} photoId={editingPhoto.id} src={srcOf(editingPhoto)} points={editingPhoto.points} options={pointOptions} onClose={() => setEditing(null)} />
       )}
     </section>
   );

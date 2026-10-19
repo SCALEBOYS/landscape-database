@@ -210,3 +210,21 @@ export async function deletePhoto(id: string, storagePath: string) {
   if (storageError) throw new Error(storageError.message);
   updateTag("projects");
 }
+
+export type NewPoint = { photo_id: string; x: number; y: number; species_id: string | null; category_id: string | null; note_ja: string };
+
+// 写真の上のポイント（押すと樹種・素材がわかる）
+export async function addPhotoPoint(point: NewPoint) {
+  if ((point.species_id === null) === (point.category_id === null)) throw new Error("樹種か素材のどちらか1つを選んでください");
+  const supabase = await adminClient();
+  const { error } = await supabase.from("photo_points").insert({ ...point, note_ja: blank(point.note_ja) });
+  if (error) throw new Error(error.message);
+  updateTag("projects");
+}
+
+export async function deletePhotoPoint(id: string) {
+  const supabase = await adminClient();
+  const { error } = await supabase.from("photo_points").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  updateTag("projects");
+}

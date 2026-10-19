@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { Icon } from "@/components/Icon";
 import { ExploreMap } from "@/components/map/ExploreMap";
+import { PhotoCarousel, type PhotoPoint, type Slide } from "@/components/PhotoCarousel";
 import { SiteHero } from "@/components/map/SiteHero";
 import { CardGrid, ProjectCard } from "@/components/ProjectCard";
 import { getBrowseItems } from "@/lib/browse-data";
@@ -57,6 +58,29 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
   const i = projects.findIndex((x) => x.id === p.id);
   const neighbours = projects.length > 1 ? [projects[(i + projects.length - 1) % projects.length], projects[(i + 1) % projects.length]] : [];
   const mapItems = (await getBrowseItems(lang)).filter((it) => it.slug === p.slug && it.lat !== null);
+
+  // 写真のカルーセル: カバー写真を先頭に。ポイントの素材には、この事例の構成要素から製品名・メーカーを添える
+  const slides: Slide[] = [...p.photos]
+    .sort((a, b) => Number(b.is_cover) - Number(a.is_cover) || a.sort_order - b.sort_order)
+    .map((ph) => ({
+      src: photoUrl(ph.storage_path),
+      alt: (lang === "en" ? ph.caption_en : ph.caption_ja) ?? name,
+      caption: [(lang === "en" ? ph.caption_en : ph.caption_ja) ?? "", "© Landscape Database"].filter(Boolean).join(" "),
+      points: [...ph.points]
+        .sort((a, b) => a.created_at.localeCompare(b.created_at))
+        .flatMap((pt): PhotoPoint[] => {
+          const note = (lang === "en" ? pt.note_en : pt.note_ja) ?? undefined;
+          if (pt.species) {
+            return [{ x: pt.x, y: pt.y, kind: "species", title: localName(lang, pt.species.name_ja, pt.species.name_en), sub: pt.species.scientific_name, note, href: `/${lang}/species/${pt.species.slug}` }];
+          }
+          if (pt.category) {
+            const cat = pt.category;
+            const products = p.components.filter((c) => c.category.slug === cat.slug).map((c) => [c.product_name, c.maker_name].filter(Boolean).join(" / ")).filter(Boolean);
+            return [{ x: pt.x, y: pt.y, kind: "material", title: localName(lang, cat.name_ja, cat.name_en), sub: products.join("、") || undefined, note, href: cat.kind === "paving" ? `/${lang}/explore?paving=${cat.slug}` : undefined }];
+          }
+          return [];
+        }),
+    }));
 
   const facts: [string, React.ReactNode][] = [
     [t.location, place(p, lang)],
@@ -116,6 +140,15 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
           <span>{name}</span>
         </nav>
 
+        {slides.length > 0 && (
+          <section className="pt-8">
+            <PhotoCarousel
+              slides={slides}
+              labels={{ species: t.pointSpecies, material: t.pointMaterial, more: t.pointMore, prev: t.photoPrev, next: t.photoNext, show: t.showPoints, hide: t.hidePoints, close: t.close }}
+            />
+          </section>
+        )}
+
         <div className="grid gap-14 pt-11 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div className="min-w-0">
             {text && <p className="max-w-[38em] text-xl leading-[1.75]">{text}</p>}
@@ -156,20 +189,6 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
                     );
                   })}
                 </ul>
-              </Section>
-            )}
-
-            {p.photos.length > 1 && (
-              <Section title={b.heroPhoto}>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                  {p.photos.map((ph) => (
-                    <figure key={ph.storage_path}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photoUrl(ph.storage_path)} alt={(lang === "en" ? ph.caption_en : ph.caption_ja) ?? name} className="w-full rounded-sm" />
-                      <figcaption className="mt-1 text-xs text-muted">{(lang === "en" ? ph.caption_en : ph.caption_ja) ?? ""} © Landscape Database</figcaption>
-                    </figure>
-                  ))}
-                </div>
               </Section>
             )}
 
