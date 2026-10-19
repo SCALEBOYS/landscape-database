@@ -34,8 +34,8 @@ export default async function SpeciesPage({ params }: PageProps<"/[lang]/species
   const sub = lang === "en" ? s.name_ja : s.name_en;
 
   return (
-    <>
-      <h1 className="text-3xl font-light">{title}</h1>
+    <div className="wrap pt-10">
+      <h1 className="text-[40px] font-extrabold leading-tight tracking-[-0.03em]">{title}</h1>
       <p className="mt-1 text-lg italic text-muted">{s.scientific_name}</p>
       <dl className="mt-6 grid max-w-xl grid-cols-[8rem_1fr] gap-y-2 text-sm">
         {sub && (
@@ -71,6 +71,6 @@ export default async function SpeciesPage({ params }: PageProps<"/[lang]/species
         <h2 className="mb-6 border-b border-line pb-2 text-lg font-medium">{t.species.usedIn}</h2>
         {used.length ? <CardGrid lang={lang} cards={used} /> : <p className="text-sm text-muted">{t.species.noProjects}</p>}
       </section>
-    </>
+    </div>
   );
 }

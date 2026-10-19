@@ -1,14 +1,17 @@
 import "../globals.css";
 
 import type { Metadata } from "next";
-import { Noto_Sans_JP } from "next/font/google";
+import { Bricolage_Grotesque, Noto_Sans_JP } from "next/font/google";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { LangSwitcher } from "@/components/LangSwitcher";
+import { SiteFooter } from "@/components/SiteFooter";
 import { getDictionary, hasLocale, locales } from "@/lib/i18n";
 
-const noto = Noto_Sans_JP({ variable: "--font-noto-sans-jp", weight: ["300", "400", "500"], preload: false });
+const noto = Noto_Sans_JP({ variable: "--font-noto-sans-jp", weight: ["400", "500", "700"], preload: false });
+// 英数字の見出し・数字用。日本語の文字は Noto Sans JP に落ちる
+const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"], axes: ["opsz"] });
 
 export async function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
@@ -33,28 +36,25 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
   const t = getDictionary(lang);
 
   return (
-    <html lang={lang} className={`${noto.variable} h-full antialiased`}>
+    <html lang={lang} className={`${noto.variable} ${bricolage.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <header className="border-b border-line">
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-            <Link href={`/${lang}`} className="text-lg font-light tracking-wide text-ink">
-              {t.siteName}
+        <header id="top" className="sticky top-0 z-30 bg-ink text-white">
+          <div className="mx-auto flex h-[var(--hdr)] max-w-none items-center gap-6 px-4 md:px-8">
+            <Link href={`/${lang}`} className="flex items-baseline gap-2.5 whitespace-nowrap">
+              <span className="text-[18px] font-extrabold tracking-[-0.02em] md:text-[21px]">{t.siteName}</span>
+              {lang === "ja" && <small className="hidden text-[11px] tracking-[.04em] text-[#9a9c96] md:inline">ランドスケープ・データベース</small>}
             </Link>
-            <nav className="flex items-center gap-5 text-sm">
-              <Link href={`/${lang}`} className="text-muted hover:text-ink">{t.nav.projects}</Link>
-              <Link href={`/${lang}/species`} className="text-muted hover:text-ink">{t.nav.species}</Link>
-              <Link href={`/${lang}/designers`} className="text-muted hover:text-ink">{t.nav.designers}</Link>
+            <nav className="ml-auto flex items-center gap-4 whitespace-nowrap text-[13px] font-medium md:gap-6 md:text-sm">
+              <Link href={`/${lang}`} className="hidden opacity-75 hover:opacity-100 sm:inline">{t.nav.projects}</Link>
+              <Link href={`/${lang}/explore`} className="opacity-75 hover:opacity-100">{t.nav.explore}</Link>
+              <Link href={`/${lang}/species`} className="hidden opacity-75 hover:opacity-100 sm:inline">{t.nav.species}</Link>
+              <Link href={`/${lang}/designers`} className="hidden opacity-75 hover:opacity-100 sm:inline">{t.nav.designers}</Link>
               <LangSwitcher current={lang} />
             </nav>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6">{children}</main>
-        <footer className="border-t border-line">
-          <div className="mx-auto max-w-7xl px-4 py-8 text-xs leading-relaxed text-muted sm:px-6">
-            <p>{t.footer.copyright}</p>
-            <p className="mt-1">{t.footer.policy}</p>
-          </div>
-        </footer>
+        <main className="fade-in flex-1">{children}</main>
+        <SiteFooter lang={lang} />
       </body>
     </html>
   );

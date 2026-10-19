@@ -27,10 +27,11 @@ Node.js は `~/.local/node/bin` に入っている（PATH に無い場合は `ex
 |---|---|---|
 | `NEXT_PUBLIC_SUPABASE_URL` | web | `https://<プロジェクトID>.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | web | Supabase の Publishable key（anon）。ブラウザに渡る公開用の値 |
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | web | Mapbox の公開トークン（pk.）。URL 制限で localhost:3000・vercel.app・本番ドメインだけに許可 |
 | `NEXT_PUBLIC_SITE_INDEXABLE` | web | 本公開時だけ `true`。未設定のあいだは検索エンジンに載せない（noindex） |
 | `SUPABASE_DB_URL` | scripts（ルートの `.env`） | Session pooler の接続文字列。パスワードを含むので共有しない |
 
-本番ビルドの公開用 2 値は `web/.env.production` にコミット済み（Vercel の環境変数があればそちらが優先）。`service_role` / `secret` キーはどこにも置かない。
+本番ビルドの Supabase の公開用 2 値は `web/.env.production` にコミット済み（Vercel の環境変数があればそちらが優先）。`NEXT_PUBLIC_MAPBOX_TOKEN` は GitHub が秘密情報として送信を止めるため、Vercel の Environment Variables に入れる。`service_role` / `secret` キーはどこにも置かない。
 
 ## DB の変更
 

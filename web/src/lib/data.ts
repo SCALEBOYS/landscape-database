@@ -11,7 +11,7 @@ function supabase() {
   return createClient(url, key, { auth: { persistSession: false } });
 }
 
-export type SpeciesRef = { slug: string; name_ja: string; name_en: string | null; scientific_name: string };
+export type SpeciesRef = { slug: string; name_ja: string; name_en: string | null; scientific_name: string; growth_form?: string | null };
 export type PartyRef = { slug: string; name_ja: string; name_en: string | null };
 
 export type Project = {
@@ -46,7 +46,7 @@ const PROJECT_SELECT = `
   id, slug, parent_id, name_ja, name_en, use_category, prefecture, municipality, completed_year, site_area_m2,
   summary_ja, summary_en, summary_en_status,
   credits:project_credits(role, sort_order, party:parties(slug, name_ja, name_en)),
-  plantings:project_plantings(layer, species:species(slug, name_ja, name_en, scientific_name)),
+  plantings:project_plantings(layer, species:species(slug, name_ja, name_en, scientific_name, growth_form)),
   components:project_components(product_name, maker_name, category:component_categories(kind, slug, name_ja, name_en)),
   photos(storage_path, is_cover, sort_order, caption_ja, caption_en),
   awards:project_awards(award_name, award_year),

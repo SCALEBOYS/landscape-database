@@ -14,8 +14,11 @@ export function toCard(p: Project, locale: Locale, note?: string): CardData {
     name: localName(locale, p.name_ja, p.name_en),
     place: place(p, locale),
     year: p.completed_year,
+    use: p.use_category,
     useLabel: label(categoryLabels, p.use_category, locale),
     cover: coverPhoto(p),
+    lat: p.lat,
+    lng: p.lng,
     note,
   };
 }

@@ -3,9 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node -e \"require('fs').mkdirSync('public/maplibre',{recursive:true});require('fs').copyFileSync('node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs','public/maplibre/maplibre-gl-worker.mjs')\"",
     "dev": "next dev",
-    "prebuild": "node -e \"require('fs').mkdirSync('public/maplibre',{recursive:true});require('fs').copyFileSync('node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs','public/maplibre/maplibre-gl-worker.mjs')\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -13,7 +11,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
-    "maplibre-gl": "^6.14.0",
+    "mapbox-gl": "^3.33.0",
     "next": "16.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0",

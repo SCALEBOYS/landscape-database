@@ -17,8 +17,8 @@ export default async function DesignersIndex({ params }: PageProps<"/[lang]/desi
   const designers = await getDesigners();
 
   return (
-    <>
-      <h1 className="mb-8 text-2xl font-light tracking-wide">{t.designers.title}</h1>
+    <div className="wrap pt-10">
+      <h1 className="mb-8 text-[34px] font-extrabold tracking-[-0.02em]">{t.designers.title}</h1>
       <ul className="divide-y divide-line border-y border-line">
         {designers.map(({ party, projects }) => (
           <li key={party.slug}>
@@ -29,6 +29,6 @@ export default async function DesignersIndex({ params }: PageProps<"/[lang]/desi
           </li>
         ))}
       </ul>
-    </>
+    </div>
   );
 }

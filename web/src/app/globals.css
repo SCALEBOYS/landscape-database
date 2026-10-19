@@ -1,12 +1,16 @@
 @import "tailwindcss";
 
+/* デザイン案2（ArchDaily 寄り）: 白地に黒、黒いヘッダー、写真を大きく、見出しを太く */
 :root {
   --background: #ffffff;
-  --ink: #2b2b2b;
-  --muted: #6b6b6b;
-  --line: #e6e4df;
-  --accent: #2f5d46;
-  --placeholder: #f1f0ec;
+  --ink: #0a0a0a;
+  --muted: #5f615c;
+  --line: #d9d9d6;
+  --soft: #f1f1ef;
+  --accent: #0d6b4e;
+  --placeholder: #f1f1ef;
+  --hot: #e2552d;
+  --hdr: 64px;
 }
 
 @theme inline {
@@ -14,9 +18,11 @@
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-line: var(--line);
+  --color-soft: var(--soft);
   --color-accent: var(--accent);
   --color-placeholder: var(--placeholder);
-  --font-sans: var(--font-noto-sans-jp), system-ui, sans-serif;
+  /* 英数字は Bricolage Grotesque、日本語は Noto Sans JP に落ちる */
+  --font-sans: var(--font-bricolage), var(--font-noto-sans-jp), system-ui, sans-serif;
 }
 
 body {
@@ -27,7 +33,140 @@ body {
   line-height: 1.75;
 }
 
-.maplibregl-popup-content {
-  font-family: var(--font-sans);
-  padding: 10px 14px;
+h1, h2, h3 { text-wrap: balance; }
+.wrap { max-width: 1320px; margin-inline: auto; padding-inline: 16px; }
+@media (min-width: 900px) { .wrap { padding-inline: 32px; } }
+.eyebrow { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.num { font-variant-numeric: tabular-nums; }
+.ico { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* 画面切り替えとカードの動き（控えめ） */
+.fade-in { animation: fade-in .45s cubic-bezier(.2,.7,.2,1); }
+@keyframes fade-in { from { opacity: .001; transform: translateY(8px); } }
+.rise { animation: rise .5s cubic-bezier(.2,.7,.2,1) backwards; }
+@keyframes rise { from { opacity: .001; transform: translateY(12px); } }
+@keyframes drift { to { transform: scale(1.12) translate(-1.5%, 1%); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* ---------- 検索バー ---------- */
+.sbar { position: relative; display: grid; grid-template-columns: 1.4fr 1fr 1fr auto; align-items: center; background: #fff; border: 2px solid var(--ink); border-radius: 2px; }
+.sfield { padding: 10px 20px; min-width: 0; border-right: 1px solid var(--line); text-align: left; display: grid; gap: 2px; }
+.sfield:hover, .sfield.open { background: var(--soft); }
+.sfield .lbl { font-size: 11px; font-weight: 500; letter-spacing: .06em; color: var(--ink); }
+.sfield input { border: 0; outline: 0; background: transparent; padding: 0; font-size: 14px; min-width: 0; width: 100%; }
+.sfield input::placeholder { color: var(--muted); }
+.sfield .val { font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sfield .val.on { color: var(--ink); }
+.sgo { margin: 6px; width: 44px; height: 44px; display: grid; place-items: center; background: var(--accent); color: #fff; border-radius: 2px; }
+.ai-hint { font-size: 10px; color: var(--accent); margin-left: 6px; letter-spacing: .04em; }
+.sbar.compact .sfield { padding-block: 6px; }
+.sbar.compact .sgo { width: 36px; height: 36px; margin: 4px; }
+@media (max-width: 720px) {
+  .sbar { grid-template-columns: 1fr 1fr auto; }
+  .sfield.kw { grid-column: 1 / -1; border-right: 0; border-bottom: 1px solid var(--line); }
+  .sfield { padding: 8px 14px; }
 }
+.pop { position: absolute; top: calc(100% + 10px); z-index: 40; background: #fff; color: var(--ink); border: 1px solid var(--line); box-shadow: 0 12px 40px rgba(0,0,0,.14); padding: 20px; border-radius: 4px; width: min(560px, calc(100vw - 32px)); }
+.pop.region { left: 25%; }
+.pop.years { right: 0; }
+@media (max-width: 720px) { .pop.region, .pop.years { left: 0; right: auto; } }
+.pop h4 { margin: 0 0 10px; font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: .06em; }
+.rcols { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 18px; }
+@media (max-width: 560px) { .rcols { grid-template-columns: 1fr 1fr; } .rcols > :last-child { grid-column: 1 / -1; } }
+.opt { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 14px; cursor: pointer; }
+.opt input { accent-color: var(--accent); margin: 0; }
+.opt .c { margin-left: auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.opt.dim { color: var(--muted); cursor: default; }
+.pop-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 13px; }
+.linkbtn { text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.solid { background: var(--ink); color: #fff; padding: 9px 18px; border-radius: 2px; font-weight: 500; white-space: nowrap; }
+
+/* 竣工年スライダー */
+.hist { display: flex; align-items: flex-end; gap: 2px; height: 64px; }
+.hist span { flex: 1; background: var(--line); border-radius: 1px 1px 0 0; min-height: 2px; transition: background .2s; }
+.hist span.in { background: var(--accent); }
+.range { position: relative; height: 28px; margin-top: -6px; }
+.range input { position: absolute; inset: 0; width: 100%; appearance: none; -webkit-appearance: none; background: none; pointer-events: none; margin: 0; }
+.range input::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 1.5px solid var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.18); cursor: grab; }
+.range input::-moz-range-thumb { pointer-events: auto; width: 20px; height: 20px; border-radius: 50%; background: #fff; border: 1.5px solid var(--ink); cursor: grab; }
+.range .track { position: absolute; left: 0; right: 0; top: 13px; height: 2px; background: var(--line); }
+.range .fill { position: absolute; top: 13px; height: 2px; background: var(--ink); }
+.presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+.presets button { font-size: 12px; padding: 5px 10px; border: 1px solid var(--line); border-radius: 2px; }
+.presets button:hover { border-color: var(--ink); }
+
+/* ---------- カテゴリ2段 ---------- */
+.catrow { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.catrow .rl { flex: none; width: 54px; font-size: 11px; color: var(--muted); letter-spacing: .08em; font-weight: 500; line-height: 1.4; }
+.catrow .rule { font-size: 10px; }
+.chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; padding-block: 4px; mask-image: linear-gradient(90deg, #000 92%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent); }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: none; display: flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1.5px solid var(--line); border-radius: 2px; color: var(--ink); font-size: 13px; font-weight: 500; transition: color .2s, border-color .2s, background .2s; white-space: nowrap; }
+.chip .ico { width: 20px; height: 20px; }
+.chip:hover { border-color: var(--ink); }
+.chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.chip .n { font-size: 10px; color: var(--muted); font-weight: 400; font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] .n { color: #b5b7b0; }
+.chip.zero { opacity: .38; }
+.compact .chip { padding: 5px 10px; font-size: 12px; }
+.compact .chip .ico { width: 18px; height: 18px; }
+.fbtn { flex: none; display: flex; align-items: center; gap: 8px; border: 1.5px solid var(--line); padding: 9px 14px; font-size: 13px; font-weight: 500; border-radius: 2px; background: #fff; }
+.fbtn:hover { border-color: var(--ink); }
+.fbtn .badge { background: var(--ink); color: #fff; border-radius: 999px; font-size: 11px; min-width: 18px; height: 18px; display: grid; place-items: center; padding: 0 5px; }
+@media (max-width: 720px) { .catrow .rl { display: none; } }
+
+/* ---------- 事例カード ---------- */
+.card-img { position: relative; overflow: hidden; aspect-ratio: 4 / 3; background: var(--soft); border-radius: 2px; }
+.card-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .9s cubic-bezier(.2,.7,.2,1); }
+.card:hover .card-img img, .card.hl .card-img img { transform: scale(1.045); }
+.card-tag { position: absolute; left: 10px; top: 10px; background: #fff; color: var(--ink); font-size: 11px; padding: 3px 8px; display: flex; gap: 5px; align-items: center; font-weight: 500; border-radius: 2px; }
+.card-tag .ico { width: 15px; height: 15px; }
+
+/* ---------- 地図（Mapbox） ---------- */
+.pin { width: 30px; height: 30px; display: grid; place-items: center; background: var(--ink); color: #fff; border: 2px solid #fff; border-radius: 2px; box-shadow: 0 2px 6px rgba(0,0,0,.3); cursor: pointer; transition: background .2s; }
+.pin .ico { width: 16px; height: 16px; stroke-width: 1.8; }
+.pin.hl, .pin.sel { background: var(--hot); }
+.mapboxgl-marker:has(.pin.hl), .mapboxgl-marker:has(.pin.sel) { z-index: 3; }
+.mapboxgl-popup-content { padding: 0; border-radius: 4px; overflow: hidden; font-family: var(--font-sans); box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+.mapboxgl-popup-close-button { width: 26px; height: 26px; right: 4px; top: 4px; background: rgba(255,255,255,.9); border-radius: 50%; font-size: 16px; line-height: 1; z-index: 1; }
+.mpop { display: block; width: 240px; color: var(--ink); }
+.mpop img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block; background: var(--soft); }
+.mpop span { display: grid; gap: 2px; padding: 10px 12px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+.mpop b { color: var(--ink); font-size: 14px; font-weight: 500; }
+.mstyle { position: absolute; z-index: 5; left: 12px; bottom: 36px; display: flex; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.2); border-radius: 4px; overflow: hidden; font-size: 12px; font-weight: 500; }
+.mstyle button { padding: 8px 12px; color: var(--muted); }
+.mstyle button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.map-missing { display: grid; place-items: center; height: 100%; background: var(--soft); color: var(--muted); font-size: 13px; padding: 16px; text-align: center; }
+
+/* ---------- 地図で探す（スマホは下から引き上げるシート） ---------- */
+.ex { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); height: calc(100dvh - var(--hdr) - var(--ex-top, 150px)); min-height: 460px; }
+.ex-map { position: relative; min-height: 0; }
+.ex-list { overflow-y: auto; border-left: 1px solid var(--line); min-height: 0; background: #fff; }
+.grabber { display: none; }
+/* 地図で探す画面では地図を画面いっぱいにするので、フッターは出さない */
+body:has(.ex) .site-footer { display: none; }
+@media (max-width: 760px) {
+  .ex { grid-template-columns: 1fr; position: relative; }
+  .ex-list { position: absolute; left: 0; right: 0; bottom: 0; z-index: 8; border-left: 0; border-radius: 18px 18px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.18); height: var(--sheet, 42%); transition: height .35s cubic-bezier(.2,.7,.2,1); overflow: hidden; display: flex; flex-direction: column; }
+  .ex-list.dragging { transition: none; }
+  .ex-list-in { overflow-y: auto; flex: 1; }
+  .grabber { display: grid; place-items: center; padding: 10px 0 8px; cursor: grab; touch-action: none; }
+  .grabber span { width: 40px; height: 5px; border-radius: 3px; background: var(--line); }
+  .ex .mstyle { bottom: calc(var(--sheet, 42%) + 12px); }
+}
+
+/* ---------- フィルターパネル ---------- */
+.ovl { position: fixed; inset: 0; z-index: 80; background: rgba(15,15,12,.45); display: grid; place-items: center; padding: 16px; animation: fade-in .2s; }
+.panel { background: #fff; color: var(--ink); width: min(620px, 100%); max-height: min(720px, 90dvh); display: flex; flex-direction: column; border-radius: 4px; overflow: hidden; }
+.ptabs button { padding: 10px 12px; font-size: 14px; color: var(--muted); border-bottom: 2px solid transparent; font-weight: 500; }
+.ptabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+.plist mark { background: color-mix(in srgb, var(--accent) 22%, transparent); color: inherit; }
+
+/* ---------- 事例詳細のヒーロー ---------- */
+.d-hero { position: relative; overflow: hidden; contain: paint; height: clamp(380px, 52vw, 640px); background: #1a1a1a; }
+.d-hero .shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,0) 30%, rgba(0,0,0,0) 45%, rgba(0,0,0,.65)); pointer-events: none; z-index: 2; }
+.hctl { position: absolute; right: 16px; top: 16px; z-index: 3; display: flex; background: rgba(20,20,18,.55); backdrop-filter: blur(8px); border-radius: 999px; padding: 3px; font-size: 12px; color: #fff; }
+.hctl button { padding: 6px 12px; border-radius: 999px; opacity: .8; }
+.hctl button[aria-pressed="true"] { background: #fff; color: #111; opacity: 1; }
+.hnote { position: absolute; left: 16px; top: 18px; z-index: 3; font-size: 11px; color: rgba(255,255,255,.85); background: rgba(20,20,18,.45); padding: 4px 10px; border-radius: 999px; }
+@media (max-width: 640px) { .hnote { display: none; } }

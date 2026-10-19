@@ -24,8 +24,8 @@ export default async function SpeciesIndex({ params }: PageProps<"/[lang]/specie
   const groups = FORMS.map((form) => ({ form, items: sorted.filter((s) => (s.growth_form ?? "other") === form) })).filter((g) => g.items.length);
 
   return (
-    <>
-      <h1 className="mb-8 text-2xl font-light tracking-wide">{t.species.title}</h1>
+    <div className="wrap pt-10">
+      <h1 className="mb-8 text-[34px] font-extrabold tracking-[-0.02em]">{t.species.title}</h1>
       <nav className="mb-8 flex flex-wrap gap-3 text-sm">
         {groups.map((g) => (
           <a key={g.form} href={`#${g.form}`} className="rounded-full border border-line px-3 py-1 text-muted hover:border-accent hover:text-accent">
@@ -50,6 +50,6 @@ export default async function SpeciesIndex({ params }: PageProps<"/[lang]/specie
           </section>
         ))}
       </div>
-    </>
+    </div>
   );
 }

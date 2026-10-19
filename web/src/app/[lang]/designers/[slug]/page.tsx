@@ -25,13 +25,13 @@ export default async function DesignerPage({ params }: PageProps<"/[lang]/design
   const t = getDictionary(lang);
 
   return (
-    <>
-      <h1 className="text-3xl font-light">{localName(lang, d.party.name_ja, d.party.name_en)}</h1>
+    <div className="wrap pt-10">
+      <h1 className="text-[40px] font-extrabold leading-tight tracking-[-0.03em]">{localName(lang, d.party.name_ja, d.party.name_en)}</h1>
       <p className="mt-1 text-muted">{t.designers.count(d.projects.length)}</p>
       <section className="mt-10">
         <h2 className="mb-6 border-b border-line pb-2 text-lg font-medium">{t.designers.projects}</h2>
         <CardGrid lang={lang} cards={d.projects.map((p) => toCard(p, lang))} />
       </section>
-    </>
+    </div>
   );
 }
