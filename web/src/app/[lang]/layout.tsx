@@ -40,9 +40,9 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
       <body className="flex min-h-full flex-col">
         <header id="top" className="sticky top-0 z-30 bg-ink text-white">
           <div className="mx-auto flex h-[var(--hdr)] max-w-none items-center gap-6 px-4 md:px-8">
-            <Link href={`/${lang}`} className="flex items-baseline gap-2.5 whitespace-nowrap">
-              <span className="text-[18px] font-extrabold tracking-[-0.02em] md:text-[21px]">{t.siteName}</span>
-              {lang === "ja" && <small className="hidden text-[11px] tracking-[.04em] text-[#9a9c96] md:inline">ランドスケープ・データベース</small>}
+            {/* ロゴは文字だけのシンプルな形。添え書きや装飾は付けない */}
+            <Link href={`/${lang}`} className="whitespace-nowrap text-[17px] font-semibold tracking-[-0.01em]">
+              {t.siteName}
             </Link>
             <nav className="ml-auto flex items-center gap-4 whitespace-nowrap text-[13px] font-medium md:gap-6 md:text-sm">
               <Link href={`/${lang}`} className="hidden opacity-75 hover:opacity-100 sm:inline">{t.nav.projects}</Link>

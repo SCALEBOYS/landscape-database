@@ -22,7 +22,7 @@ export function SiteFooter({ lang }: { lang: Locale }) {
     <footer className="site-footer mt-24 bg-ink text-white">
       <div className="wrap grid grid-cols-2 gap-x-6 gap-y-12 pb-10 pt-14 md:grid-cols-[1.4fr_1fr_1fr_1.2fr]">
         <div className="col-span-2 grid content-start gap-4 md:col-span-1">
-          <Link href={`/${lang}`} className="text-[26px] font-extrabold leading-none tracking-[-0.02em]">
+          <Link href={`/${lang}`} className="text-[20px] font-semibold leading-none tracking-[-0.01em]">
             {t.siteName}
           </Link>
           <p className="max-w-[34ch] text-sm leading-[1.8] text-white/65">{f.lead}</p>
