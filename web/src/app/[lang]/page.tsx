@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { HomeBrowser, HomeBrowserFromUrl } from "@/components/browse/Browser";
 import { ExploreMap } from "@/components/map/ExploreMap";
 import type { BrowseItem, Ref } from "@/lib/browse";
-import { getBrowseItems } from "@/lib/browse-data";
+import { getBrowseItems, getLawOptions } from "@/lib/browse-data";
 import { fmt, getDictionary, hasLocale } from "@/lib/i18n";
 import { satelliteImage } from "@/lib/mapbox";
 import { yearRange } from "@/lib/years";
@@ -14,7 +14,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
   const t = getDictionary(lang).browse;
-  const items = await getBrowseItems(lang);
+  const [items, lawOptions] = await Promise.all([getBrowseItems(lang), getLawOptions(lang)]);
 
   // ヒーローは自分の写真がある最新の事例。まだなければ最新の事例の航空写真
   const heroItem = items.find((it) => it.photo) ?? items.find((it) => it.lat !== null);
@@ -101,7 +101,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
     </>
   );
 
-  const props = { lang, items, t, years: yearRange(items), hero, after };
+  const props = { lang, items, lawOptions, t, years: yearRange(items), hero, after };
   return (
     <Suspense fallback={<HomeBrowser {...props} />}>
       <HomeBrowserFromUrl {...props} />

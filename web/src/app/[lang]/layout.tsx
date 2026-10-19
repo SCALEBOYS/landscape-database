@@ -49,6 +49,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
               <Link href={`/${lang}/explore`} className="opacity-75 hover:opacity-100">{t.nav.explore}</Link>
               <Link href={`/${lang}/species`} className="hidden opacity-75 hover:opacity-100 sm:inline">{t.nav.species}</Link>
               <Link href={`/${lang}/designers`} className="hidden opacity-75 hover:opacity-100 sm:inline">{t.nav.designers}</Link>
+              <Link href={`/${lang}/laws`} className="hidden opacity-75 hover:opacity-100 sm:inline">{t.nav.laws}</Link>
               <LangSwitcher current={lang} />
             </nav>
           </div>

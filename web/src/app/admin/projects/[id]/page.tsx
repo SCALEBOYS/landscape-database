@@ -41,6 +41,7 @@ const EMPTY: ProjectPayload = {
   sources: [],
   plantings: [],
   components: [],
+  laws: [],
   notes: { impressions: "", rating: "", detail_notes: "", cost_notes: "", visit_notes: "" },
 };
 
@@ -52,10 +53,11 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
   const { supabase, user, isAdmin } = await requireUser();
   if (!isAdmin) return <NotAdmin email={user.email ?? ""} />;
 
-  const [speciesRes, categoriesRes, parentsRes] = await Promise.all([
+  const [speciesRes, categoriesRes, parentsRes, lawsRes] = await Promise.all([
     supabase.from("species").select("id, name_ja, scientific_name").order("name_ja"),
     supabase.from("component_categories").select("id, kind, name_ja, sort_order").order("kind").order("sort_order"),
     supabase.from("projects").select("id, name_ja").order("name_ja"),
+    supabase.from("laws").select("id, kind, name_ja, jurisdiction_ja").order("sort_order"),
   ]);
 
   let initial = EMPTY;
@@ -70,6 +72,7 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
          sources(url),
          plantings:project_plantings(species_id, layer),
          components:project_components(category_id, product_name, maker_name),
+         laws:project_laws(law_id, note_ja, source_url, sort_order),
          notes:project_private_notes(*),
          photos(id, storage_path, taken_on, caption_ja, caption_en, people_checked, is_cover, sort_order)`,
       )
@@ -108,6 +111,9 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
         product_name: s(c.product_name),
         maker_name: s(c.maker_name),
       })),
+      laws: (p.laws as { law_id: string; note_ja: string | null; source_url: string | null; sort_order: number }[])
+        .sort((a, b) => a.sort_order - b.sort_order)
+        .map((x) => ({ law_id: x.law_id, note_ja: s(x.note_ja), source_url: s(x.source_url) })),
       notes: {
         impressions: s(notes?.impressions),
         rating: s(notes?.rating),
@@ -135,6 +141,7 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
         initial={initial}
         species={speciesRes.data ?? []}
         categories={categoriesRes.data ?? []}
+        laws={lawsRes.data ?? []}
         parents={(parentsRes.data ?? []).filter((x) => x.id !== initial.id)}
       />
       {initial.id ? (

@@ -7,14 +7,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { ExploreMap } from "@/components/map/ExploreMap";
 import { ProjectCard, type CardData } from "@/components/ProjectCard";
-import { EMPTY, matches, parseFilters, toQuery, type BrowseItem, type Filters } from "@/lib/browse";
+import { EMPTY, matches, parseFilters, toQuery, type BrowseItem, type Filters, type LawOption } from "@/lib/browse";
 import { fmt, type BrowseText, type Locale } from "@/lib/i18n";
 
 import { CategoryRows } from "./CategoryRows";
 import { FilterButton, FilterPanel } from "./FilterPanel";
 import { SearchBar } from "./SearchBar";
 
-type Props = { lang: Locale; items: BrowseItem[]; t: BrowseText; years: [number, number]; hero?: React.ReactNode; after?: React.ReactNode };
+type Props = {
+  lang: Locale;
+  items: BrowseItem[];
+  lawOptions: LawOption[];
+  t: BrowseText;
+  years: [number, number];
+  hero?: React.ReactNode;
+  after?: React.ReactNode;
+};
 
 const toCard = (it: BrowseItem, t: BrowseText): CardData => ({
   slug: it.slug,
@@ -48,7 +56,7 @@ export function ExploreFromUrl(props: Props) {
   return <Explore {...props} initial={parseFilters(new URLSearchParams(useSearchParams().toString()))} />;
 }
 
-export function HomeBrowser({ lang, items, t, years, hero, after, initial = EMPTY }: Props & { initial?: Filters }) {
+export function HomeBrowser({ lang, items, lawOptions, t, years, hero, after, initial = EMPTY }: Props & { initial?: Filters }) {
   const { filters, update } = useFilterState(initial);
   const [panel, setPanel] = useState(false);
   const router = useRouter();
@@ -64,7 +72,7 @@ export function HomeBrowser({ lang, items, t, years, hero, after, initial = EMPT
         </div>
       </section>
       <div className="wrap flex items-start gap-5 pt-9">
-        <CategoryRows items={items} filters={filters} update={update} t={t} lang={lang} />
+        <CategoryRows items={items} filters={filters} update={update} t={t} lang={lang} lawOptions={lawOptions} />
         <FilterButton filters={filters} t={t} onClick={() => setPanel(true)} />
       </div>
       <section className="wrap grid gap-6 pt-14">
@@ -91,7 +99,7 @@ export function HomeBrowser({ lang, items, t, years, hero, after, initial = EMPT
   );
 }
 
-export function Explore({ lang, items, t, years, initial = EMPTY }: Props & { initial?: Filters }) {
+export function Explore({ lang, items, lawOptions, t, years, initial = EMPTY }: Props & { initial?: Filters }) {
   const { filters, update } = useFilterState(initial);
   const [panel, setPanel] = useState(false);
   const [inView, setInView] = useState(true);
@@ -121,7 +129,7 @@ export function Explore({ lang, items, t, years, initial = EMPTY }: Props & { in
             <SearchBar items={items} filters={filters} update={update} t={t} lang={lang} years={years} compact />
           </div>
           <div className="flex items-center gap-4">
-            <CategoryRows items={items} filters={filters} update={update} t={t} lang={lang} />
+            <CategoryRows items={items} filters={filters} update={update} t={t} lang={lang} lawOptions={lawOptions} />
             <FilterButton filters={filters} t={t} onClick={() => setPanel(true)} />
           </div>
         </div>

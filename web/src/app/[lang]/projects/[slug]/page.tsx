@@ -134,6 +134,31 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
               </Section>
             )}
 
+            {p.laws.length > 0 && (
+              <Section title={dict.laws.section}>
+                <ul className="grid gap-3">
+                  {p.laws.map(({ law, note_ja, note_en, source_url }) => {
+                    const note = lang === "en" ? note_en : note_ja;
+                    return (
+                      <li key={law.slug} className="grid gap-1 border-b border-line pb-3">
+                        <span className="flex flex-wrap items-baseline gap-x-2">
+                          <span className="text-[11px] text-muted">{dict.laws.kinds[law.kind]}</span>
+                          <Link href={`/${lang}/laws/${law.slug}`} className="font-medium hover:underline">{localName(lang, law.name_ja, law.name_en)}</Link>
+                          {law.kind === "ordinance" && <span className="text-xs text-muted">{lang === "en" ? law.jurisdiction_en ?? law.jurisdiction_ja : law.jurisdiction_ja}</span>}
+                        </span>
+                        {note && <span className="text-sm leading-relaxed">{note}</span>}
+                        {source_url && (
+                          <a href={source_url} target="_blank" rel="noopener noreferrer" className="break-all text-xs text-accent hover:underline">
+                            {dict.laws.source}: {new URL(source_url).hostname}
+                          </a>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Section>
+            )}
+
             {p.photos.length > 1 && (
               <Section title={b.heroPhoto}>
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

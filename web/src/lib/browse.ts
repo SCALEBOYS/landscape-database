@@ -15,6 +15,7 @@ export type BrowseItem = {
   species: Ref[];
   designers: Ref[];
   paving: Ref[];
+  laws: Ref[];
   lat: number | null;
   lng: number | null;
   photo: string | null;
@@ -33,11 +34,15 @@ export type Filters = {
   species: string[];
   designers: string[];
   paving: string[];
+  laws: string[];
 };
 
-export const EMPTY: Filters = { q: "", uses: [], els: [], prefs: [], munis: [], y0: null, y1: null, species: [], designers: [], paving: [] };
+// 探す画面の法令の行に並べる候補（kind はアイコンの出し分けに使う）
+export type LawOption = { slug: string; label: string; kind: string };
 
-const LIST_KEYS = ["uses", "els", "prefs", "munis", "species", "designers", "paving"] as const;
+export const EMPTY: Filters = { q: "", uses: [], els: [], prefs: [], munis: [], y0: null, y1: null, species: [], designers: [], paving: [], laws: [] };
+
+const LIST_KEYS = ["uses", "els", "prefs", "munis", "species", "designers", "paving", "laws"] as const;
 
 export function parseFilters(params: URLSearchParams): Filters {
   const f: Filters = { ...EMPTY, q: params.get("q") ?? "" };
@@ -58,11 +63,12 @@ export function toQuery(f: Filters) {
   return s ? `?${s}` : "";
 }
 
-// 用途どうしは「いずれか」、要素どうしは「すべて」、軸の間は「かつ」
-export function matches(it: BrowseItem, f: Filters, skip?: "uses" | "els" | "years") {
+// 用途どうしは「いずれか」、要素どうし・法令どうしは「すべて」、軸の間は「かつ」
+export function matches(it: BrowseItem, f: Filters, skip?: "uses" | "els" | "laws" | "years") {
   if (f.q && !it.search.includes(f.q.toLowerCase())) return false;
   if (skip !== "uses" && f.uses.length && !f.uses.includes(it.use)) return false;
   if (skip !== "els" && !f.els.every((e) => it.elements.includes(e))) return false;
+  if (skip !== "laws" && !f.laws.every((l) => it.laws.some((x) => x.slug === l))) return false;
   if (f.munis.length) {
     if (!f.munis.includes(it.muni)) return false;
   } else if (f.prefs.length && !f.prefs.includes(it.pref)) return false;

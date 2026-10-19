@@ -1,8 +1,8 @@
 import "server-only";
 
-import type { BrowseItem } from "./browse";
+import type { BrowseItem, LawOption } from "./browse";
 import { elementsOf } from "./catalog";
-import { coverPhoto, getProjects, getSpeciesList } from "./data";
+import { coverPhoto, getLaws, getProjects, getSpeciesList, type LawRef } from "./data";
 import { categoryLabels, label, localName, prefectureEn, type Locale } from "./i18n";
 import { place } from "./view";
 
@@ -18,6 +18,7 @@ export async function getBrowseItems(lang: Locale): Promise<BrowseItem[]> {
       p.name_ja, p.name_en, p.prefecture, p.municipality,
       ...designers.flatMap((d) => [d.name_ja, d.name_en]),
       ...species.flatMap((s) => [s.name_ja, s.name_en, s.scientific_name, ...(aliasesBySlug.get(s.slug) ?? [])]),
+      ...p.laws.flatMap(({ law }) => [law.name_ja, law.name_en, law.short_ja]),
     ];
     return {
       slug: p.slug,
@@ -33,10 +34,19 @@ export async function getBrowseItems(lang: Locale): Promise<BrowseItem[]> {
       species: species.map((s) => ({ slug: s.slug, label: localName(lang, s.name_ja, s.name_en), sub: s.scientific_name })),
       designers: designers.map((d) => ({ slug: d.slug, label: localName(lang, d.name_ja, d.name_en) })),
       paving: paving.map((c) => ({ slug: c.slug, label: localName(lang, c.name_ja, c.name_en) })),
+      laws: p.laws.map(({ law }) => ({ slug: law.slug, label: lawLabel(law, lang), sub: law.kind })),
       lat: p.lat,
       lng: p.lng,
       photo: coverPhoto(p),
       search: terms.filter(Boolean).join(" ").toLowerCase(),
     };
   });
+}
+
+// 探す画面のボタン用の短い名前（なければ正式名）
+export const lawLabel = (law: LawRef, lang: Locale) =>
+  lang === "en" ? law.short_en ?? law.name_en ?? law.name_ja : law.short_ja ?? law.name_ja;
+
+export async function getLawOptions(lang: Locale): Promise<LawOption[]> {
+  return (await getLaws()).map((law) => ({ slug: law.slug, label: lawLabel(law, lang), kind: law.kind }));
 }

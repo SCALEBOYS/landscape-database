@@ -31,6 +31,7 @@ export type ProjectPayload = {
   sources: string[];
   plantings: { species_id: string; layer: string }[];
   components: { category_id: string; product_name: string; maker_name: string }[];
+  laws: { law_id: string; note_ja: string; source_url: string }[];
   notes: { impressions: string; rating: string; detail_notes: string; cost_notes: string; visit_notes: string };
 };
 
@@ -95,7 +96,7 @@ export async function saveProject(_: SaveResult | null, formData: FormData): Pro
   }
 
   // 子テーブルは入れ替える
-  for (const table of ["project_credits", "project_awards", "sources", "project_plantings", "project_components"]) {
+  for (const table of ["project_credits", "project_awards", "sources", "project_plantings", "project_components", "project_laws"]) {
     const { error } = await supabase.from(table).delete().eq("project_id", id);
     if (error) return { ok: false, message: error.message };
   }
@@ -124,6 +125,16 @@ export async function saveProject(_: SaveResult | null, formData: FormData): Pro
     [
       "project_components",
       p.components.filter((c) => c.category_id).map((c) => ({ project_id: id, category_id: c.category_id, product_name: blank(c.product_name), maker_name: blank(c.maker_name) })),
+    ],
+    [
+      "project_laws",
+      [...new Map(p.laws.filter((x) => x.law_id).map((x) => [x.law_id, x])).values()].map((x, i) => ({
+        project_id: id,
+        law_id: x.law_id,
+        note_ja: blank(x.note_ja),
+        source_url: blank(x.source_url),
+        sort_order: i,
+      })),
     ],
   ];
   for (const [table, rows] of inserts) {

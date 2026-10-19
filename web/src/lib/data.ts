@@ -40,6 +40,18 @@ export type Project = {
   photos: { storage_path: string; is_cover: boolean; sort_order: number; caption_ja: string | null; caption_en: string | null }[];
   awards: { award_name: string; award_year: number | null }[];
   sources: { url: string; title: string | null; kind: string }[];
+  laws: { note_ja: string | null; note_en: string | null; source_url: string | null; sort_order: number; law: LawRef }[];
+};
+
+export type LawRef = {
+  slug: string;
+  kind: "law" | "system" | "ordinance";
+  name_ja: string;
+  name_en: string | null;
+  short_ja: string | null;
+  short_en: string | null;
+  jurisdiction_ja: string;
+  jurisdiction_en: string | null;
 };
 
 const PROJECT_SELECT = `
@@ -50,7 +62,8 @@ const PROJECT_SELECT = `
   components:project_components(product_name, maker_name, category:component_categories(kind, slug, name_ja, name_en)),
   photos(storage_path, is_cover, sort_order, caption_ja, caption_en),
   awards:project_awards(award_name, award_year),
-  sources(url, title, kind)
+  sources(url, title, kind),
+  laws:project_laws(note_ja, note_en, source_url, sort_order, law:laws(slug, kind, name_ja, name_en, short_ja, short_en, jurisdiction_ja, jurisdiction_en))
 `;
 
 export async function getProjects(): Promise<Project[]> {
@@ -69,6 +82,7 @@ export async function getProjects(): Promise<Project[]> {
     ...p,
     credits: [...p.credits].sort((a, b) => a.sort_order - b.sort_order),
     photos: [...p.photos].sort((a, b) => a.sort_order - b.sort_order),
+    laws: [...p.laws].sort((a, b) => a.sort_order - b.sort_order),
     lat: byId.get(p.id)?.lat ?? null,
     lng: byId.get(p.id)?.lng ?? null,
   }));
@@ -117,6 +131,27 @@ export async function getDesigners() {
     }
   }
   return [...byParty.values()].sort((a, b) => b.projects.length - a.projects.length || a.party.name_ja.localeCompare(b.party.name_ja, "ja"));
+}
+
+export type Law = LawRef & {
+  summary_ja: string | null;
+  summary_en: string | null;
+  official_url: string | null;
+  sort_order: number;
+  basis: { slug: string; name_ja: string; name_en: string | null } | null;
+};
+
+// 法令マスタ（法律→制度→条例の順）
+export async function getLaws(): Promise<Law[]> {
+  "use cache";
+  cacheLife("days");
+  cacheTag("laws");
+  const { data, error } = await supabase()
+    .from("laws")
+    .select("slug, kind, name_ja, name_en, short_ja, short_en, jurisdiction_ja, jurisdiction_en, summary_ja, summary_en, official_url, sort_order, basis:basis_id(slug, name_ja, name_en)")
+    .order("sort_order");
+  if (error) throw error;
+  return data as unknown as Law[];
 }
 
 export function photoUrl(path: string) {

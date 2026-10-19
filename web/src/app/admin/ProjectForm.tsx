@@ -9,6 +9,9 @@ import { saveProject, type ProjectPayload } from "./actions";
 type Species = { id: string; name_ja: string; scientific_name: string };
 type Category = { id: string; kind: string; name_ja: string };
 type Parent = { id: string; name_ja: string };
+type Law = { id: string; kind: string; name_ja: string; jurisdiction_ja: string };
+
+const LAW_KINDS: [string, string][] = [["law", "法律"], ["system", "制度"], ["ordinance", "条例"]];
 
 const PREFECTURES = ["大阪府", "兵庫県", "京都府", "滋賀県", "奈良県", "和歌山県"];
 const input = "mt-1 w-full rounded-md border border-line bg-white px-3 py-2 text-sm";
@@ -19,11 +22,13 @@ export function ProjectForm({
   species,
   categories,
   parents,
+  laws,
 }: {
   initial: ProjectPayload;
   species: Species[];
   categories: Category[];
   parents: Parent[];
+  laws: Law[];
 }) {
   const [p, setP] = useState(initial);
   const [result, action, pending] = useActionState(saveProject, null);
@@ -167,6 +172,32 @@ export function ProjectForm({
           </div>
         ))}
         <button type="button" onClick={() => set("components", [...p.components, { category_id: "", product_name: "", maker_name: "" }])} className="mt-2 text-sm text-accent">＋ 構成要素を追加</button>
+      </section>
+
+      <section className={section}>
+        <h2 className="mb-1 font-medium">関係する法令</h2>
+        <p className="mb-4 text-xs text-muted">法律・制度・条例のどれが、どう使われたかと、その根拠の資料を記録します。公開ページの「関係する法令」と、法令ごとのページに出ます。</p>
+        {p.laws.map((x, i) => {
+          const edit = (patch: Partial<ProjectPayload["laws"][number]>) => set("laws", p.laws.map((y, j) => (j === i ? { ...y, ...patch } : y)));
+          return (
+            <div key={i} className="mt-3 grid gap-2 rounded-md border border-line p-3 text-sm sm:grid-cols-[1fr_1.4fr_auto]">
+              <select className={input} value={x.law_id} onChange={(e) => edit({ law_id: e.target.value })}>
+                <option value="">法令を選ぶ</option>
+                {LAW_KINDS.map(([kind, label]) => (
+                  <optgroup key={kind} label={label}>
+                    {laws.filter((l) => l.kind === kind).map((l) => (
+                      <option key={l.id} value={l.id}>{l.name_ja}{kind === "ordinance" ? `（${l.jurisdiction_ja}）` : ""}</option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              <input placeholder="どう使われたか（例: 公開空地を設けて容積率を緩和）" className={input} value={x.note_ja} onChange={(e) => edit({ note_ja: e.target.value })} />
+              <button type="button" onClick={() => set("laws", p.laws.filter((_, j) => j !== i))} className="px-2 text-muted">削除</button>
+              <input placeholder="出典URL（その根拠となる公開資料）" className={`${input} sm:col-span-2`} value={x.source_url} onChange={(e) => edit({ source_url: e.target.value })} />
+            </div>
+          );
+        })}
+        <button type="button" onClick={() => set("laws", [...p.laws, { law_id: "", note_ja: "", source_url: "" }])} className="mt-2 text-sm text-accent">＋ 法令を追加</button>
       </section>
 
       <section className={`${section} border-amber-300 bg-amber-50/40`}>

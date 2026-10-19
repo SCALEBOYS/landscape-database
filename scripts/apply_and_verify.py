@@ -19,7 +19,7 @@ SEEDS = [ROOT / "supabase" / "seed.sql", ROOT / "supabase" / "seed_species.sql"]
 TABLES = [
     "admins", "projects", "project_private_notes", "parties", "project_credits", "species",
     "species_aliases", "project_plantings", "component_categories", "project_components",
-    "photos", "sources", "project_awards",
+    "photos", "sources", "project_awards", "laws", "project_laws",
 ]
 
 
@@ -81,7 +81,7 @@ def verify(conn) -> bool:
             "where n.nspname = 'public' and c.relkind = 'r' and c.relname = any(%s)", (TABLES,))
         rls = dict(cur.fetchall())
         missing = [t for t in TABLES if t not in rls]
-        results.append(check("テーブル 13 個", not missing, f"不足: {missing}" if missing else ""))
+        results.append(check(f"テーブル {len(TABLES)} 個", not missing, f"不足: {missing}" if missing else ""))
         no_rls = [t for t, on in rls.items() if not on]
         results.append(check("全テーブルで RLS 有効", not no_rls, f"無効: {no_rls}" if no_rls else ""))
 
@@ -94,6 +94,9 @@ def verify(conn) -> bool:
         cur.execute("select count(*) from species_aliases")
         n = cur.fetchone()[0]
         results.append(check("樹種の表記ゆれ", n == 186, f"{n} 件"))
+        cur.execute("select kind, count(*) from laws group by kind")
+        laws = dict(cur.fetchall())
+        results.append(check("法令マスタ（法律・制度・条例）", laws == {"law": 9, "system": 7, "ordinance": 5}, str(laws)))
         cur.execute("select s.name_ja from species_aliases a join species s on s.id = a.species_id where a.alias = '欅'")
         row = cur.fetchone()
         results.append(check("表記ゆれ検索（欅 → ケヤキ）", row is not None and row[0] == "ケヤキ"))

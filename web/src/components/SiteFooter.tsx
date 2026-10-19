@@ -16,6 +16,7 @@ export function SiteFooter({ lang }: { lang: Locale }) {
     [`/${lang}/explore`, t.nav.explore],
     [`/${lang}/species`, t.nav.species],
     [`/${lang}/designers`, t.nav.designers],
+    [`/${lang}/laws`, t.nav.laws],
   ];
 
   return (

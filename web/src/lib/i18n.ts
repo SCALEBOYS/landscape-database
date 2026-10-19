@@ -8,7 +8,7 @@ export const hasLocale = (value: string): value is Locale => (locales as readonl
 const ja = {
   siteName: "Landscape Database",
   tagline: "日本のランドスケープ事例データベース",
-  nav: { projects: "事例", explore: "地図で探す", species: "樹種", designers: "設計者" },
+  nav: { projects: "事例", explore: "地図で探す", species: "樹種", designers: "設計者", laws: "法令" },
   view: { grid: "写真", map: "地図" },
   filter: {
     keyword: "名称・設計者・樹種で検索",
@@ -52,6 +52,19 @@ const ja = {
     noProjects: "まだ事例がありません",
   },
   designers: { title: "設計者", projects: "設計した事例", count: (n: number) => `${n}件` },
+  laws: {
+    title: "法令",
+    lead: "ランドスケープの計画や設計に関わる法律・制度・条例と、それが使われた事例。説明は要点だけをまとめたもので、正確な内容は原文を確認してください。",
+    kinds: { law: "法律", system: "制度", ordinance: "条例" },
+    basis: "根拠となる法律",
+    jurisdiction: "所管",
+    official: "原文を見る",
+    usedIn: "この法令が関係する事例",
+    none: "まだ事例が登録されていません",
+    count: (n: number) => `${n}件の事例`,
+    section: "関係する法令",
+    source: "出典",
+  },
   footer: {
     copyright: "写真の無断転載を禁じます © Landscape Database",
     policy: "写真はすべて自前で撮影したものです。文章は公開情報を要約し、出典へのリンクを付けています。",
@@ -95,6 +108,7 @@ const ja = {
     useRule: "いずれか",
     elRow: "要素",
     elRule: "すべて",
+    lawRow: "法令",
     filter: "フィルター",
     tabSpecies: "樹種",
     tabDesigners: "設計者",
@@ -137,7 +151,7 @@ type Dict = typeof ja;
 const en: Dict = {
   siteName: "Landscape Database",
   tagline: "A database of landscape architecture in Japan",
-  nav: { projects: "Projects", explore: "Map", species: "Plants", designers: "Designers" },
+  nav: { projects: "Projects", explore: "Map", species: "Plants", designers: "Designers", laws: "Regulations" },
   view: { grid: "Photos", map: "Map" },
   filter: {
     keyword: "Search by name, designer or plant",
@@ -181,6 +195,19 @@ const en: Dict = {
     noProjects: "No projects yet",
   },
   designers: { title: "Designers", projects: "Projects", count: (n: number) => `${n} ${n === 1 ? "project" : "projects"}` },
+  laws: {
+    title: "Laws and regulations",
+    lead: "Laws, planning systems and local ordinances that shape landscape projects, with the projects they apply to. Summaries are brief; check the original text for details.",
+    kinds: { law: "Laws", system: "Planning systems", ordinance: "Local ordinances" },
+    basis: "Based on",
+    jurisdiction: "Authority",
+    official: "Read the original",
+    usedIn: "Projects under this rule",
+    none: "No projects yet",
+    count: (n: number) => `${n} ${n === 1 ? "project" : "projects"}`,
+    section: "Laws and regulations",
+    source: "Source",
+  },
   footer: {
     copyright: "Do not reproduce photos without permission © Landscape Database",
     policy: "All photos are our own. Texts summarize public information and link to their sources.",
@@ -223,6 +250,7 @@ const en: Dict = {
     useRule: "any",
     elRow: "Elements",
     elRule: "all",
+    lawRow: "Rules",
     filter: "Filters",
     tabSpecies: "Plants",
     tabDesigners: "Designers",
