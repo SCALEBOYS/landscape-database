@@ -9,6 +9,7 @@ export function AdminHeader({ email }: { email: string }) {
         Landscape Database 管理画面
       </Link>
       <div className="flex items-center gap-4 text-sm text-muted">
+        <Link href="/admin/materials" className="hover:text-ink">素材の分類</Link>
         <Link href="/ja" className="hover:text-ink">公開サイト</Link>
         <span>{email}</span>
         <form action={signOut}>
