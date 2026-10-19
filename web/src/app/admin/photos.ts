@@ -4,7 +4,7 @@ const MAX_SIDE = 2400;
 const QUALITY = 0.88;
 
 export async function stripExif(file: File): Promise<{ blob: Blob; width: number; height: number }> {
-  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const bitmap = await decode(file);
   const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height));
   const width = Math.round(bitmap.width * scale);
   const height = Math.round(bitmap.height * scale);
@@ -20,6 +20,17 @@ export async function stripExif(file: File): Promise<{ blob: Blob; width: number
   );
   if (await hasExif(blob)) throw new Error("EXIF が残っています");
   return { blob, width, height };
+}
+
+// まずブラウザ自身で読む。Chrome などは iPhone の HEIC を読めないので、そのときはブラウザ内で変換する
+async function decode(file: File): Promise<ImageBitmap> {
+  try {
+    return await createImageBitmap(file, { imageOrientation: "from-image" });
+  } catch {
+    const { heicTo, isHeic } = await import("heic-to/next");
+    if (!(await isHeic(file))) throw new Error(`${file.name} は読み込めない形式です（JPEG・PNG・WebP・HEIC に対応）`);
+    return heicTo({ blob: file, type: "bitmap", options: { imageOrientation: "from-image" } });
+  }
 }
 
 // JPEG の APP1（Exif）セグメントが無いことを確かめる

@@ -14,6 +14,9 @@ import { CategoryRows } from "./CategoryRows";
 import { FilterButton, FilterPanel } from "./FilterPanel";
 import { SearchBar } from "./SearchBar";
 
+// トップの新着は 25 件まで
+const NEWEST_LIMIT = 25;
+
 type Props = {
   lang: Locale;
   items: BrowseItem[];
@@ -61,6 +64,8 @@ export function HomeBrowser({ lang, items, lawOptions, t, years, hero, after, in
   const [panel, setPanel] = useState(false);
   const router = useRouter();
   const list = useMemo(() => items.filter((it) => matches(it, filters)), [items, filters]);
+  const [more, setMore] = useState(false);
+  const shown = more ? list : list.slice(0, NEWEST_LIMIT);
   const goExplore = () => router.push(`/${lang}/explore${toQuery(filters)}`);
 
   return (
@@ -84,11 +89,21 @@ export function HomeBrowser({ lang, items, lawOptions, t, years, hero, after, in
           </Link>
         </div>
         {list.length ? (
-          <div className="grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
-            {list.map((it, i) => (
-              <ProjectCard key={it.slug} lang={lang} card={toCard(it, t)} index={i} />
-            ))}
-          </div>
+          <>
+            {/* 「もっと見る」で全件を出したら、下の地図などへ行きやすいよう枠の中でスクロールさせる */}
+            <div className={more ? "max-h-[min(1600px,180vh)] overflow-y-auto border-y border-line py-6 pr-2" : ""}>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4 lg:gap-x-5 xl:grid-cols-5">
+                {shown.map((it, i) => (
+                  <ProjectCard key={it.slug} lang={lang} card={toCard(it, t)} index={i} />
+                ))}
+              </div>
+            </div>
+            {list.length > NEWEST_LIMIT && (
+              <button type="button" onClick={() => setMore((m) => !m)} className="fbtn justify-self-center">
+                {more ? t.showLess : fmt(t.showMore, list.length - NEWEST_LIMIT)}
+              </button>
+            )}
+          </>
         ) : (
           <p className="py-12 text-sm text-muted">{t.none}</p>
         )}

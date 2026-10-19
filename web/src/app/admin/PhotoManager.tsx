@@ -38,6 +38,9 @@ export function PhotoManager({
   const [caption, setCaption] = useState("");
   const [peopleChecked, setPeopleChecked] = useState(false);
   const [status, setStatus] = useState("");
+  // 削除は画面内で2段階で確かめる（ブラウザの確認ダイアログは環境によって出ないため）
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<{ id: string; message: string } | null>(null);
   const [pending, startTransition] = useTransition();
 
   const upload = () =>
@@ -62,13 +65,15 @@ export function PhotoManager({
       }
     });
 
-  const run = (fn: () => Promise<void>) =>
+  const run = (id: string, fn: () => Promise<void>) =>
     startTransition(async () => {
+      setPhotoError(null);
       try {
         await fn();
+        setConfirmId(null);
         router.refresh();
       } catch (e) {
-        setStatus(`失敗しました: ${e instanceof Error ? e.message : String(e)}`);
+        setPhotoError({ id, message: `失敗しました: ${e instanceof Error ? e.message : String(e)}` });
       }
     });
 
@@ -83,7 +88,7 @@ export function PhotoManager({
       <div className="grid gap-3 rounded-md bg-placeholder/60 p-4 text-sm sm:grid-cols-2">
         <label className="sm:col-span-2">
           写真ファイル
-          <input type="file" accept="image/jpeg,image/png,image/heic,image/webp" multiple onChange={(e) => setFiles([...(e.target.files ?? [])])} className="mt-1 block w-full" />
+          <input type="file" accept="image/jpeg,image/png,image/heic,image/heif,image/webp,.heic,.heif" multiple onChange={(e) => setFiles([...(e.target.files ?? [])])} className="mt-1 block w-full" />
         </label>
         <label>
           撮影日*
@@ -119,7 +124,7 @@ export function PhotoManager({
                 <button
                   type="button"
                   disabled={pending}
-                  onClick={() => run(() => updatePhoto(ph.id, projectId, { people_checked: !ph.people_checked }))}
+                  onClick={() => run(ph.id, () => updatePhoto(ph.id, projectId, { people_checked: !ph.people_checked }))}
                   className="text-accent underline-offset-2 hover:underline"
                 >
                   {ph.people_checked ? "非公開に戻す" : "人物確認済みにして公開"}
@@ -129,17 +134,22 @@ export function PhotoManager({
                 {ph.is_cover ? (
                   <span className="text-accent">カバー写真</span>
                 ) : (
-                  <button type="button" disabled={pending} onClick={() => run(() => updatePhoto(ph.id, projectId, { is_cover: true }))} className="text-accent">カバーにする</button>
+                  <button type="button" disabled={pending} onClick={() => run(ph.id, () => updatePhoto(ph.id, projectId, { is_cover: true }))} className="text-accent">カバーにする</button>
                 )}
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => confirm("この写真を削除しますか？") && run(() => deletePhoto(ph.id, ph.storage_path))}
-                  className="text-red-700"
-                >
-                  削除
-                </button>
+                {confirmId === ph.id ? (
+                  <span className="flex gap-2">
+                    <button type="button" disabled={pending} onClick={() => run(ph.id, () => deletePhoto(ph.id, ph.storage_path))} className="rounded bg-red-700 px-2 text-white">
+                      {pending ? "削除中…" : "本当に削除する"}
+                    </button>
+                    <button type="button" onClick={() => setConfirmId(null)} className="text-muted">やめる</button>
+                  </span>
+                ) : (
+                  <button type="button" disabled={pending} onClick={() => setConfirmId(ph.id)} className="text-red-700">
+                    削除
+                  </button>
+                )}
               </div>
+              {photoError?.id === ph.id && <p className="mt-1 text-red-700">{photoError.message}</p>}
             </li>
           ))}
         </ul>
