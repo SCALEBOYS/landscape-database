@@ -17,8 +17,8 @@ export const SATELLITE_CONFIG = {
 };
 
 // 自分の写真がまだない事例は、代わりに航空写真の静止画を出す（Static Images API）
-// 既定は事例カードの縦長 3:4
-export function satelliteImage(lat: number, lng: number, { w = 480, h = 640, zoom = 16 } = {}) {
+// 既定は事例カードの横長 16:9
+export function satelliteImage(lat: number, lng: number, { w = 640, h = 360, zoom = 16 } = {}) {
   if (!MAPBOX_TOKEN) return null;
   return `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/${lng},${lat},${zoom},0/${w}x${h}@2x?access_token=${MAPBOX_TOKEN}`;
 }

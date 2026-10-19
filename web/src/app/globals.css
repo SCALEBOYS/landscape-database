@@ -116,7 +116,7 @@ h1, h2, h3 { text-wrap: balance; }
 @media (max-width: 720px) { .catrow .rl { display: none; } }
 
 /* ---------- 事例カード ---------- */
-.card-img { position: relative; overflow: hidden; aspect-ratio: 3 / 4; background: var(--soft); border-radius: 2px; }
+.card-img { position: relative; overflow: hidden; aspect-ratio: 16 / 9; background: var(--soft); border-radius: 2px; }
 .card-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .9s cubic-bezier(.2,.7,.2,1); }
 .card:hover .card-img img, .card.hl .card-img img { transform: scale(1.045); }
 .card-tag { position: absolute; left: 10px; top: 10px; background: #fff; color: var(--ink); font-size: 11px; padding: 3px 8px; display: flex; gap: 5px; align-items: center; font-weight: 500; border-radius: 2px; }
@@ -144,7 +144,7 @@ h1, h2, h3 { text-wrap: balance; }
 .ex-list { overflow-y: auto; border-left: 1px solid var(--line); min-height: 0; background: #fff; }
 .grabber { display: none; }
 /* 地図で探す画面では地図を画面いっぱいにするので、フッターは出さない */
-body:has(.ex) .site-footer { display: none; }
+body:has(.ex) .site-footer, body:has(.graph-page) .site-footer { display: none; }
 @media (max-width: 760px) {
   .ex { grid-template-columns: 1fr; position: relative; }
   .ex-list { position: absolute; left: 0; right: 0; bottom: 0; z-index: 8; border-left: 0; border-radius: 18px 18px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,.18); height: var(--sheet, 42%); transition: height .35s cubic-bezier(.2,.7,.2,1); overflow: hidden; display: flex; flex-direction: column; }

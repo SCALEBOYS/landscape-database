@@ -8,7 +8,7 @@ export const hasLocale = (value: string): value is Locale => (locales as readonl
 const ja = {
   siteName: "Landscape Database",
   tagline: "日本のランドスケープ事例データベース",
-  nav: { projects: "事例", explore: "地図で探す", species: "樹種", designers: "設計者", laws: "法令" },
+  nav: { projects: "事例", explore: "地図で探す", species: "樹種", designers: "設計者", laws: "法令", graph: "つながり" },
   view: { grid: "写真", map: "地図" },
   filter: {
     keyword: "名称・設計者・樹種で検索",
@@ -75,6 +75,24 @@ const ja = {
     photos: "写真は現地で撮影し、人物の写り込みと位置情報を確認してから公開しています。",
     mapCredit: "地図・航空写真 © Mapbox © OpenStreetMap",
     toTop: "ページの先頭へ",
+  },
+  graph: {
+    title: "つながり",
+    lead: "事例と、設計者・樹種・法令・用途などの分類を線で結んだ図です。丸を押すと、その丸を中心にした表示に切り替わります。",
+    structure: "構造",
+    similar: "似ている事例",
+    modeLabel: "線の種類",
+    search: "名前で探す",
+    types: { project: "事例", designer: "設計者", species: "樹種", law: "法令", use: "用途", element: "要素", award: "受賞", tag: "特徴タグ", pref: "都道府県", decade: "竣工年代" },
+    connections: "つながっている項目",
+    openPage: "ページを開く",
+    backToAll: "全体を表示",
+    hint: "丸を押すと、ここに詳しい内容が出ます。マウスのホイールで拡大・縮小、ドラッグで移動できます。",
+    nodes: "{n} 個の丸",
+    links: "{n} 本の線",
+    tagsComing: "特徴タグは、説明文から自動で付ける仕組みを準備中です",
+    noMatch: "見つかりません",
+    close: "閉じる",
   },
   // クライアント部品に渡すので、関数ではなく文字列（{n} を置き換える）にする
   browse: {
@@ -159,7 +177,7 @@ type Dict = typeof ja;
 const en: Dict = {
   siteName: "Landscape Database",
   tagline: "A database of landscape architecture in Japan",
-  nav: { projects: "Projects", explore: "Map", species: "Plants", designers: "Designers", laws: "Regulations" },
+  nav: { projects: "Projects", explore: "Map", species: "Plants", designers: "Designers", laws: "Regulations", graph: "Connections" },
   view: { grid: "Photos", map: "Map" },
   filter: {
     keyword: "Search by name, designer or plant",
@@ -226,6 +244,24 @@ const en: Dict = {
     photos: "Photos are taken on site and published only after checking for people and removing location data.",
     mapCredit: "Maps and aerial imagery © Mapbox © OpenStreetMap",
     toTop: "Back to top",
+  },
+  graph: {
+    title: "Connections",
+    lead: "Projects linked to their designers, plants, rules, types and more. Click a circle to center the view on it.",
+    structure: "Structure",
+    similar: "Similar projects",
+    modeLabel: "Links",
+    search: "Search by name",
+    types: { project: "Projects", designer: "Designers", species: "Plants", law: "Rules", use: "Types", element: "Elements", award: "Awards", tag: "Feature tags", pref: "Prefectures", decade: "Decades" },
+    connections: "Connected items",
+    openPage: "Open page",
+    backToAll: "Show all",
+    hint: "Click a circle to see details here. Scroll to zoom, drag to move.",
+    nodes: "{n} circles",
+    links: "{n} links",
+    tagsComing: "Feature tags extracted from descriptions are coming soon",
+    noMatch: "No matches",
+    close: "Close",
   },
   browse: {
     heroTitle: "Find landscapes by place and material.",
@@ -367,6 +403,7 @@ export const prefectureEn: Record<string, string> = {
 };
 
 export type BrowseText = Dict["browse"];
+export type GraphText = Dict["graph"];
 export const fmt = (template: string, n: number | string) => template.replace("{n}", String(n));
 
 export const label = (map: Record<string, { ja: string; en: string }>, key: string, locale: Locale) =>
