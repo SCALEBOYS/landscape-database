@@ -59,6 +59,13 @@ h1, h2, h3 { text-wrap: balance; }
 .sfield .val.on { color: var(--ink); }
 .sgo { margin: 6px; width: 44px; height: 44px; display: grid; place-items: center; background: var(--accent); color: #fff; border-radius: 2px; }
 .ai-hint { font-size: 10px; color: var(--accent); margin-left: 6px; letter-spacing: .04em; }
+/* キーワードの入力候補 */
+.pop.suggest { left: 0; width: min(440px, 100%); padding: 6px; list-style: none; }
+.pop.suggest button { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 2px; text-align: left; font-size: 14px; }
+.pop.suggest button.on { background: var(--soft); }
+.pop.suggest .k { font-size: 10px; letter-spacing: .06em; color: var(--accent); }
+.pop.suggest .l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pop.suggest .c { font-size: 11px; color: var(--muted); }
 .sbar.compact .sfield { padding-block: 6px; }
 .sbar.compact .sgo { width: 36px; height: 36px; margin: 4px; }
 @media (max-width: 720px) {

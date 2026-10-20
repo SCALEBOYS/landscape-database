@@ -274,7 +274,7 @@ function Timeline({ papers, match, colorOf, onPick, label }: { papers: BrowserPa
               cy={cy}
               r={hover?.slug === p.slug ? 8 : 6}
               fill={colorOf(p)}
-              stroke="#0a0a0a"
+              stroke="rgba(255,255,255,.9)"
               strokeWidth="1.5"
               opacity={on ? 1 : 0.18}
               className="cursor-pointer transition-[r,opacity]"

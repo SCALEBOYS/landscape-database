@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Icon } from "@/components/Icon";
 import { matches, type BrowseItem, type Filters } from "@/lib/browse";
@@ -20,8 +20,15 @@ type Props = {
 
 // 「キーワード｜地域｜竣工年」の検索バー。キーワード欄は後で AI 検索に置き換える
 export function SearchBar({ items, filters, update, t, lang, years, compact, onSubmit }: Props) {
-  const [open, setOpen] = useState<"region" | "years" | null>(null);
+  const [open, setOpen] = useState<"region" | "years" | "suggest" | null>(null);
+  const [active, setActive] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
+  const suggestions = useSuggestions(items, filters.q, t);
+  const showSuggest = open === "suggest" && suggestions.length > 0;
+  const pick = (label: string) => {
+    update({ q: label });
+    setOpen(null);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -52,10 +59,51 @@ export function SearchBar({ items, filters, update, t, lang, years, compact, onS
           value={filters.q}
           placeholder={t.keywordPlaceholder}
           autoComplete="off"
-          onChange={(e) => update({ q: e.target.value })}
-          onKeyDown={(e) => e.key === "Enter" && onSubmit?.()}
+          role="combobox"
+          aria-expanded={showSuggest}
+          aria-controls="kw-suggest"
+          aria-autocomplete="list"
+          onFocus={() => setOpen("suggest")}
+          onChange={(e) => {
+            update({ q: e.target.value });
+            setOpen("suggest");
+            setActive(0);
+          }}
+          onKeyDown={(e) => {
+            // 候補は ↑↓ で選び、Enter か Tab で入れる
+            if (showSuggest && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+              e.preventDefault();
+              setActive((i) => (i + (e.key === "ArrowDown" ? 1 : suggestions.length - 1)) % suggestions.length);
+            } else if (showSuggest && (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)) && suggestions[active]) {
+              if (suggestions[active].label !== filters.q) {
+                e.preventDefault();
+                pick(suggestions[active].label);
+                return;
+              }
+              if (e.key === "Enter") {
+                setOpen(null);
+                onSubmit?.();
+              }
+            } else if (e.key === "Enter") {
+              setOpen(null);
+              onSubmit?.();
+            }
+          }}
         />
       </label>
+      {showSuggest && (
+        <ul id="kw-suggest" role="listbox" className="pop suggest fade-in">
+          {suggestions.map((s, i) => (
+            <li key={`${s.kind}:${s.label}`} role="option" aria-selected={i === active}>
+              <button type="button" onPointerDown={(e) => e.preventDefault()} onClick={() => pick(s.label)} onMouseEnter={() => setActive(i)} className={i === active ? "on" : ""}>
+                <span className="k">{s.kindLabel}</span>
+                <span className="l">{s.label}</span>
+                <span className="c num">{s.count}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
       <button type="button" className={`sfield ${open === "region" ? "open" : ""}`} onClick={() => setOpen(open === "region" ? null : "region")} aria-expanded={open === "region"}>
         <span className="lbl">{t.region}</span>
         <span className={`val ${regionSel.length ? "on" : ""}`}>{regionText}</span>
@@ -72,6 +120,38 @@ export function SearchBar({ items, filters, update, t, lang, years, compact, onS
       {open === "years" && <YearsPop items={items} filters={filters} update={update} t={t} years={years} onClose={() => setOpen(null)} />}
     </div>
   );
+}
+
+type Suggestion = { kind: string; kindLabel: string; label: string; count: number };
+
+// 入力中の文字で、事例名・設計者・樹種・地名の候補を出す（前方一致を先に、事例の多い順）
+function useSuggestions(items: BrowseItem[], q: string, t: BrowseText) {
+  const pool = useMemo(() => {
+    const m = new Map<string, Suggestion>();
+    const add = (kind: string, kindLabel: string, label: string) => {
+      if (!label) return;
+      const key = `${kind}:${label}`;
+      const cur = m.get(key);
+      if (cur) cur.count++;
+      else m.set(key, { kind, kindLabel, label, count: 1 });
+    };
+    for (const it of items) {
+      add("project", t.sugProject, it.name);
+      it.designers.forEach((d) => add("designer", t.sugDesigner, d.label));
+      it.species.forEach((s) => add("species", t.sugSpecies, s.label));
+      add("place", t.sugPlace, it.muni);
+      add("place", t.sugPlace, it.prefLabel);
+    }
+    return [...m.values()];
+  }, [items, t]);
+  const k = q.trim().toLowerCase();
+  if (!k) return [];
+  return pool
+    .map((s) => ({ s, at: s.label.toLowerCase().indexOf(k) }))
+    .filter((x) => x.at >= 0)
+    .sort((a, b) => Number(a.at > 0) - Number(b.at > 0) || b.s.count - a.s.count || a.s.label.length - b.s.label.length)
+    .slice(0, 8)
+    .map((x) => x.s);
 }
 
 function RegionPop({ items, filters, update, t, lang, onClose }: Omit<Props, "years"> & { onClose: () => void }) {
