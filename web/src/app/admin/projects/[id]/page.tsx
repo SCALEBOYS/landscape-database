@@ -88,7 +88,7 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
     const { data: p } = await supabase
       .from("projects")
       .select(
-        `*, lat_lng:project_points(lat, lng),
+        `*,
          credits:project_credits(sort_order, party:parties(name_ja)),
          awards:project_awards(award_name, award_year),
          sources(url),
@@ -102,8 +102,8 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
       .eq("id", id)
       .maybeSingle();
     if (!p) notFound();
-    // project_points は1対1で、1件のオブジェクトで返ることがある（配列前提だと空欄になり、保存で座標が消える）
-    const point = oneOf(p.lat_lng as { lat: number; lng: number } | { lat: number; lng: number }[] | null);
+    // 座標はビュー project_points から別に読む（埋め込みだと null になり、空欄のまま保存すると座標が消えていた）
+    const { data: point } = await supabase.from("project_points").select("lat, lng").eq("id", id).maybeSingle();
     const notes = (Array.isArray(p.notes) ? p.notes[0] : p.notes) as Record<string, unknown> | null;
     initial = {
       id: p.id,
