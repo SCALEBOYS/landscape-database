@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { LangSwitcher } from "@/components/LangSwitcher";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getDictionary, hasLocale, locales } from "@/lib/i18n";
+import { INDEXABLE, SITE_URL } from "@/lib/site";
 
 const noto = Noto_Sans_JP({ variable: "--font-noto-sans-jp", weight: ["400", "500", "700"], preload: false });
 // 英数字の見出し・数字用。日本語の文字は Noto Sans JP に落ちる
@@ -24,9 +25,9 @@ export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Prom
   return {
     title: { default: `${t.siteName} — ${t.tagline}`, template: `%s | ${t.siteName}` },
     description: t.tagline,
+    metadataBase: new URL(SITE_URL),
     alternates: { languages: { ja: "/ja", en: "/en" } },
-    // 本公開（12週目）までは検索エンジンに載せない。Vercel で NEXT_PUBLIC_SITE_INDEXABLE=true にすると解除
-    robots: process.env.NEXT_PUBLIC_SITE_INDEXABLE === "true" ? undefined : { index: false, follow: false },
+    robots: INDEXABLE ? undefined : { index: false, follow: false },
   };
 }
 
