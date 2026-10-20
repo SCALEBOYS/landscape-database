@@ -228,3 +228,39 @@ export async function deletePhotoPoint(id: string) {
   if (error) throw new Error(error.message);
   updateTag("projects");
 }
+
+export type ModelPlacement = {
+  caption_ja: string | null;
+  offset_east_m: number;
+  offset_north_m: number;
+  altitude_m: number;
+  rotation_deg: number;
+  scale: number;
+  show_on_map: boolean;
+};
+
+// 3D モデル: ファイルはブラウザから models バケットに上げ、ここで記録する
+export async function addModel(m: { project_id: string; storage_path: string; file_name: string; size_bytes: number; caption_ja: string }) {
+  const supabase = await adminClient();
+  const { count } = await supabase.from("project_models").select("id", { count: "exact", head: true }).eq("project_id", m.project_id);
+  const { error } = await supabase.from("project_models").insert({ ...m, caption_ja: blank(m.caption_ja), sort_order: count ?? 0 });
+  if (error) throw new Error(error.message);
+  updateTag("projects");
+}
+
+export async function updateModel(id: string, p: ModelPlacement) {
+  if (!(p.scale > 0)) throw new Error("倍率は 0 より大きい数にしてください");
+  const supabase = await adminClient();
+  const { error } = await supabase.from("project_models").update({ ...p, caption_ja: p.caption_ja?.trim() || null }).eq("id", id);
+  if (error) throw new Error(error.message);
+  updateTag("projects");
+}
+
+export async function deleteModel(id: string, storagePath: string) {
+  const supabase = await adminClient();
+  const { error } = await supabase.from("project_models").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  const { error: storageError } = await supabase.storage.from("models").remove([storagePath]);
+  if (storageError) throw new Error(storageError.message);
+  updateTag("projects");
+}

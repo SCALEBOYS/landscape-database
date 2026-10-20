@@ -9,6 +9,8 @@ import { MAPBOX_TOKEN, MODEL_CONFIG, SATELLITE_CONFIG, satelliteImage, STYLE_MAP
 
 type Mode = "photo" | "3d" | "flat";
 type Labels = { photo: string; d3: string; flat: string; note: string; view: string };
+// 地図に置く 3D モデル（GLB）。位置は事例の座標からの東・北のずれ（m）で決める
+export type MapModel = { url: string; offsetEast: number; offsetNorth: number; altitude: number; rotation: number; scale: number };
 
 const VIEW_3D = { zoom: 16.4, pitch: 62, bearing: -24 };
 const VIEW_FLAT = { zoom: 16, pitch: 0, bearing: 0 };
@@ -23,8 +25,10 @@ export function SiteHero({
   lng,
   alt,
   labels,
+  models = [],
   children,
 }: {
+  models?: MapModel[];
   photo: string | null;
   lat: number | null;
   lng: number | null;
@@ -57,6 +61,32 @@ export function SiteHero({
         attributionControl: true,
       });
       mapRef.current = m;
+      // スタイルを切り替えるとレイヤーは消えるので、読み込むたびにモデルを置き直す
+      const placeModels = () => {
+        models.forEach((md, k) => {
+          const id = `project-model-${k}`;
+          const latM = lat! + md.offsetNorth / 111320;
+          const lngM = lng! + md.offsetEast / (111320 * Math.cos((lat! * Math.PI) / 180));
+          if (!m.hasModel(id)) m.addModel(id, md.url);
+          if (!m.getSource(id)) m.addSource(id, { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [lngM, latM] } } });
+          if (!m.getLayer(id)) {
+            m.addLayer({
+              id,
+              type: "model",
+              source: id,
+              layout: { "model-id": id },
+              paint: {
+                "model-scale": [md.scale, md.scale, md.scale],
+                "model-rotation": [0, 0, md.rotation],
+                "model-translation": [0, 0, md.altitude],
+                "model-type": "common-3d",
+                "model-cast-shadows": true,
+              },
+            });
+          }
+        });
+      };
+      if (models.length) m.on("style.load", placeModels);
       // 3D のときはゆっくり回り込む。動きを減らす設定の人には回さない
       const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       let dir = 1;
@@ -71,7 +101,7 @@ export function SiteHero({
     return () => {
       cancelled = true;
     };
-  }, [showMap, canMap, lat, lng, mode]);
+  }, [showMap, canMap, lat, lng, mode, models]);
 
   useEffect(() => () => mapRef.current?.remove(), []);
 

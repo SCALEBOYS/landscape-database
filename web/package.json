@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@google/model-viewer": "4.3.1",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "force-graph": "1.52.0",
@@ -17,7 +18,8 @@
     "next": "16.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "three": "0.183.2"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",

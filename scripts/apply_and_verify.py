@@ -19,7 +19,7 @@ SEEDS = [ROOT / "supabase" / "seed.sql", ROOT / "supabase" / "seed_species.sql"]
 TABLES = [
     "admins", "projects", "project_private_notes", "parties", "project_credits", "species",
     "species_aliases", "project_plantings", "component_categories", "project_components",
-    "photos", "sources", "project_awards", "laws", "project_laws", "photo_points",
+    "photos", "sources", "project_awards", "laws", "project_laws", "photo_points", "project_models",
 ]
 
 

@@ -56,6 +56,21 @@ export type Project = {
   awards: { award_name: string; award_year: number | null }[];
   sources: { url: string; title: string | null; kind: string }[];
   laws: { note_ja: string | null; note_en: string | null; source_url: string | null; sort_order: number; law: LawRef }[];
+  models: ProjectModel[];
+};
+
+export type ProjectModel = {
+  storage_path: string;
+  file_name: string;
+  caption_ja: string | null;
+  caption_en: string | null;
+  offset_east_m: number;
+  offset_north_m: number;
+  altitude_m: number;
+  rotation_deg: number;
+  scale: number;
+  show_on_map: boolean;
+  sort_order: number;
 };
 
 export type LawRef = {
@@ -79,6 +94,7 @@ const PROJECT_SELECT = `
     points:photo_points(x, y, note_ja, note_en, created_at, species:species(slug, name_ja, name_en, scientific_name), category:component_categories(kind, slug, name_ja, name_en))),
   awards:project_awards(award_name, award_year),
   sources(url, title, kind),
+  models:project_models(storage_path, file_name, caption_ja, caption_en, offset_east_m, offset_north_m, altitude_m, rotation_deg, scale, show_on_map, sort_order),
   laws:project_laws(note_ja, note_en, source_url, sort_order, law:laws(slug, kind, name_ja, name_en, short_ja, short_en, jurisdiction_ja, jurisdiction_en))
 `;
 
@@ -99,6 +115,7 @@ export async function getProjects(): Promise<Project[]> {
     credits: [...p.credits].sort((a, b) => a.sort_order - b.sort_order),
     photos: [...p.photos].sort((a, b) => a.sort_order - b.sort_order),
     laws: [...p.laws].sort((a, b) => a.sort_order - b.sort_order),
+    models: [...p.models].sort((a, b) => a.sort_order - b.sort_order),
     lat: byId.get(p.id)?.lat ?? null,
     lng: byId.get(p.id)?.lng ?? null,
   }));
@@ -168,6 +185,10 @@ export async function getLaws(): Promise<Law[]> {
     .order("sort_order");
   if (error) throw error;
   return data as unknown as Law[];
+}
+
+export function modelUrl(path: string) {
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/models/${path}`;
 }
 
 export function photoUrl(path: string) {

@@ -4,12 +4,13 @@ import { notFound } from "next/navigation";
 
 import { Icon } from "@/components/Icon";
 import { ExploreMap } from "@/components/map/ExploreMap";
+import { ModelSection } from "@/components/ModelSection";
 import { PhotoCarousel, type PhotoPoint, type Slide } from "@/components/PhotoCarousel";
 import { SiteHero } from "@/components/map/SiteHero";
 import { CardGrid, ProjectCard } from "@/components/ProjectCard";
 import { getBrowseItems } from "@/lib/browse-data";
 import { ELEMENTS, elementsOf } from "@/lib/catalog";
-import { coverPhoto, getProject, getProjects, photoUrl } from "@/lib/data";
+import { coverPhoto, getProject, getProjects, modelUrl, photoUrl } from "@/lib/data";
 import {
   categoryLabels,
   componentKindLabels,
@@ -119,6 +120,9 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
         lng={p.lng}
         alt={name}
         labels={{ photo: b.heroPhoto, d3: b.hero3d, flat: b.heroFlat, note: b.heroNote, view: b.viewLabel }}
+        models={p.models
+          .filter((m) => m.show_on_map)
+          .map((m) => ({ url: modelUrl(m.storage_path), offsetEast: m.offset_east_m, offsetNorth: m.offset_north_m, altitude: m.altitude_m, rotation: m.rotation_deg, scale: m.scale }))}
       >
         <div className="wrap grid gap-2.5">
           <span className="eyebrow !text-white/80">{useLabel} · {place(p, lang)}</span>
@@ -147,6 +151,13 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
               labels={{ species: t.pointSpecies, material: t.pointMaterial, more: t.pointMore, prev: t.photoPrev, next: t.photoNext, show: t.showPoints, hide: t.hidePoints, close: t.close }}
             />
           </section>
+        )}
+
+        {p.models.length > 0 && (
+          <ModelSection
+            models={p.models.map((m) => ({ src: modelUrl(m.storage_path), name: m.file_name, caption: (lang === "en" ? m.caption_en : m.caption_ja) ?? undefined }))}
+            labels={{ title: t.model, hint: t.modelHint, fullscreen: t.fullscreen }}
+          />
         )}
 
         <div className="grid gap-14 pt-11 lg:grid-cols-[minmax(0,1fr)_340px]">
