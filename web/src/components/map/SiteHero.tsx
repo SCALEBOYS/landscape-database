@@ -69,12 +69,16 @@ export function SiteHero({
       urls.then((u) => blobs.current.push(...u.filter((x) => x.startsWith("blob:"))));
       const placeModels = () =>
         urls.then((u) => models.forEach((md, k) => {
-          // 読み込み中にスタイルが切り替わったときは、次の style.load で置き直す
-          if (mapRef.current !== m || !m.isStyleLoaded()) return;
+          if (mapRef.current !== m) return;
           const id = `project-model-${k}`;
           const latM = lat! + md.offsetNorth / 111320;
           const lngM = lng! + md.offsetEast / (111320 * Math.cos((lat! * Math.PI) / 180));
-          if (!m.hasModel(id)) m.addModel(id, u[k]);
+          // 読み込み中にスタイルが切り替わると hasModel が失敗する。そのときは次の style.load で置き直す
+          try {
+            if (!m.hasModel(id)) m.addModel(id, u[k]);
+          } catch {
+            return;
+          }
           if (!m.getSource(id)) m.addSource(id, { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [lngM, latM] } } });
           if (!m.getLayer(id)) {
             m.addLayer({
