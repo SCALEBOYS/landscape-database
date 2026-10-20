@@ -50,6 +50,8 @@ const ja = {
     photoNext: "次の写真",
     showPoints: "樹種・素材のポイントを表示",
     hidePoints: "ポイントを隠す",
+    spots: "撮影地点",
+    spotsHint: "番号は上の写真の順番です。点を押すと写真が出ます",
     close: "閉じる",
   },
   species: {
@@ -232,6 +234,8 @@ const en: Dict = {
     photoNext: "Next photo",
     showPoints: "Show plant and material points",
     hidePoints: "Hide points",
+    spots: "Where the photos were taken",
+    spotsHint: "Numbers follow the photos above. Tap a point to see the photo",
     close: "Close",
   },
   species: {

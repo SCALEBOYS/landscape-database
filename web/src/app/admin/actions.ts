@@ -173,20 +173,56 @@ export type NewPhoto = {
   width: number;
   height: number;
   people_checked: boolean;
+  location?: { lat: number; lng: number; heading: number | null } | null;
 };
 
 // ブラウザで EXIF を消して Storage に上げた後に呼ぶ
 export async function addPhoto(photo: NewPhoto) {
   const supabase = await adminClient();
   const { count } = await supabase.from("photos").select("id", { count: "exact", head: true }).eq("project_id", photo.project_id);
-  const { error } = await supabase.from("photos").insert({
-    ...photo,
-    caption_ja: blank(photo.caption_ja),
-    caption_en: blank(photo.caption_en),
-    exif_stripped: true,
-    is_cover: (count ?? 0) === 0,
-    sort_order: count ?? 0,
-  });
+  const { location, ...row } = photo;
+  const { data, error } = await supabase
+    .from("photos")
+    .insert({
+      ...row,
+      caption_ja: blank(row.caption_ja),
+      caption_en: blank(row.caption_en),
+      exif_stripped: true,
+      is_cover: (count ?? 0) === 0,
+      sort_order: count ?? 0,
+    })
+    .select("id")
+    .single();
+  if (error) throw new Error(error.message);
+  if (location) {
+    const { error: locError } = await supabase.from("photo_locations").insert({ photo_id: data.id, ...location, source: "exif" });
+    if (locError) throw new Error(locError.message);
+  }
+  updateTag("projects");
+}
+
+export type PhotoLocationInput = { lat: number; lng: number; heading: number | null };
+
+// 撮影地点を手で入れる・直す。null なら外す
+export async function setPhotoLocation(photoId: string, loc: PhotoLocationInput | null) {
+  const supabase = await adminClient();
+  if (!loc) {
+    const { error } = await supabase.from("photo_locations").delete().eq("photo_id", photoId);
+    if (error) throw new Error(error.message);
+  } else {
+    if (!(Math.abs(loc.lat) <= 90 && Math.abs(loc.lng) <= 180)) throw new Error("緯度・経度が正しくありません");
+    const heading = loc.heading === null ? null : ((loc.heading % 360) + 360) % 360;
+    const { error } = await supabase
+      .from("photo_locations")
+      .upsert({ photo_id: photoId, lat: loc.lat, lng: loc.lng, heading, source: "manual", updated_at: new Date().toISOString() }, { onConflict: "photo_id" });
+    if (error) throw new Error(error.message);
+  }
+  updateTag("projects");
+}
+
+export async function setPhotoLocationPublic(photoId: string, isPublic: boolean) {
+  const supabase = await adminClient();
+  const { error } = await supabase.from("photo_locations").update({ is_public: isPublic }).eq("photo_id", photoId);
   if (error) throw new Error(error.message);
   updateTag("projects");
 }

@@ -12,6 +12,7 @@ function supabase() {
 }
 
 export type SpeciesRef = { slug: string; name_ja: string; name_en: string | null; scientific_name: string; growth_form?: string | null };
+export type ShotLocation = { lat: number; lng: number; heading: number | null };
 export type PartyRef = { slug: string; name_ja: string; name_en: string | null };
 
 export type Project = {
@@ -43,6 +44,8 @@ export type Project = {
     sort_order: number;
     caption_ja: string | null;
     caption_en: string | null;
+    // 公開してよい撮影地点だけが返る（RLS）。1対1なので、配列か1件のどちらかで来る
+    location: ShotLocation | ShotLocation[] | null;
     points: {
       x: number;
       y: number;
@@ -90,7 +93,7 @@ const PROJECT_SELECT = `
   credits:project_credits(role, sort_order, party:parties(slug, name_ja, name_en)),
   plantings:project_plantings(layer, species:species(slug, name_ja, name_en, scientific_name, growth_form)),
   components:project_components(product_name, maker_name, category:component_categories(kind, slug, name_ja, name_en)),
-  photos(storage_path, is_cover, sort_order, caption_ja, caption_en,
+  photos(storage_path, is_cover, sort_order, caption_ja, caption_en, location:photo_locations(lat, lng, heading),
     points:photo_points(x, y, note_ja, note_en, created_at, species:species(slug, name_ja, name_en, scientific_name), category:component_categories(kind, slug, name_ja, name_en))),
   awards:project_awards(award_name, award_year),
   sources(url, title, kind),

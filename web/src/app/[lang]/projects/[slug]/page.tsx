@@ -6,6 +6,7 @@ import { Icon } from "@/components/Icon";
 import { ExploreMap } from "@/components/map/ExploreMap";
 import { ModelSection } from "@/components/ModelSection";
 import { PhotoCarousel, type PhotoPoint, type Slide } from "@/components/PhotoCarousel";
+import { PhotoSpotMap, type Spot } from "@/components/PhotoSpotMap";
 import { SiteHero } from "@/components/map/SiteHero";
 import { CardGrid, ProjectCard } from "@/components/ProjectCard";
 import { getBrowseItems } from "@/lib/browse-data";
@@ -61,8 +62,13 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
   const mapItems = (await getBrowseItems(lang)).filter((it) => it.slug === p.slug && it.lat !== null);
 
   // 写真のカルーセル: カバー写真を先頭に。ポイントの素材には、この事例の構成要素から製品名・メーカーを添える
-  const slides: Slide[] = [...p.photos]
-    .sort((a, b) => Number(b.is_cover) - Number(a.is_cover) || a.sort_order - b.sort_order)
+  const ordered = [...p.photos].sort((a, b) => Number(b.is_cover) - Number(a.is_cover) || a.sort_order - b.sort_order);
+  // 撮影地点（公開してよいものだけ）。番号はカルーセルの順番
+  const spots: Spot[] = ordered.flatMap((ph, k) => {
+    const loc = Array.isArray(ph.location) ? ph.location[0] : ph.location;
+    return loc ? [{ n: k + 1, lat: loc.lat, lng: loc.lng, heading: loc.heading, src: photoUrl(ph.storage_path), caption: (lang === "en" ? ph.caption_en : ph.caption_ja) ?? name }] : [];
+  });
+  const slides: Slide[] = ordered
     .map((ph) => ({
       src: photoUrl(ph.storage_path),
       alt: (lang === "en" ? ph.caption_en : ph.caption_ja) ?? name,
@@ -152,6 +158,8 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
             />
           </section>
         )}
+
+        {spots.length > 0 && <PhotoSpotMap spots={spots} total={slides.length} labels={{ title: t.spots, hint: t.spotsHint, close: t.close }} />}
 
         {p.models.length > 0 && (
           <ModelSection

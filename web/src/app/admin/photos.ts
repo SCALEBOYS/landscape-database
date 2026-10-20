@@ -50,3 +50,23 @@ async function hasExif(blob: Blob) {
 export function photoPath(projectSlug: string) {
   return `${projectSlug}/${crypto.randomUUID()}.jpg`;
 }
+
+export type ShotLocation = { lat: number; lng: number; heading: number | null };
+
+// EXIF を消す前に、撮影地点（GPS）と撮影した向きだけを読み取る。無ければ null
+// 写真ファイルには残さず、地図に出すためにデータベースへ別に記録する
+export async function readLocation(file: File): Promise<ShotLocation | null> {
+  try {
+    const exifr = (await import("exifr")).default;
+    const tags = (await exifr.parse(file, { gps: true, pick: ["GPSLatitude", "GPSLatitudeRef", "GPSLongitude", "GPSLongitudeRef", "GPSImgDirection"] })) as
+      | { latitude?: number; longitude?: number; GPSImgDirection?: number }
+      | undefined;
+    const lat = tags?.latitude;
+    const lng = tags?.longitude;
+    if (typeof lat !== "number" || typeof lng !== "number" || !Number.isFinite(lat) || !Number.isFinite(lng) || (lat === 0 && lng === 0)) return null;
+    const dir = tags?.GPSImgDirection;
+    return { lat, lng, heading: typeof dir === "number" && Number.isFinite(dir) ? ((dir % 360) + 360) % 360 : null };
+  } catch {
+    return null;
+  }
+}

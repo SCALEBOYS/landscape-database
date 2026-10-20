@@ -82,6 +82,7 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
 
   let initial = EMPTY;
   let photos: AdminPhoto[] = [];
+  let center: { lat: number; lng: number } | null = null;
   let models: AdminModel[] = [];
   if (id !== "new") {
     const { data: p } = await supabase
@@ -96,7 +97,7 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
          laws:project_laws(law_id, note_ja, source_url, sort_order),
          notes:project_private_notes(*),
          models:project_models(id, storage_path, file_name, size_bytes, caption_ja, offset_east_m, offset_north_m, altitude_m, rotation_deg, scale, show_on_map, sort_order),
-         photos(id, storage_path, taken_on, caption_ja, caption_en, people_checked, is_cover, sort_order, points:photo_points(id, x, y, species_id, category_id, note_ja, created_at))`,
+         photos(id, storage_path, taken_on, caption_ja, caption_en, people_checked, is_cover, sort_order, points:photo_points(id, x, y, species_id, category_id, note_ja, created_at), location:photo_locations(lat, lng, heading, source, is_public))`,
       )
       .eq("id", id)
       .maybeSingle();
@@ -147,7 +148,9 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
     models = (p.models as (AdminModel & { sort_order: number })[]).sort((a, b) => a.sort_order - b.sort_order);
     photos = (p.photos as (AdminPhoto & { points: (AdminPhoto["points"][number] & { created_at: string })[] })[])
       .sort((a, b) => a.sort_order - b.sort_order)
-      .map((ph) => ({ ...ph, points: [...ph.points].sort((a, b) => a.created_at.localeCompare(b.created_at)) }));
+      // 撮影地点は写真と1対1。配列で返ることもあるので1件にそろえる
+      .map((ph) => ({ ...ph, location: oneOf(ph.location), points: [...ph.points].sort((a, b) => a.created_at.localeCompare(b.created_at)) }));
+    center = point ?? null;
   }
 
   return (
@@ -176,6 +179,7 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
           photos={photos}
           supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!}
           pointOptions={pointOptions(initial, speciesRes.data ?? [], categoriesRes.data ?? [])}
+          center={center}
         />
       ) : null}
       {initial.id ? (
@@ -186,3 +190,5 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
     </>
   );
 }
+
+const oneOf = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
