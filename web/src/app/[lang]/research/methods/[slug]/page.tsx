@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { Icon } from "@/components/Icon";
 import { Body, DraftBadge, PaperRow } from "@/components/research/ResearchParts";
+import { fieldOf } from "@/lib/research-fields";
 import { getDictionary, hasLocale, locales } from "@/lib/i18n";
 import { getResearch } from "@/lib/research";
 
@@ -27,16 +29,25 @@ export default async function MethodPage({ params }: PageProps<"/[lang]/research
   const t = dict.research;
   const using = papers.filter((p) => p.methods.some((x) => x.method.slug === slug));
   const body = lang === "en" ? m.body_en : m.body_ja;
+  const fd = fieldOf(m.field);
 
   return (
     <div className="wrap pt-10">
       <nav className="flex gap-2 text-xs text-muted">
         <Link href={`/${lang}/research`} className="hover:text-ink hover:underline">{t.title}</Link>
         <span>/</span>
-        <span>{t.methods}</span>
+        <Link href={`/${lang}/research?field=${fd.key}`} className="hover:text-ink hover:underline">{lang === "en" ? fd.en : fd.ja}</Link>
       </nav>
-      <h1 className="mt-3 text-[clamp(28px,4vw,40px)] font-extrabold leading-tight tracking-[-0.03em]">{lang === "en" ? m.name_en : m.name_ja}</h1>
-      {lang === "ja" && <p className="mt-1 text-sm text-muted">{m.name_en}</p>}
+      <div className="mt-4 flex items-center gap-4">
+        <span className="grid h-14 w-14 flex-none place-items-center rounded-full" style={{ background: `${fd.color}1a`, color: fd.color }}>
+          <Icon name={`field-${fd.key}`} className="ico !h-7 !w-7" />
+        </span>
+        <div className="min-w-0">
+          <h1 className="text-[clamp(28px,4vw,40px)] font-extrabold leading-tight tracking-[-0.03em]">{lang === "en" ? m.name_en : m.name_ja}</h1>
+          {lang === "ja" && <p className="mt-0.5 text-sm text-muted">{m.name_en}</p>}
+        </div>
+      </div>
+      <div className="mt-5 h-1 w-24" style={{ background: fd.color }} />
       {m.review_status === "draft" && (
         <p className="mt-4 flex max-w-[44em] items-start gap-2 text-xs leading-relaxed text-muted"><DraftBadge t={t} />{t.draftNote}</p>
       )}

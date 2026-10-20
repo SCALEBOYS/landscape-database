@@ -28,6 +28,13 @@ const PATHS: Record<string, React.ReactNode> = {
   "law-law": <path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h10M9 8h5" />,
   "law-system": <path d="M6 3h9l4 4v14H6zM15 3v4h4M9 13l2 2 4-4" />,
   "law-ordinance": <path d="M4 21h16M6 21V10h12v11M3 10l9-6 9 6M10 21v-5h4v5" />,
+  // 研究の分野
+  "field-perception": <><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" /><circle cx="12" cy="12" r="3" /></>,
+  "field-behavior": <><circle cx="8" cy="5" r="2" /><path d="M8 7.5v6l-2.5 7M8 13.5l2.5 7M5 10.5h6" /><circle cx="17" cy="7" r="1.6" /><path d="M17 9v4.5l-2 6M17 13.5l2 6M14.5 11h5" /></>,
+  "field-imagery": <><rect x="3" y="5" width="18" height="14" rx="1.5" /><path d="M3 16l5-5 4 4 3-3 6 6" /><circle cx="16.5" cy="9" r="1.5" /></>,
+  "field-spatial": <><circle cx="5" cy="6" r="2" /><circle cx="19" cy="6" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="6" cy="19" r="2" /><circle cx="18" cy="18" r="2" /><path d="M6.6 7.2l3.8 3.6M17.4 7.2l-3.8 3.6M10.6 13.4l-3.2 4.2M13.5 13.3l3.1 3.4M7 6h10" /></>,
+  "field-environment": <><path d="M12 21c-5 0-8-3.5-8-8 0-5 5-9 14-9 0 9-2.5 17-6 17z" /><path d="M8 17c2-4 5-7 8-9" /></>,
+  "field-design": <><path d="M4 20l3.5-1 11-11-2.5-2.5-11 11zM14.5 6.5l2.5 2.5" /><path d="M3 21h18" /></>,
   search: <><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></>,
   sliders: <><path d="M4 7h10M18 7h2M4 17h2M10 17h10" /><circle cx="16" cy="7" r="2" /><circle cx="8" cy="17" r="2" /></>,
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,

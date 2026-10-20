@@ -14,6 +14,7 @@ export type Method = {
   body_ja: string | null;
   body_en: string | null;
   sort_order: number;
+  field: string;
   review_status: ReviewStatus;
 };
 type Named = { slug: string; name_ja: string; name_en: string | null };
@@ -47,7 +48,7 @@ export async function getResearch(): Promise<{ methods: Method[]; papers: Paper[
   cacheTag("research");
   const db = supabase();
   const [m, p] = await Promise.all([
-    db.from("methods").select("slug, name_ja, name_en, summary_ja, summary_en, body_ja, body_en, sort_order, review_status").order("sort_order"),
+    db.from("methods").select("slug, name_ja, name_en, summary_ja, summary_en, body_ja, body_en, sort_order, field, review_status").order("sort_order"),
     db
       .from("papers")
       .select(

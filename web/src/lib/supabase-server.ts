@@ -22,7 +22,7 @@ export async function createServerSupabase() {
   });
 }
 
-// 管理画面の入口。未ログインならログイン画面へ、管理者でなければ null の isAdmin を返す
+// 管理画面の入口。未ログインならログイン画面へ、2段階認証がまだならその画面へ。管理者でなければ isAdmin が false
 export async function requireUser() {
   // 管理画面は常にリクエスト時に描画する（Supabase クライアントが内部で現在時刻を使うため、事前描画させない）
   await connection();
@@ -31,6 +31,9 @@ export async function requireUser() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/admin/login");
+  // 2段階認証（認証アプリのワンタイムコード）を済ませていなければ、その画面へ
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal?.currentLevel !== "aal2") redirect("/admin/mfa");
   const { data: isAdmin } = await supabase.rpc("is_admin");
   return { supabase, user, isAdmin: isAdmin === true };
 }

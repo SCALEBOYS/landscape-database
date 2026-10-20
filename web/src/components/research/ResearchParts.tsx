@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import type { Dictionary, Locale } from "@/lib/i18n";
 import type { Method, Paper } from "@/lib/research";
+import { fieldOf } from "@/lib/research-fields";
 
 type T = Dictionary["research"];
 
@@ -46,7 +47,8 @@ export function PaperRow({ lang, paper, methods, t }: { lang: Locale; paper: Pap
       </Link>
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
         {ms.map((m) => (
-          <Link key={m.slug} href={`/${lang}/research/methods/${m.slug}`} className="rounded-sm border border-line px-2 py-0.5 text-[11px] hover:border-ink">
+          <Link key={m.slug} href={`/${lang}/research/methods/${m.slug}`} className="flex items-center gap-1 rounded-sm border border-line px-2 py-0.5 text-[11px] hover:border-ink">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: fieldOf(m.field).color }} />
             {lang === "en" ? m.name_en : m.name_ja}
           </Link>
         ))}
