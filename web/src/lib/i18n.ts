@@ -8,7 +8,7 @@ export const hasLocale = (value: string): value is Locale => (locales as readonl
 const ja = {
   siteName: "Landscape Database",
   tagline: "日本のランドスケープ事例データベース",
-  nav: { projects: "事例", explore: "地図で探す", species: "樹種", designers: "設計者", laws: "法令", graph: "つながり" },
+  nav: { projects: "事例", explore: "地図で探す", species: "樹種", designers: "設計者", laws: "法令", research: "研究", graph: "つながり" },
   view: { grid: "写真", map: "地図" },
   filter: {
     keyword: "名称・設計者・樹種で検索",
@@ -66,6 +66,27 @@ const ja = {
     noProjects: "まだ事例がありません",
   },
   designers: { title: "設計者", projects: "設計した事例", count: (n: number) => `${n}件` },
+  research: {
+    title: "研究",
+    lead: "ランドスケープの調査・研究・設計で使われる手法と、その代表的な論文。要約は公開されている抄録や書誌情報をもとにまとめたもので、論文の本文は原文で確認してください。",
+    methods: "手法",
+    papers: "論文",
+    paperCount: (n: number) => `${n}本の論文`,
+    draft: "確認前の下書き",
+    draftNote: "この要約・解説は、編集部が確認する前の下書きです。正確な内容は原文で確認してください。",
+    original: "原文を見る",
+    originalTitle: "原題",
+    authors: "著者",
+    published: "掲載",
+    kind: { article: "論文", report: "報告書", book: "書籍" },
+    usesMethod: "この手法を使った論文",
+    relatedProjects: "関係する事例",
+    relatedSpecies: "関係する樹種",
+    relatedMaterials: "関係する素材",
+    sectionProject: "関係する研究",
+    sectionSpecies: "この樹種に関係する研究",
+    none: "まだ登録されていません",
+  },
   laws: {
     title: "法令",
     lead: "ランドスケープの計画や設計に関わる法律・制度・条例と、それが使われた事例。説明は要点だけをまとめたもので、正確な内容は原文を確認してください。",
@@ -97,7 +118,7 @@ const ja = {
     similar: "似ている事例",
     modeLabel: "線の種類",
     search: "名前で探す",
-    types: { project: "事例", designer: "設計者", species: "樹種", law: "法令", use: "用途", element: "要素", award: "受賞", tag: "特徴タグ", pref: "都道府県", decade: "竣工年代" },
+    types: { project: "事例", designer: "設計者", species: "樹種", law: "法令", paper: "論文", method: "研究手法", use: "用途", element: "要素", award: "受賞", tag: "特徴タグ", pref: "都道府県", decade: "竣工年代" },
     connections: "つながっている項目",
     openPage: "ページを開く",
     backToAll: "全体を表示",
@@ -187,12 +208,13 @@ const ja = {
   englishPending: "",
 };
 
-type Dict = typeof ja;
+export type Dictionary = typeof ja;
+type Dict = Dictionary;
 
 const en: Dict = {
   siteName: "Landscape Database",
   tagline: "A database of landscape architecture in Japan",
-  nav: { projects: "Projects", explore: "Map", species: "Plants", designers: "Designers", laws: "Regulations", graph: "Connections" },
+  nav: { projects: "Projects", explore: "Map", species: "Plants", designers: "Designers", laws: "Regulations", research: "Research", graph: "Connections" },
   view: { grid: "Photos", map: "Map" },
   filter: {
     keyword: "Search by name, designer or plant",
@@ -250,6 +272,27 @@ const en: Dict = {
     noProjects: "No projects yet",
   },
   designers: { title: "Designers", projects: "Projects", count: (n: number) => `${n} ${n === 1 ? "project" : "projects"}` },
+  research: {
+    title: "Research",
+    lead: "Methods used in landscape research and design, with representative papers. Summaries are based on published abstracts and bibliographic data; read the original for the full text.",
+    methods: "Methods",
+    papers: "Papers",
+    paperCount: (n: number) => `${n} paper${n === 1 ? "" : "s"}`,
+    draft: "Draft",
+    draftNote: "This summary is a draft that has not yet been reviewed by the editors. Check the original for accuracy.",
+    original: "Read the original",
+    originalTitle: "Original title",
+    authors: "Authors",
+    published: "Published in",
+    kind: { article: "Article", report: "Report", book: "Book" },
+    usesMethod: "Papers using this method",
+    relatedProjects: "Related projects",
+    relatedSpecies: "Related plants",
+    relatedMaterials: "Related materials",
+    sectionProject: "Related research",
+    sectionSpecies: "Research on this plant",
+    none: "Nothing registered yet",
+  },
   laws: {
     title: "Laws and regulations",
     lead: "Laws, planning systems and local ordinances that shape landscape projects, with the projects they apply to. Summaries are brief; check the original text for details.",
@@ -281,7 +324,7 @@ const en: Dict = {
     similar: "Similar projects",
     modeLabel: "Links",
     search: "Search by name",
-    types: { project: "Projects", designer: "Designers", species: "Plants", law: "Rules", use: "Types", element: "Elements", award: "Awards", tag: "Feature tags", pref: "Prefectures", decade: "Decades" },
+    types: { project: "Projects", designer: "Designers", species: "Plants", law: "Rules", paper: "Papers", method: "Methods", use: "Types", element: "Elements", award: "Awards", tag: "Feature tags", pref: "Prefectures", decade: "Decades" },
     connections: "Connected items",
     openPage: "Open page",
     backToAll: "Show all",

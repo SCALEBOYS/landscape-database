@@ -7,6 +7,8 @@ import { ExploreMap } from "@/components/map/ExploreMap";
 import { ModelSection } from "@/components/ModelSection";
 import { PhotoCarousel, type PhotoPoint, type Slide } from "@/components/PhotoCarousel";
 import { PhotoSpotMap, type Spot } from "@/components/PhotoSpotMap";
+import { PaperRow } from "@/components/research/ResearchParts";
+import { getResearch } from "@/lib/research";
 import { SiteHero } from "@/components/map/SiteHero";
 import { CardGrid, ProjectCard } from "@/components/ProjectCard";
 import { getBrowseItems } from "@/lib/browse-data";
@@ -56,7 +58,8 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
   const elements = elementsOf(p);
 
   // 前後の事例（一覧と同じ並び）と、位置の小さな地図
-  const projects = await getProjects();
+  const [projects, research] = await Promise.all([getProjects(), getResearch()]);
+  const papers = research.papers.filter((pa) => pa.projects.some((x) => x.project.slug === p.slug));
   const i = projects.findIndex((x) => x.id === p.id);
   const neighbours = projects.length > 1 ? [projects[(i + projects.length - 1) % projects.length], projects[(i + 1) % projects.length]] : [];
   const mapItems = (await getBrowseItems(lang)).filter((it) => it.slug === p.slug && it.lat !== null);
@@ -207,6 +210,14 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
                       </li>
                     );
                   })}
+                </ul>
+              </Section>
+            )}
+
+            {papers.length > 0 && (
+              <Section title={dict.research.sectionProject}>
+                <ul className="divide-y divide-line">
+                  {papers.map((pa) => <PaperRow key={pa.slug} lang={lang} paper={pa} methods={research.methods} t={dict.research} />)}
                 </ul>
               </Section>
             )}

@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { CardGrid } from "@/components/ProjectCard";
 import { RememberRecent } from "@/components/RememberRecent";
+import { PaperRow } from "@/components/research/ResearchParts";
 import { getProjects, getSpeciesList, photoUrl } from "@/lib/data";
+import { getResearch } from "@/lib/research";
 import { getDictionary, growthFormLabels, hasLocale, label, layerLabels, localName, locales } from "@/lib/i18n";
 import { toCard } from "@/lib/view";
 
@@ -22,7 +24,8 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/species/[s
 export default async function SpeciesPage({ params }: PageProps<"/[lang]/species/[slug]">) {
   const { lang, slug } = await params;
   if (!hasLocale(lang)) notFound();
-  const [species, projects] = await Promise.all([getSpeciesList(), getProjects()]);
+  const [species, projects, research] = await Promise.all([getSpeciesList(), getProjects(), getResearch()]);
+  const papers = research.papers.filter((pa) => pa.species.some((x) => x.species.slug === slug));
   const s = species.find((x) => x.slug === slug);
   if (!s) notFound();
   const t = getDictionary(lang);
@@ -88,6 +91,14 @@ export default async function SpeciesPage({ params }: PageProps<"/[lang]/species
         <h2 className="mb-6 border-b border-line pb-2 text-lg font-medium">{t.species.usedIn}</h2>
         {used.length ? <CardGrid lang={lang} cards={used} /> : <p className="text-sm text-muted">{t.species.noProjects}</p>}
       </section>
+      {papers.length > 0 && (
+        <section className="mt-12">
+          <h2 className="border-b border-line pb-2 text-lg font-medium">{t.research.sectionSpecies}</h2>
+          <ul className="divide-y divide-line">
+            {papers.map((pa) => <PaperRow key={pa.slug} lang={lang} paper={pa} methods={research.methods} t={t.research} />)}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

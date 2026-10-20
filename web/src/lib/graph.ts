@@ -2,6 +2,7 @@ import "server-only";
 
 import { ELEMENTS, elementsOf } from "./catalog";
 import { coverPhoto, getLaws, getProjects } from "./data";
+import { getResearch } from "./research";
 import { categoryLabels, label, localName, prefectureEn, type Locale } from "./i18n";
 import { satelliteImage } from "./mapbox";
 import { place, summary } from "./view";
@@ -13,7 +14,7 @@ const SIMILAR_TYPES: NodeType[] = ["designer", "species", "law", "element", "awa
 const SIMILAR_PER_PROJECT = 5;
 
 export async function getGraph(lang: Locale): Promise<GraphData> {
-  const [projects, laws] = await Promise.all([getProjects(), getLaws()]);
+  const [projects, laws, research] = await Promise.all([getProjects(), getLaws(), getResearch()]);
   const lawSummary = new Map(laws.map((l) => [l.slug, lang === "en" ? l.summary_en : l.summary_ja]));
   const nodes = new Map<string, GraphNode>();
   const links: GraphLink[] = [];
@@ -88,6 +89,27 @@ export async function getGraph(lang: Locale): Promise<GraphData> {
       if (seen.has(key)) continue;
       seen.add(key);
       links.push({ source: id, target: s.other, kind: "similar", weight: s.weight });
+    }
+  }
+
+  // 論文は手法・事例・樹種とつなぐ（事例どうしの近さの計算には入れない）
+  const methodName = new Map(research.methods.map((m) => [m.slug, lang === "en" ? m.name_en : m.name_ja]));
+  for (const pa of research.papers) {
+    const id = add({
+      id: `paper:${pa.slug}`,
+      type: "paper",
+      label: lang === "ja" ? pa.title_ja ?? pa.title : pa.title,
+      sub: `${pa.authors} · ${pa.year}`,
+      href: `/${lang}/research/papers/${pa.slug}`,
+      summary: lang === "en" ? pa.summary_en ?? pa.summary_ja : pa.summary_ja,
+    });
+    const to = (target: string) => links.push({ source: id, target, kind: "has", weight: 1 });
+    for (const { method } of pa.methods) {
+      to(add({ id: `method:${method.slug}`, type: "method", label: methodName.get(method.slug) ?? method.slug, href: `/${lang}/research/methods/${method.slug}` }));
+    }
+    for (const { project } of pa.projects) if (nodes.has(`project:${project.slug}`)) to(`project:${project.slug}`);
+    for (const { species: s } of pa.species) {
+      to(add({ id: `species:${s.slug}`, type: "species", label: localName(lang, s.name_ja, s.name_en), sub: s.scientific_name, href: `/${lang}/species/${s.slug}` }));
     }
   }
 

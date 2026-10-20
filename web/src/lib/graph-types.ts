@@ -1,5 +1,5 @@
 // つながりページの丸と線の型（サーバーとブラウザの両方で使う）
-export const NODE_TYPES = ["project", "designer", "species", "law", "use", "element", "award", "tag", "pref", "decade"] as const;
+export const NODE_TYPES = ["project", "designer", "species", "law", "paper", "method", "use", "element", "award", "tag", "pref", "decade"] as const;
 export type NodeType = (typeof NODE_TYPES)[number];
 
 export type GraphNode = {

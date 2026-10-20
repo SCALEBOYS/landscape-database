@@ -14,6 +14,8 @@ const COLORS: Record<NodeType, string> = {
   designer: "#6aa8ff",
   species: "#6fdc8c",
   law: "#f5c451",
+  paper: "#f2f2a0",
+  method: "#ffd1e8",
   use: "#c48bff",
   element: "#4fd6d6",
   award: "#ff9a5a",
