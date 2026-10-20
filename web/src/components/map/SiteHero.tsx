@@ -69,7 +69,8 @@ export function SiteHero({
       urls.then((u) => blobs.current.push(...u.filter((x) => x.startsWith("blob:"))));
       const placeModels = () =>
         urls.then((u) => models.forEach((md, k) => {
-          if (!mapRef.current) return;
+          // 読み込み中にスタイルが切り替わったときは、次の style.load で置き直す
+          if (mapRef.current !== m || !m.isStyleLoaded()) return;
           const id = `project-model-${k}`;
           const latM = lat! + md.offsetNorth / 111320;
           const lngM = lng! + md.offsetEast / (111320 * Math.cos((lat! * Math.PI) / 180));
