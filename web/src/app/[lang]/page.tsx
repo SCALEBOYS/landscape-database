@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { HomeBrowser, HomeBrowserFromUrl } from "@/components/browse/Browser";
+import { RecentTags } from "@/components/browse/RecentTags";
 import { HeroSlides, type Slide } from "@/components/HeroSlides";
 import { ExploreMap } from "@/components/map/ExploreMap";
 import type { BrowseItem, Ref } from "@/lib/browse";
@@ -13,7 +14,8 @@ import { fmt, getDictionary, hasLocale, localName } from "@/lib/i18n";
 import { satelliteImage } from "@/lib/mapbox";
 import { yearRange } from "@/lib/years";
 
-const DESIGNER_LIMIT = 20;
+// 樹種・設計者は、最近探したものと事例の多いものを合わせてこの件数まで。ほかは地図で探す
+const TAG_LIMIT = 15;
 
 export default async function Home({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;
@@ -49,24 +51,11 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   const usedSpecies = tally((it) => it.species);
   const species = usedSpecies.length
     ? usedSpecies
-    : speciesMaster.slice(0, 24).map((sp) => ({ slug: sp.slug, label: localName(lang, sp.name_ja, sp.name_en), sub: sp.scientific_name, n: 0 }));
-  // 設計者は事例の多い順に上位だけ。全員は設計者の一覧ページで見る
+    : speciesMaster.slice(0, TAG_LIMIT).map((sp) => ({ slug: sp.slug, label: localName(lang, sp.name_ja, sp.name_en), sub: sp.scientific_name, n: 0 }));
   const allDesigners = tally((it) => it.designers);
-  const designers = allDesigners.slice(0, DESIGNER_LIMIT);
-  const tags = (list: (Ref & { n: number })[], base: string) =>
-    list.length ? (
-      <div className="flex flex-wrap gap-2">
-        {list.map((r) => (
-          <Link key={r.slug} href={`/${lang}/${base}/${r.slug}`} className="rounded-sm border border-line px-3 py-1.5 text-[13px] hover:border-ink">
-            {r.label}
-            {r.sub && <i className="ml-1 text-muted">{r.sub}</i>}
-            {r.n > 0 && <span className="ml-1.5 text-[11px] text-muted">{r.n}</span>}
-          </Link>
-        ))}
-      </div>
-    ) : (
-      <p className="text-sm text-muted">{t.noOptions}</p>
-    );
+  const tags = (kind: "species" | "designers", list: (Ref & { n: number })[]) => (
+    <RecentTags lang={lang} kind={kind} base={kind} options={list} limit={TAG_LIMIT} recentLabel={t.recentMark} empty={t.noOptions} />
+  );
 
   const after = (
     <>
@@ -92,8 +81,8 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
             <span className="text-[13px] text-muted">{usedSpecies.length ? fmt(t.nSpecies, usedSpecies.length) : ""}</span>
           </div>
           {!usedSpecies.length && <p className="text-[13px] text-muted">{t.speciesNotUsed}</p>}
-          {tags(species, "species")}
-          <Link href={`/${lang}/species`} className="inline-flex items-center gap-1.5 justify-self-start text-sm font-medium hover:underline">
+          {tags("species", species)}
+          <Link href={`/${lang}/explore?find=species`} className="inline-flex items-center gap-1.5 justify-self-start text-sm font-medium hover:underline">
             {t.allSpecies} <Icon name="arrow" />
           </Link>
         </div>
@@ -102,8 +91,8 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
             <h2 className="text-2xl font-extrabold tracking-[-0.02em]">{t.byDesigner}</h2>
             <span className="text-[13px] text-muted">{fmt(t.nDesigners, allDesigners.length)}</span>
           </div>
-          {tags(designers, "designers")}
-          <Link href={`/${lang}/designers`} className="inline-flex items-center gap-1.5 justify-self-start text-sm font-medium hover:underline">
+          {tags("designers", allDesigners)}
+          <Link href={`/${lang}/explore?find=designers`} className="inline-flex items-center gap-1.5 justify-self-start text-sm font-medium hover:underline">
             {fmt(t.allDesigners, allDesigners.length)} <Icon name="arrow" />
           </Link>
         </div>

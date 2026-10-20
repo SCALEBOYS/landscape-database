@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { RememberRecent } from "@/components/RememberRecent";
 import { CardGrid } from "@/components/ProjectCard";
 import { getDesigners } from "@/lib/data";
 import { getDictionary, hasLocale, localName, locales } from "@/lib/i18n";
@@ -26,6 +27,7 @@ export default async function DesignerPage({ params }: PageProps<"/[lang]/design
 
   return (
     <div className="wrap pt-10">
+      <RememberRecent kind="designers" slug={slug} />
       <h1 className="text-[40px] font-extrabold leading-tight tracking-[-0.03em]">{localName(lang, d.party.name_ja, d.party.name_en)}</h1>
       <p className="mt-1 text-muted">{t.designers.count(d.projects.length)}</p>
       <section className="mt-10">

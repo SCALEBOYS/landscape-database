@@ -11,7 +11,8 @@ import { EMPTY, matches, parseFilters, toQuery, type BrowseItem, type Filters, t
 import { fmt, type BrowseText, type Locale } from "@/lib/i18n";
 
 import { CategoryRows } from "./CategoryRows";
-import { FilterButton, FilterPanel } from "./FilterPanel";
+import { FilterButton, FilterPanel, type Tab } from "./FilterPanel";
+import { rememberRecent } from "@/lib/recent";
 import { SearchBar } from "./SearchBar";
 
 // トップの新着は 25 件まで
@@ -47,6 +48,9 @@ function useFilterState(initial: Filters) {
   // 条件は URL に残す（共有・戻る・地図画面への引き継ぎのため）
   useEffect(() => {
     window.history.replaceState(null, "", pathname + toQuery(filters));
+    // 絞り込みに使った樹種・設計者は、トップの「最近探したもの」に出す
+    rememberRecent("species", filters.species);
+    rememberRecent("designers", filters.designers);
   }, [filters, pathname]);
   return { filters, update };
 }
@@ -56,7 +60,9 @@ export function HomeBrowserFromUrl(props: Props) {
   return <HomeBrowser {...props} initial={parseFilters(new URLSearchParams(useSearchParams().toString()))} />;
 }
 export function ExploreFromUrl(props: Props) {
-  return <Explore {...props} initial={parseFilters(new URLSearchParams(useSearchParams().toString()))} />;
+  const params = useSearchParams();
+  const find = params.get("find");
+  return <Explore {...props} initial={parseFilters(new URLSearchParams(params.toString()))} find={find === "species" || find === "designers" ? find : undefined} />;
 }
 
 export function HomeBrowser({ lang, items, lawOptions, t, years, hero, after, initial = EMPTY }: Props & { initial?: Filters }) {
@@ -114,9 +120,10 @@ export function HomeBrowser({ lang, items, lawOptions, t, years, hero, after, in
   );
 }
 
-export function Explore({ lang, items, lawOptions, t, years, initial = EMPTY }: Props & { initial?: Filters }) {
+// find があれば（トップの「ほかは地図で探す」から来たとき）、そのタブで絞り込みパネルを開いておく
+export function Explore({ lang, items, lawOptions, t, years, initial = EMPTY, find }: Props & { initial?: Filters; find?: Tab }) {
   const { filters, update } = useFilterState(initial);
-  const [panel, setPanel] = useState(false);
+  const [panel, setPanel] = useState(!!find);
   const [inView, setInView] = useState(true);
   const [visible, setVisible] = useState<Set<string> | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -176,7 +183,7 @@ export function Explore({ lang, items, lawOptions, t, years, initial = EMPTY }: 
           </div>
         </Sheet>
       </div>
-      {panel && <FilterPanel items={items} filters={filters} update={update} t={t} onClose={() => setPanel(false)} />}
+      {panel && <FilterPanel items={items} filters={filters} update={update} t={t} initialTab={find} onClose={() => setPanel(false)} />}
     </>
   );
 }

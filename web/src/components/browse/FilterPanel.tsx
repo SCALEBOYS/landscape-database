@@ -6,7 +6,7 @@ import { Icon } from "@/components/Icon";
 import { matches, type BrowseItem, type Filters, type Ref } from "@/lib/browse";
 import { fmt, type BrowseText } from "@/lib/i18n";
 
-type Tab = "species" | "designers" | "paving";
+export type Tab = "species" | "designers" | "paving";
 
 export function FilterButton({ filters, onClick, t }: { filters: Filters; onClick: () => void; t: BrowseText }) {
   const n = filters.species.length + filters.designers.length + filters.paving.length;
@@ -26,14 +26,16 @@ export function FilterPanel({
   update,
   t,
   onClose,
+  initialTab = "species",
 }: {
+  initialTab?: Tab;
   items: BrowseItem[];
   filters: Filters;
   update: (patch: Partial<Filters>) => void;
   t: BrowseText;
   onClose: () => void;
 }) {
-  const [tab, setTab] = useState<Tab>("species");
+  const [tab, setTab] = useState<Tab>(initialTab);
   const [q, setQ] = useState("");
   const input = useRef<HTMLInputElement>(null);
 

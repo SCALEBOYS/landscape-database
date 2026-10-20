@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { RememberRecent } from "@/components/RememberRecent";
 import { CardGrid } from "@/components/ProjectCard";
 import { getProjects, getSpeciesList } from "@/lib/data";
 import { getDictionary, growthFormLabels, hasLocale, label, layerLabels, localName, locales } from "@/lib/i18n";
@@ -35,6 +36,7 @@ export default async function SpeciesPage({ params }: PageProps<"/[lang]/species
 
   return (
     <div className="wrap pt-10">
+      <RememberRecent kind="species" slug={slug} />
       <h1 className="text-[40px] font-extrabold leading-tight tracking-[-0.03em]">{title}</h1>
       <p className="mt-1 text-lg italic text-muted">{s.scientific_name}</p>
       <dl className="mt-6 grid max-w-xl grid-cols-[8rem_1fr] gap-y-2 text-sm">
