@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { RememberRecent } from "@/components/RememberRecent";
+import { Icon } from "@/components/Icon";
 import { CardGrid } from "@/components/ProjectCard";
-import { getProjects, getSpeciesList } from "@/lib/data";
+import { RememberRecent } from "@/components/RememberRecent";
+import { getProjects, getSpeciesList, photoUrl } from "@/lib/data";
 import { getDictionary, growthFormLabels, hasLocale, label, layerLabels, localName, locales } from "@/lib/i18n";
 import { toCard } from "@/lib/view";
 
@@ -37,8 +38,22 @@ export default async function SpeciesPage({ params }: PageProps<"/[lang]/species
   return (
     <div className="wrap pt-10">
       <RememberRecent kind="species" slug={slug} />
-      <h1 className="text-[40px] font-extrabold leading-tight tracking-[-0.03em]">{title}</h1>
-      <p className="mt-1 text-lg italic text-muted">{s.scientific_name}</p>
+      {/* 名前の左に樹種の写真（正方形に切り抜く）。写真がまだなければ木のアイコン */}
+      <div className="flex items-center gap-4 md:gap-5">
+        <figure className="grid h-[76px] w-[76px] flex-none place-items-center overflow-hidden rounded-sm bg-placeholder text-muted md:h-[92px] md:w-[92px]">
+          {s.photo_path ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={photoUrl(s.photo_path)} alt={title} title={s.photo_credit ?? undefined} className="h-full w-full object-cover" />
+          ) : (
+            <Icon name="park" className="ico !h-8 !w-8 opacity-50" />
+          )}
+        </figure>
+        <div className="min-w-0">
+          <h1 className="text-[40px] font-extrabold leading-tight tracking-[-0.03em]">{title}</h1>
+          <p className="mt-1 text-lg italic text-muted">{s.scientific_name}</p>
+        </div>
+      </div>
+      {s.photo_path && s.photo_credit && <p className="mt-2 text-[11px] text-muted">{lang === "en" ? "Photo" : "写真"}: {s.photo_credit}</p>}
       <dl className="mt-6 grid max-w-xl grid-cols-[8rem_1fr] gap-y-2 text-sm">
         {sub && (
           <>

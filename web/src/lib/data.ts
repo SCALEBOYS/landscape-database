@@ -137,6 +137,8 @@ export type Species = SpeciesRef & {
   family_scientific: string | null;
   growth_form: string | null;
   evergreen: boolean | null;
+  photo_path: string | null;
+  photo_credit: string | null;
   aliases: string[];
 };
 
@@ -146,7 +148,7 @@ export async function getSpeciesList(): Promise<Species[]> {
   cacheTag("species");
   const { data, error } = await supabase()
     .from("species")
-    .select("slug, name_ja, name_en, scientific_name, family_ja, family_scientific, growth_form, evergreen, aliases:species_aliases(alias)");
+    .select("slug, name_ja, name_en, scientific_name, family_ja, family_scientific, growth_form, evergreen, photo_path, photo_credit, aliases:species_aliases(alias)");
   if (error) throw error;
   return (data as unknown as (Omit<Species, "aliases"> & { aliases: { alias: string }[] })[])
     .map((s) => ({ ...s, aliases: s.aliases.map((a) => a.alias) }))
