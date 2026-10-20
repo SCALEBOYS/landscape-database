@@ -102,7 +102,8 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
       .eq("id", id)
       .maybeSingle();
     if (!p) notFound();
-    const point = (p.lat_lng as { lat: number; lng: number }[] | null)?.[0];
+    // project_points は1対1で、1件のオブジェクトで返ることがある（配列前提だと空欄になり、保存で座標が消える）
+    const point = oneOf(p.lat_lng as { lat: number; lng: number } | { lat: number; lng: number }[] | null);
     const notes = (Array.isArray(p.notes) ? p.notes[0] : p.notes) as Record<string, unknown> | null;
     initial = {
       id: p.id,
