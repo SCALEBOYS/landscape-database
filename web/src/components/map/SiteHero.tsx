@@ -5,6 +5,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 import type { Map as MapboxMap } from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 
+import { mapModelUrl } from "@/lib/map-model";
 import { MAPBOX_TOKEN, MODEL_CONFIG, SATELLITE_CONFIG, satelliteImage, STYLE_MAP, STYLE_SATELLITE } from "@/lib/mapbox";
 
 type Mode = "photo" | "3d" | "flat";
@@ -43,6 +44,7 @@ export function SiteHero({
   const [mode, setMode] = useState<Mode>(modes[0] ?? "photo");
   const box = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapboxMap | null>(null);
+  const blobs = useRef<string[]>([]);
   const showMap = mode !== "photo";
 
   // 地図は最初に必要になったときに作り、以後は表示を切り替えるだけ
@@ -62,12 +64,16 @@ export function SiteHero({
       });
       mapRef.current = m;
       // スタイルを切り替えるとレイヤーは消えるので、読み込むたびにモデルを置き直す
-      const placeModels = () => {
-        models.forEach((md, k) => {
+      // 地図のローダーが読めない GLB は、ブラウザ内で読める形に組み直してから渡す
+      const urls = Promise.all(models.map((md) => mapModelUrl(md.url)));
+      urls.then((u) => blobs.current.push(...u.filter((x) => x.startsWith("blob:"))));
+      const placeModels = () =>
+        urls.then((u) => models.forEach((md, k) => {
+          if (!mapRef.current) return;
           const id = `project-model-${k}`;
           const latM = lat! + md.offsetNorth / 111320;
           const lngM = lng! + md.offsetEast / (111320 * Math.cos((lat! * Math.PI) / 180));
-          if (!m.hasModel(id)) m.addModel(id, md.url);
+          if (!m.hasModel(id)) m.addModel(id, u[k]);
           if (!m.getSource(id)) m.addSource(id, { type: "geojson", data: { type: "Feature", properties: {}, geometry: { type: "Point", coordinates: [lngM, latM] } } });
           if (!m.getLayer(id)) {
             m.addLayer({
@@ -84,8 +90,7 @@ export function SiteHero({
               },
             });
           }
-        });
-      };
+        }));
       if (models.length) m.on("style.load", placeModels);
       // 3D のときはゆっくり回り込む。動きを減らす設定の人には回さない
       const calm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -103,7 +108,14 @@ export function SiteHero({
     };
   }, [showMap, canMap, lat, lng, mode, models]);
 
-  useEffect(() => () => mapRef.current?.remove(), []);
+  useEffect(
+    () => () => {
+      mapRef.current?.remove();
+      mapRef.current = null;
+      blobs.current.forEach((u) => URL.revokeObjectURL(u));
+    },
+    [],
+  );
 
   const choose = (next: Mode) => {
     setMode(next);

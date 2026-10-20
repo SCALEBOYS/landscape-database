@@ -28,7 +28,7 @@ export function ModelSection({ models, labels }: { models: ViewerModel[]; labels
           </button>
         </div>
       </div>
-      <div ref={box} className="relative h-[clamp(320px,48vw,560px)] overflow-hidden rounded-sm bg-gradient-to-b from-[#f4f4f2] to-[#e4e4e0]">
+      <div ref={box} className="relative h-[clamp(240px,34vw,400px)] overflow-hidden rounded-sm bg-gradient-to-b from-[#f4f4f2] to-[#e4e4e0]">
         <ModelViewer key={cur.src} src={cur.src} alt={cur.caption || cur.name} className="absolute inset-0" />
       </div>
       <p className="flex flex-wrap justify-between gap-3 text-xs text-muted">
