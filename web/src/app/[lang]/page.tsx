@@ -49,9 +49,10 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   };
   // 樹種は事例で使われているものを優先。まだ1件もなければ樹種マスタから一部を出す
   const usedSpecies = tally((it) => it.species);
+  // 学名は長くなるのでタグには出さない（樹種のページで見られる）
   const species = usedSpecies.length
-    ? usedSpecies
-    : speciesMaster.slice(0, TAG_LIMIT).map((sp) => ({ slug: sp.slug, label: localName(lang, sp.name_ja, sp.name_en), sub: sp.scientific_name, n: 0 }));
+    ? usedSpecies.map((r) => ({ ...r, sub: undefined }))
+    : speciesMaster.slice(0, TAG_LIMIT).map((sp) => ({ slug: sp.slug, label: localName(lang, sp.name_ja, sp.name_en), n: 0 }));
   const allDesigners = tally((it) => it.designers);
   const tags = (kind: "species" | "designers", list: (Ref & { n: number })[]) => (
     <RecentTags lang={lang} kind={kind} base={kind} options={list} limit={TAG_LIMIT} recentLabel={t.recentMark} empty={t.noOptions} />
