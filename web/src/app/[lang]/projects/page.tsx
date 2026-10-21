@@ -9,6 +9,9 @@ import { getDictionary, hasLocale } from "@/lib/i18n";
 import { alternates } from "@/lib/site";
 import { yearRange } from "@/lib/years";
 
+// AI（文章で探す・下書き・写真の候補）の処理を待てるように
+export const maxDuration = 60;
+
 export async function generateMetadata({ params }: PageProps<"/[lang]/projects">): Promise<Metadata> {
   const { lang } = await params;
   return hasLocale(lang) ? { title: getDictionary(lang).groups.project.list, alternates: alternates(lang, "/projects") } : {};

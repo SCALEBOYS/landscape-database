@@ -58,7 +58,13 @@ h1, h2, h3 { text-wrap: balance; }
 .sfield .val { font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sfield .val.on { color: var(--ink); }
 .sgo { margin: 6px; width: 44px; height: 44px; display: grid; place-items: center; background: var(--accent); color: #fff; border-radius: 2px; }
-.ai-hint { font-size: 10px; color: var(--accent); margin-left: 6px; letter-spacing: .04em; }
+.ai-btn { margin-left: 8px; display: inline-flex; align-items: center; gap: 3px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); font-size: 10px; font-weight: 600; letter-spacing: .04em; line-height: 1.6; }
+.ai-btn:hover:not(:disabled) { background: var(--accent); color: #fff; }
+.ai-btn:disabled { opacity: .45; cursor: default; }
+.ai-note { margin-top: 8px; display: flex; align-items: flex-start; gap: 6px; padding: 8px 12px; border-radius: 2px; background: color-mix(in srgb, var(--accent) 9%, #fff); color: var(--ink); font-size: 13px; line-height: 1.6; }
+.ai-note span { color: var(--accent); }
+.ai-note.err { background: var(--soft); color: var(--muted); }
+.ai-note button { margin-left: auto; color: var(--muted); padding-inline: 4px; }
 /* キーワードの入力候補 */
 .pop.suggest { left: 0; width: min(440px, 100%); padding: 6px; list-style: none; }
 .pop.suggest button { display: grid; grid-template-columns: 52px 1fr auto; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 2px; text-align: left; font-size: 14px; }

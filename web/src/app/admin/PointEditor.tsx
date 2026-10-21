@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { addPhotoPoint, deletePhotoPoint } from "./actions";
+import { guessPhotoPoints, type PhotoCandidate } from "./ai-actions";
 
 export type AdminPoint = { id: string; x: number; y: number; species_id: string | null; category_id: string | null; note_ja: string | null };
 // ポイントに結びつけられる候補（この事例に登録済みの植栽と構成要素）
@@ -17,6 +18,16 @@ export function PointEditor({ photoId, src, points, options, onClose }: { photoI
   const [choice, setChoice] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  const [guessing, startGuess] = useTransition();
+  const [candidates, setCandidates] = useState<PhotoCandidate[] | null>(null);
+  const has = (c: PhotoCandidate) => options.some((o) => o.kind === c.kind && o.id === c.id);
+  const guess = () =>
+    startGuess(async () => {
+      setError("");
+      const r = await guessPhotoPoints(photoId);
+      if (r.ok) setCandidates(r.candidates);
+      else setError(r.message);
+    });
 
   const labelOf = (p: AdminPoint) =>
     options.find((o) => (o.kind === "species" ? o.id === p.species_id : o.id === p.category_id))?.label ?? "（この事例から外れた項目）";
@@ -62,13 +73,23 @@ export function PointEditor({ photoId, src, points, options, onClose }: { photoI
           この事例に植栽・構成要素がまだ登録されていません。先に上の「植栽」「構成要素」に入れて保存すると、ここで選べるようになります。
         </p>
       )}
-      <p className="mb-2 text-xs text-muted">写真の上をクリックすると、その位置にポイントを置けます。</p>
+      <div className="mb-2 flex flex-wrap items-center gap-3">
+        <p className="text-xs text-muted">写真の上をクリックすると、その位置にポイントを置けます。</p>
+        <button type="button" disabled={guessing} onClick={guess} className="ml-auto rounded-md border border-accent px-3 py-1 text-xs text-accent hover:bg-accent hover:text-white disabled:opacity-50">
+          {guessing ? "AI が写真を見ています…" : "✦ AI で樹種・素材の候補を出す"}
+        </button>
+      </div>
       <div className="relative cursor-crosshair overflow-hidden rounded" onClick={place}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={src} alt="" className="block w-full select-none" draggable={false} />
         {points.map((p, i) => (
           <span key={p.id} className="absolute grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-white bg-ink text-[11px] font-medium text-white shadow" style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%` }}>
             {i + 1}
+          </span>
+        ))}
+        {candidates?.map((c, i) => (
+          <span key={`c${i}`} className="pointer-events-none absolute grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-dashed border-white bg-accent/70 text-[10px] font-medium text-white shadow" style={{ left: `${c.x * 100}%`, top: `${c.y * 100}%` }}>
+            {String.fromCharCode(65 + i)}
           </span>
         ))}
         {draft && (
@@ -95,6 +116,42 @@ export function PointEditor({ photoId, src, points, options, onClose }: { photoI
         </div>
       )}
       {error && <p className="mt-2 text-red-700">失敗しました: {error}</p>}
+
+      {candidates && (
+        <div className="mt-4 rounded-md bg-white p-3">
+          <p className="mb-2 text-xs text-muted">AI の候補です（写真の上の A・B…）。確かめてから「置く」を押してください。事例の植栽・構成要素にないものは、先に事例へ登録すると置けます。</p>
+          {candidates.length === 0 && <p className="text-muted">候補は見つかりませんでした。</p>}
+          <ol className="grid gap-1.5">
+            {candidates.map((c, i) => (
+              <li key={i} className="grid grid-cols-[20px_1fr_auto] items-start gap-2">
+                <span className="grid h-5 w-5 place-items-center rounded-full bg-accent text-[10px] text-white">{String.fromCharCode(65 + i)}</span>
+                <span>
+                  {c.label}
+                  <span className="ml-2 text-xs text-muted">{c.kind === "species" ? "樹種" : "素材"}・確からしさ {({ high: "高", medium: "中", low: "低" } as const)[c.confidence]}</span>
+                  <span className="block text-xs text-muted">{c.reason}</span>
+                </span>
+                {has(c) ? (
+                  <button
+                    type="button"
+                    disabled={pending}
+                    onClick={() =>
+                      run(
+                        () => addPhotoPoint({ photo_id: photoId, x: c.x, y: c.y, species_id: c.kind === "species" ? c.id : null, category_id: c.kind === "category" ? c.id : null, note_ja: "" }),
+                        () => setCandidates((list) => list?.filter((x) => x !== c) ?? null),
+                      )
+                    }
+                    className="rounded-md bg-accent px-3 py-1 text-xs text-white disabled:opacity-50"
+                  >
+                    置く
+                  </button>
+                ) : (
+                  <span className="text-[11px] text-amber-700">事例に未登録</span>
+                )}
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       {points.length > 0 && (
         <ol className="mt-4 grid gap-1">

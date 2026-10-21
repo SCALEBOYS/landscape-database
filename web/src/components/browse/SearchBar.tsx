@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+
+import { aiSearch } from "@/app/actions/ai-search";
 
 import { Icon } from "@/components/Icon";
 import { matches, type BrowseItem, type Filters } from "@/lib/browse";
@@ -18,13 +20,23 @@ type Props = {
   onSubmit?: () => void;
 };
 
-// 「キーワード｜地域｜竣工年」の検索バー。キーワード欄は後で AI 検索に置き換える
+// 「キーワード｜地域｜竣工年」の検索バー。キーワード欄の文章は「AI で探す」で絞り込み条件に置き換えられる
 export function SearchBar({ items, filters, update, t, lang, years, compact, onSubmit }: Props) {
   const [open, setOpen] = useState<"region" | "years" | "suggest" | null>(null);
   const [active, setActive] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const suggestions = useSuggestions(items, filters.q, t);
   const showSuggest = open === "suggest" && suggestions.length > 0;
+  const [aiPending, startAi] = useTransition();
+  const [aiNote, setAiNote] = useState<{ ok: boolean; text: string } | null>(null);
+  // キーワード欄の文章を AI に渡し、返ってきた条件で絞り込み直す
+  const runAi = () =>
+    startAi(async () => {
+      setOpen(null);
+      const r = await aiSearch(filters.q, lang);
+      if (r.ok) update(r.filters);
+      setAiNote({ ok: r.ok, text: r.ok ? r.note : r.message });
+    });
   const pick = (label: string) => {
     update({ q: label });
     setOpen(null);
@@ -49,10 +61,14 @@ export function SearchBar({ items, filters, update, t, lang, years, compact, onS
   const yearsText = !yearsOn ? t.anytime : y0 === y1 ? String(y0) : `${y0}–${y1}`;
 
   return (
+    <>
     <div ref={ref} className={`sbar ${compact ? "compact" : ""}`}>
       <label className="sfield kw">
         <span className="lbl">
-          {t.keyword} <span className="ai-hint">{t.aiHint}</span>
+          {t.keyword}
+          <button type="button" className="ai-btn" disabled={aiPending || !filters.q.trim()} onClick={runAi} title={t.aiHint}>
+            <span aria-hidden="true">✦</span> {aiPending ? t.aiWorking : t.aiButton}
+          </button>
         </span>
         <input
           type="search"
@@ -119,6 +135,13 @@ export function SearchBar({ items, filters, update, t, lang, years, compact, onS
       {open === "region" && <RegionPop items={items} filters={filters} update={update} t={t} lang={lang} onClose={() => setOpen(null)} />}
       {open === "years" && <YearsPop items={items} filters={filters} update={update} t={t} years={years} onClose={() => setOpen(null)} />}
     </div>
+    {aiNote && (
+      <p className={`ai-note ${aiNote.ok ? "" : "err"}`} role="status">
+        <span aria-hidden="true">✦</span> {aiNote.text}
+        <button type="button" onClick={() => setAiNote(null)} aria-label={t.aiClose}>×</button>
+      </p>
+    )}
+    </>
   );
 }
 

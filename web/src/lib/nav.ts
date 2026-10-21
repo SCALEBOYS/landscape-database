@@ -39,6 +39,7 @@ export function siteNav(lang: Locale): NavGroup[] {
         { href: `${L}/research#methods`, label: g.research.methods, desc: g.research.methodsDesc, icon: "field-perception" },
         { href: `${L}/research#papers`, label: g.research.papers, desc: g.research.papersDesc, icon: "news" },
         { href: `${L}/laws`, label: g.research.laws, desc: g.research.lawsDesc, icon: "law-law" },
+        { href: `${L}/ask`, label: g.research.ask, desc: g.research.askDesc, icon: "spark" },
       ],
     },
     {

@@ -11,6 +11,9 @@ import { ModelManager, type AdminModel } from "../../ModelManager";
 import type { PointOption } from "../../PointEditor";
 import { ProjectForm } from "../../ProjectForm";
 
+// AI（文章で探す・下書き・写真の候補）の処理を待てるように
+export const maxDuration = 60;
+
 export default function EditProjectPage(props: PageProps<"/admin/projects/[id]">) {
   return (
     <Suspense fallback={<p className="text-muted">読み込み中…</p>}>

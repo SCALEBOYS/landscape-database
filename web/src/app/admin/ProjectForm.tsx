@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import { categoryLabels, componentKindLabels, layerLabels } from "@/lib/i18n";
 
 import { saveProject, type ProjectPayload } from "./actions";
+import { AiDraftPanel } from "./AiDraftPanel";
 
 type Species = { id: string; name_ja: string; scientific_name: string };
 type Category = { id: string; kind: string; name_ja: string };
@@ -32,6 +33,7 @@ export function ProjectForm({
 }) {
   const [p, setP] = useState(initial);
   const [result, action, pending] = useActionState(saveProject, null);
+  const [formKey, setFormKey] = useState(0);
   const set = <K extends keyof ProjectPayload>(key: K, value: ProjectPayload[K]) => setP((x) => ({ ...x, [key]: value }));
   const field = (key: keyof ProjectPayload) => ({
     value: p[key] as string,
@@ -51,6 +53,18 @@ export function ProjectForm({
   return (
     <form action={action} className="space-y-6">
       <input type="hidden" name="payload" value={JSON.stringify(p)} />
+
+      <AiDraftPanel
+        key={formKey}
+        p={p}
+        apply={(patch) => {
+          setP((x) => ({ ...x, ...patch }));
+          // 植栽の入力欄は初期値で表示しているので、反映後に作り直す
+          setFormKey((k) => k + 1);
+        }}
+        species={species.map((sp) => ({ id: sp.id, label: `${sp.name_ja}（${sp.scientific_name}）` }))}
+        categories={categories.map((c) => ({ id: c.id, label: c.name_ja }))}
+      />
 
       <section className={section}>
         <h2 className="mb-4 font-medium">基本情報</h2>
@@ -136,7 +150,7 @@ export function ProjectForm({
         <h2 className="mb-4 font-medium">植栽</h2>
         <datalist id="species">{species.map((sp) => <option key={sp.id} value={`${sp.name_ja}（${sp.scientific_name}）`} />)}</datalist>
         {p.plantings.map((pl, i) => (
-          <div key={i} className="mt-1 flex gap-2 text-sm">
+          <div key={`${formKey}-${i}`} className="mt-1 flex gap-2 text-sm">
             <select className={`${input} w-32`} value={pl.layer} onChange={(e) => set("plantings", p.plantings.map((x, j) => (j === i ? { ...x, layer: e.target.value } : x)))}>
               {Object.entries(layerLabels).map(([k, v]) => <option key={k} value={k}>{v.ja}</option>)}
             </select>

@@ -17,6 +17,9 @@ import { yearRange } from "@/lib/years";
 import type { Metadata } from "next";
 import { alternates, jsonLd, SITE_URL, socialLinks } from "@/lib/site";
 
+// AI（文章で探す・下書き・写真の候補）の処理を待てるように
+export const maxDuration = 60;
+
 // 樹種・設計者は、最近探したものと事例の多いものを合わせてこの件数まで。ほかは地図で探す
 const TAG_LIMIT = 15;
 

@@ -42,5 +42,6 @@ async function refreshSession(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|favicon.ico|.*\\..*).*)"],
+  // /api は言語の振り分けをしない
+  matcher: ["/((?!_next|api/|favicon.ico|.*\\..*).*)"],
 };

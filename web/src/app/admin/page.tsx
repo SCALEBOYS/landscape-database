@@ -34,9 +34,28 @@ async function ProjectList() {
     return m;
   }, new Map<string, { label: string; n: number; last: string }>()).values()].sort((a, b) => b.n - a.n).slice(0, 15);
 
+  // AI の利用（直近30日）。料金は Claude Opus 5.5 の単価（入力 $4・出力 $20 / 100万トークン）で概算
+  const { data: aiRows } = await supabase.from("ai_usage").select("kind, input_tokens, output_tokens").gte("created_at", since).limit(10000);
+  const aiByKind = new Map<string, { n: number; usd: number }>();
+  for (const r of aiRows ?? []) {
+    const cur = aiByKind.get(r.kind) ?? { n: 0, usd: 0 };
+    aiByKind.set(r.kind, { n: cur.n + 1, usd: cur.usd + ((r.input_tokens ?? 0) * 4 + (r.output_tokens ?? 0) * 20) / 1e6 });
+  }
+  const AI_KINDS: Record<string, string> = { search: "文章で探す", ask: "AIに聞く", draft: "出典から下書き", photo: "写真の候補" };
+
   return (
     <>
       <AdminHeader email={user.email ?? ""} />
+      <section className="mb-6 rounded-md border border-line bg-white p-4 text-sm">
+        <h2 className="mb-2 font-medium">AI の利用（直近30日）</h2>
+        <div className="flex flex-wrap gap-x-6 gap-y-1">
+          {Object.entries(AI_KINDS).map(([k, label]) => (
+            <span key={k}>
+              {label}: <b className="num">{aiByKind.get(k)?.n ?? 0}</b> 回<span className="text-muted">（約 ${(aiByKind.get(k)?.usd ?? 0).toFixed(2)}）</span>
+            </span>
+          ))}
+        </div>
+      </section>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl">物件（{projects.length}件）</h1>
         <Link href="/admin/projects/new" className="rounded-md bg-accent px-4 py-2 text-sm text-white">
