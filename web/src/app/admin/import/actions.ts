@@ -36,11 +36,9 @@ export async function geocode(row: { name_ja: string; prefecture: string; munici
   await adminClient();
   // 住所はそのまま、名称は都道府県コード（市区町村コードの先頭2桁）で同名の別の場所を除く
   const pref = PREF_CODES[row.prefecture];
-  const queries: [string, boolean][] = [
-    [row.address, true],
-    [`${row.municipality}${row.name_ja}`, false],
-    [row.name_ja, false],
-  ];
+  const names = nameVariants(row.name_ja);
+  // 地理院は地区名・川の名前にも当たるので、先頭の語だけの形（「中之島」など）は使わない
+  const queries: [string, boolean][] = [[row.address, true], ...names.slice(0, -1).flatMap((n): [string, boolean][] => [[`${row.municipality}${n}`, false], [n, false]])];
   for (const [q, isAddress] of queries) {
     if (!q.trim()) continue;
     try {
@@ -55,8 +53,28 @@ export async function geocode(row: { name_ja: string; prefecture: string; munici
       // 次の方法を試す
     }
   }
+  for (const [i, n] of names.entries()) {
+    // OpenStreetMap は1秒に1回までの約束なので間をあける
+    if (i) await new Promise((r) => setTimeout(r, 1100));
+    const hit = await nominatim([n, row.municipality.split("・")[0], row.prefecture].filter(Boolean).join(" "));
+    if (hit) return hit;
+  }
+  return null;
+}
+
+// 事例名には「再整備」などの言葉や括弧書きが付いていて、地図の地名と一致しないことが多い。外した形でも探す
+function nameVariants(name: string) {
+  const inParens = [...name.matchAll(/[（(「]([^）)」]+)[）)」]/g)].map((m) => m[1]);
+  const base = name.replace(/[（(「][^）)」]*[）)」]/g, " ").trim();
+  const trimmed = base.replace(/\s*(再整備|リニューアル|リノベーション|整備|再生|改修)$/, "").trim();
+  const head = trimmed.split(/\s+/)[0];
+  // 最後の要素は先頭の語だけの形（OpenStreetMap でだけ使う）
+  const out = [...new Set([name, trimmed, ...inParens].map((x) => x.trim()).filter((x) => x.length >= 2))];
+  return [...out, head && !out.includes(head) ? head : out[out.length - 1]];
+}
+
+async function nominatim(q: string): Promise<GeoHit> {
   try {
-    const q = [row.name_ja, row.municipality, row.prefecture].filter(Boolean).join(" ");
     const res = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=jp&q=${encodeURIComponent(q)}`, {
       headers: { "User-Agent": "LandscapeDatabase/1.0 (https://landscapedatabase.com)" },
       signal: AbortSignal.timeout(8000),
