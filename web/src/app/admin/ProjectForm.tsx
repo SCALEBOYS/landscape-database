@@ -110,9 +110,9 @@ export function ProjectForm({
       </section>
 
       <section className={section}>
-        <h2 className="mb-4 font-medium">設計者・受賞・出典</h2>
+        <h2 className="mb-4 font-medium">設計・受賞・出典</h2>
         <label className="block text-sm">
-          設計者（1行に1社・1名）
+          設計（1行に1社）
           <textarea rows={4} className={input} value={p.designers.join("\n")} onChange={(e) => set("designers", e.target.value.split("\n"))} />
         </label>
         <div className="mt-4 text-sm">

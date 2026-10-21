@@ -43,6 +43,7 @@ export function GraphView({ data, t }: { data: GraphData; t: GraphText }) {
   const [focus, setFocus] = useState(false);
   const [q, setQ] = useState("");
   const [hover, setHover] = useState<string | null>(null);
+  const [topTab, setTopTab] = useState<NodeType>("designer");
 
   const byId = useMemo(() => new Map(data.nodes.map((n) => [n.id, n])), [data]);
   // 位置を覚えておくため、描画用の丸は作り直さずに使い回す
@@ -196,17 +197,19 @@ export function GraphView({ data, t }: { data: GraphData; t: GraphText }) {
   const toggleType = (k: NodeType) => setHidden((h) => { const n = new Set(h); if (n.has(k)) n.delete(k); else n.add(k); return n; });
   const pick = (id: string) => { setSelected(id); setFocus(true); setQ(""); };
   const top = (k: NodeType) => data.nodes.filter((n) => n.type === k).sort((a, b) => b.degree - a.degree).slice(0, 5);
+  const topTypes = (["designer", "species", "law", "award", "element", "method"] as const).filter((k) => counts[k] > 0);
+  const topTabShown: NodeType = topTypes.includes(topTab as (typeof topTypes)[number]) ? topTab : topTypes[0] ?? "designer";
   const grouped = node
     ? NODE_TYPES.map((k) => ({ k, items: [...(neighbors.get(node.id) ?? [])].map((id) => byId.get(id)!).filter((n) => n.type === k).sort((a, b) => b.degree - a.degree) })).filter((g) => g.items.length)
     : [];
 
   return (
-    <div className="graph-page relative grid h-[calc(100dvh-var(--hdr))] overflow-hidden min-h-[520px] grid-rows-[auto_1fr] bg-[#0f0f0f] text-white md:grid-cols-[260px_minmax(0,1fr)_340px] md:grid-rows-1">
+    <div className="graph-page relative grid h-[calc(100dvh-var(--hdr))] min-h-[520px] grid-rows-[auto_1fr] overflow-hidden bg-[#0f0f0f] text-white md:grid-cols-[256px_minmax(0,1fr)] md:grid-rows-1 lg:grid-cols-[272px_minmax(0,1fr)_340px]">
       {/* 左: 検索・種類の切り替え・つながりの多い項目 */}
-      <aside className="z-10 grid content-start gap-3 border-b border-white/10 p-3 md:overflow-y-auto md:border-b-0 md:border-r md:p-5">
+      <aside className="z-10 grid min-w-0 content-start gap-3 overflow-x-hidden border-b border-white/10 p-3 [scrollbar-color:rgba(255,255,255,.18)_transparent] [scrollbar-width:thin] md:overflow-y-auto md:border-b-0 md:border-r md:p-4">
         <div className="hidden md:block">
           <h1 className="text-xl font-bold">{t.title}</h1>
-          <p className="mt-2 text-xs leading-relaxed text-white/55">{t.lead}</p>
+          <p className="mt-1.5 line-clamp-3 text-xs leading-relaxed text-white/55">{t.lead}</p>
         </div>
         <div className="relative">
           <label className="flex items-center gap-2 rounded border border-white/20 bg-white/5 px-3 py-2 text-sm">
@@ -235,7 +238,8 @@ export function GraphView({ data, t }: { data: GraphData; t: GraphText }) {
             </button>
           ))}
         </div>
-        <div className="flex gap-1.5 overflow-x-auto pb-1 md:grid md:overflow-visible md:pb-0">
+        {/* 種類の表示・非表示。折り返すチップにして、縦に長くしない */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0">
           {NODE_TYPES.filter((k) => counts[k] > 0 || k === "tag").map((k) => (
             <button
               key={k}
@@ -244,34 +248,38 @@ export function GraphView({ data, t }: { data: GraphData; t: GraphText }) {
               disabled={!counts[k]}
               onClick={() => toggleType(k)}
               title={k === "tag" && !counts[k] ? t.tagsComing : undefined}
-              className={`flex flex-none items-center gap-2 rounded px-2 py-1 text-left text-xs md:text-sm ${hidden.has(k) || !counts[k] ? "text-white/35" : "text-white/90"} hover:bg-white/5 disabled:cursor-default`}
+              className={`flex flex-none items-center gap-1.5 rounded-full border px-2.5 py-1 text-left text-xs ${hidden.has(k) || !counts[k] ? "border-white/10 text-white/35" : "border-white/20 text-white/90"} hover:border-white/50 disabled:cursor-default disabled:hover:border-white/10`}
             >
-              <span className="h-2.5 w-2.5 flex-none rounded-full" style={{ background: hidden.has(k) || !counts[k] ? "transparent" : COLORS[k], border: `1.5px solid ${COLORS[k]}` }} />
+              <span className="h-2 w-2 flex-none rounded-full" style={{ background: hidden.has(k) || !counts[k] ? "transparent" : COLORS[k], border: `1.5px solid ${COLORS[k]}` }} />
               {t.types[k]}
-              <span className="ml-auto pl-2 text-[11px] text-white/45 tabular-nums">{counts[k]}</span>
+              <span className="text-[10px] text-white/45 tabular-nums">{counts[k]}</span>
             </button>
           ))}
         </div>
-        <div className="hidden gap-4 border-t border-white/10 pt-4 md:grid">
-          {(["designer", "law", "species", "award", "element"] as const).filter((k) => counts[k] > 0).map((k) => (
-            <div key={k}>
-              <h2 className="mb-1 flex items-center gap-2 text-[11px] uppercase tracking-[.12em] text-white/45">
-                <span className="h-2 w-2 rounded-full" style={{ background: COLORS[k] }} />
-                {t.types[k]}
-              </h2>
-              <ul className="grid gap-0.5 text-[13px]">
-                {top(k).map((n) => (
-                  <li key={n.id}>
-                    <button type="button" onClick={() => pick(n.id)} className="flex w-full gap-2 truncate rounded px-1 py-0.5 text-left text-white/80 hover:bg-white/5 hover:text-white">
-                      <span className="truncate">{n.label}</span>
-                      <span className="ml-auto flex-none text-[11px] text-white/40 tabular-nums">{n.degree}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
+        {/* つながりの多い項目。種類はタブで切り替えて、上位5件だけ出す */}
+        {topTypes.length > 0 && (
+          <div className="hidden border-t border-white/10 pt-3 md:block">
+            <p className="mb-2 text-[11px] tracking-[.08em] text-white/45">{t.topLabel}</p>
+            <div className="mb-2 flex flex-wrap gap-1" role="tablist">
+              {topTypes.map((k) => (
+                <button key={k} type="button" role="tab" aria-selected={topTabShown === k} onClick={() => setTopTab(k)} className={`rounded px-2 py-0.5 text-[11px] ${topTabShown === k ? "bg-white text-black" : "text-white/60 hover:text-white"}`}>
+                  {t.types[k]}
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
+            <ul className="grid gap-0.5 text-[13px]">
+              {top(topTabShown).map((n) => (
+                <li key={n.id}>
+                  <button type="button" onClick={() => pick(n.id)} className="flex w-full min-w-0 items-center gap-2 rounded px-1.5 py-1 text-left text-white/80 hover:bg-white/5 hover:text-white">
+                    <span className="h-1.5 w-1.5 flex-none rounded-full" style={{ background: COLORS[n.type] }} />
+                    <span className="min-w-0 truncate">{n.label}</span>
+                    <span className="ml-auto flex-none text-[11px] text-white/40 tabular-nums">{n.degree}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </aside>
 
       {/* 中央: 図 */}
@@ -289,7 +297,7 @@ export function GraphView({ data, t }: { data: GraphData; t: GraphText }) {
 
       {/* 右: 選んだ丸の詳細（スマホでは下から出るシート） */}
       <aside
-        className={`fixed inset-x-0 bottom-0 z-20 max-h-[55dvh] overflow-y-auto rounded-t-2xl border-t border-white/15 bg-[#151515] p-5 shadow-[0_-10px_30px_rgba(0,0,0,.5)] transition-transform md:static md:max-h-none md:translate-y-0 md:rounded-none md:border-l md:border-t-0 md:shadow-none ${node ? "translate-y-0" : "translate-y-full"}`}
+        className={`fixed inset-x-0 bottom-0 z-20 max-h-[55dvh] overflow-y-auto rounded-t-2xl border-t border-white/15 bg-[#151515] p-5 shadow-[0_-10px_30px_rgba(0,0,0,.5)] transition-transform [scrollbar-color:rgba(255,255,255,.18)_transparent] [scrollbar-width:thin] md:absolute md:inset-x-auto md:bottom-0 md:right-0 md:top-0 md:w-[340px] md:max-h-none md:translate-y-0 md:rounded-none md:border-l md:border-t-0 md:shadow-[-10px_0_30px_rgba(0,0,0,.45)] lg:static lg:w-auto lg:translate-x-0 lg:shadow-none ${node ? "translate-y-0 md:translate-x-0" : "translate-y-full md:translate-x-full"}`}
       >
         {node ? (
           <div className="grid gap-4">
@@ -332,7 +340,7 @@ export function GraphView({ data, t }: { data: GraphData; t: GraphText }) {
             </div>
           </div>
         ) : (
-          <div className="hidden gap-3 text-sm leading-relaxed text-white/55 md:grid">
+          <div className="hidden gap-3 text-sm leading-relaxed text-white/55 lg:grid">
             <p>{t.hint}</p>
             <p className="text-xs text-white/40">{t.tagsComing}</p>
           </div>

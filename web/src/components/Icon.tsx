@@ -35,6 +35,10 @@ const PATHS: Record<string, React.ReactNode> = {
   "field-spatial": <><circle cx="5" cy="6" r="2" /><circle cx="19" cy="6" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="6" cy="19" r="2" /><circle cx="18" cy="18" r="2" /><path d="M6.6 7.2l3.8 3.6M17.4 7.2l-3.8 3.6M10.6 13.4l-3.2 4.2M13.5 13.3l3.1 3.4M7 6h10" /></>,
   "field-environment": <><path d="M12 21c-5 0-8-3.5-8-8 0-5 5-9 14-9 0 9-2.5 17-6 17z" /><path d="M8 17c2-4 5-7 8-9" /></>,
   "field-design": <><path d="M4 20l3.5-1 11-11-2.5-2.5-11 11zM14.5 6.5l2.5 2.5" /><path d="M3 21h18" /></>,
+  // ヘッダー・メニュー
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  map: <path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5zM9 4v13.5M15 6.5V20" />,
+  grid: <><rect x="4" y="4" width="7" height="7" /><rect x="13" y="4" width="7" height="7" /><rect x="4" y="13" width="7" height="7" /><rect x="13" y="13" width="7" height="7" /></>,
   search: <><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></>,
   sliders: <><path d="M4 7h10M18 7h2M4 17h2M10 17h10" /><circle cx="16" cy="7" r="2" /><circle cx="8" cy="17" r="2" /></>,
   arrow: <path d="M5 12h14M13 6l6 6-6 6" />,

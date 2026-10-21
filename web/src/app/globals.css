@@ -177,3 +177,8 @@ body:has(.ex) .site-footer, body:has(.graph-page) .site-footer { display: none; 
 .hctl button[aria-pressed="true"] { background: #fff; color: #111; opacity: 1; }
 .hnote { position: absolute; left: 16px; top: 18px; z-index: 3; font-size: 11px; color: rgba(255,255,255,.85); background: rgba(20,20,18,.45); padding: 4px 10px; border-radius: 999px; }
 @media (max-width: 640px) { .hnote { display: none; } }
+
+/* スマホのメニュー: 項目を少しずつずらして出す */
+@keyframes menu-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.menu-item { animation: menu-in .32s cubic-bezier(.2,.7,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .menu-item { animation: none; } }

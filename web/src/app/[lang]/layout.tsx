@@ -5,7 +5,9 @@ import { Inter, Noto_Sans_JP } from "next/font/google";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { Icon } from "@/components/Icon";
 import { LangSwitcher } from "@/components/LangSwitcher";
+import { MobileMenu } from "@/components/MobileMenu";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getDictionary, hasLocale, locales } from "@/lib/i18n";
 import { INDEXABLE, SITE_URL } from "@/lib/site";
@@ -36,6 +38,15 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
   const t = getDictionary(lang);
+  const menu = [
+    { href: `/${lang}`, label: t.nav.projects, desc: t.menu.desc.projects, icon: "grid" },
+    { href: `/${lang}/explore`, label: t.nav.explore, desc: t.menu.desc.explore, icon: "map" },
+    { href: `/${lang}/species`, label: t.nav.species, desc: t.menu.desc.species, icon: "shade" },
+    { href: `/${lang}/designers`, label: t.nav.designers, desc: t.menu.desc.designers, icon: "field-design" },
+    { href: `/${lang}/laws`, label: t.nav.laws, desc: t.menu.desc.laws, icon: "law-law" },
+    { href: `/${lang}/research`, label: t.nav.research, desc: t.menu.desc.research, icon: "field-perception" },
+    { href: `/${lang}/graph`, label: t.nav.graph, desc: t.menu.desc.graph, icon: "field-spatial" },
+  ];
 
   return (
     <html lang={lang} className={`${noto.variable} ${inter.variable} h-full antialiased`}>
@@ -46,16 +57,20 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
             <Link href={`/${lang}`} className="whitespace-nowrap text-[17px] font-semibold tracking-[-0.01em]">
               {t.siteName}
             </Link>
-            <nav className="ml-auto flex items-center gap-4 whitespace-nowrap text-[13px] font-medium md:gap-6 md:text-sm">
-              <Link href={`/${lang}`} className="hidden opacity-75 hover:opacity-100 sm:inline">{t.nav.projects}</Link>
-              <Link href={`/${lang}/explore`} className="opacity-75 hover:opacity-100">{t.nav.explore}</Link>
-              <Link href={`/${lang}/species`} className="hidden opacity-75 hover:opacity-100 sm:inline">{t.nav.species}</Link>
-              <Link href={`/${lang}/designers`} className="hidden opacity-75 hover:opacity-100 sm:inline">{t.nav.designers}</Link>
-              <Link href={`/${lang}/laws`} className="hidden opacity-75 hover:opacity-100 sm:inline">{t.nav.laws}</Link>
-              <Link href={`/${lang}/research`} className="hidden opacity-75 hover:opacity-100 sm:inline">{t.nav.research}</Link>
-              <Link href={`/${lang}/graph`} className="opacity-75 hover:opacity-100">{t.nav.graph}</Link>
+            {/* PC・タブレットは横並び。スマホは「地図」だけ出して、ほかはメニューから */}
+            <nav className="ml-auto hidden items-center gap-5 whitespace-nowrap text-sm font-medium md:flex lg:gap-6">
+              {menu.map((it) => (
+                <Link key={it.href} href={it.href} className="opacity-75 hover:opacity-100">{it.label}</Link>
+              ))}
               <LangSwitcher current={lang} />
             </nav>
+            <div className="ml-auto flex items-center gap-3 text-[13px] font-medium md:hidden">
+              <Link href={`/${lang}/explore`} className="flex items-center gap-1.5 rounded-full border border-white/25 px-3 py-1.5 hover:bg-white/10">
+                <Icon name="map" className="ico !h-4 !w-4" />
+                {t.nav.explore}
+              </Link>
+              <MobileMenu lang={lang} items={menu} labels={{ open: t.menu.open, close: t.menu.close }} />
+            </div>
           </div>
         </header>
         <main className="fade-in flex-1">{children}</main>
