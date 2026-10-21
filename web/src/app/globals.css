@@ -22,7 +22,7 @@
   --color-accent: var(--accent);
   --color-placeholder: var(--placeholder);
   /* 英数字は Bricolage Grotesque、日本語は Noto Sans JP に落ちる */
-  --font-sans: var(--font-bricolage), var(--font-noto-sans-jp), system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, var(--font-inter), var(--font-noto-sans-jp), "Hiragino Sans", sans-serif;
 }
 
 body {

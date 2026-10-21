@@ -80,7 +80,7 @@ export default async function ResearchIndex({ params }: PageProps<"/[lang]/resea
         <div className="wrap grid gap-6 pb-8 pt-12 md:grid-cols-[1.3fr_1fr] md:items-end">
           <div className="grid gap-3">
             <span className="eyebrow !text-white/60">Research</span>
-            <h1 className="text-[clamp(34px,5vw,56px)] font-extrabold leading-none tracking-[-0.03em]">{t.title}</h1>
+            <h1 className="text-[clamp(34px,5vw,56px)] font-extrabold leading-none tracking-[-0.02em]">{t.title}</h1>
             <p className="max-w-[52ch] text-sm leading-[1.8] text-white/75">{t.lead}</p>
           </div>
           <dl className="grid grid-cols-[1fr_1fr_1fr_1.6fr] gap-3">

@@ -197,7 +197,7 @@ export function ResearchBrowser({ lang, methods, papers, t, initial = { q: "", f
                 <li key={p.slug}>
                   <Link href={`/${lang}/research/papers/${p.slug}`} className="group grid h-full grid-cols-[72px_1fr] overflow-hidden rounded-sm border border-line bg-white transition hover:shadow-[0_10px_28px_rgba(0,0,0,.08)]">
                     <span className="grid content-between justify-items-center py-4 text-white" style={{ background: fd.color }}>
-                      <span className="num text-[22px] font-extrabold leading-none tracking-[-0.03em]">{p.year}</span>
+                      <span className="num text-[22px] font-extrabold leading-none tracking-[-0.02em]">{p.year}</span>
                       <Icon name={`field-${fd.key}`} className="ico !h-5 !w-5 opacity-80" />
                     </span>
                     <span className="grid content-start gap-2 p-4">

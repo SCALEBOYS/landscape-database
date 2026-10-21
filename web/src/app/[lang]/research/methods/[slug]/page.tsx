@@ -43,7 +43,7 @@ export default async function MethodPage({ params }: PageProps<"/[lang]/research
           <Icon name={`field-${fd.key}`} className="ico !h-7 !w-7" />
         </span>
         <div className="min-w-0">
-          <h1 className="text-[clamp(28px,4vw,40px)] font-extrabold leading-tight tracking-[-0.03em]">{lang === "en" ? m.name_en : m.name_ja}</h1>
+          <h1 className="text-[clamp(28px,4vw,40px)] font-extrabold leading-tight tracking-[-0.02em]">{lang === "en" ? m.name_en : m.name_ja}</h1>
           {lang === "ja" && <p className="mt-0.5 text-sm text-muted">{m.name_en}</p>}
         </div>
       </div>

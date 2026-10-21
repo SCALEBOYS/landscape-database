@@ -1,7 +1,7 @@
 import "../globals.css";
 
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Noto_Sans_JP } from "next/font/google";
+import { Inter, Noto_Sans_JP } from "next/font/google";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -11,8 +11,9 @@ import { getDictionary, hasLocale, locales } from "@/lib/i18n";
 import { INDEXABLE, SITE_URL } from "@/lib/site";
 
 const noto = Noto_Sans_JP({ variable: "--font-noto-sans-jp", weight: ["400", "500", "700"], preload: false });
-// 英数字の見出し・数字用。日本語の文字は Noto Sans JP に落ちる
-const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"], axes: ["opsz"] });
+// 欧文は Apple 端末ではシステムフォント（SF Pro）、それ以外では Inter。SF Pro はライセンス上ウェブで配信できないため
+// 端末に入っているものを使う（globals.css の --font-sans）。日本語の文字は Noto Sans JP に落ちる
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"], axes: ["opsz"] });
 
 export async function generateStaticParams() {
   return locales.map((lang) => ({ lang }));
@@ -37,7 +38,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
   const t = getDictionary(lang);
 
   return (
-    <html lang={lang} className={`${noto.variable} ${bricolage.variable} h-full antialiased`}>
+    <html lang={lang} className={`${noto.variable} ${inter.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <header id="top" className="sticky top-0 z-30 bg-ink text-white">
           <div className="mx-auto flex h-[var(--hdr)] max-w-none items-center gap-6 px-4 md:px-8">

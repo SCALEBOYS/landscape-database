@@ -28,7 +28,7 @@ export default async function DesignerPage({ params }: PageProps<"/[lang]/design
   return (
     <div className="wrap pt-10">
       <RememberRecent kind="designers" slug={slug} />
-      <h1 className="text-[40px] font-extrabold leading-tight tracking-[-0.03em]">{localName(lang, d.party.name_ja, d.party.name_en)}</h1>
+      <h1 className="text-[40px] font-extrabold leading-tight tracking-[-0.02em]">{localName(lang, d.party.name_ja, d.party.name_en)}</h1>
       <p className="mt-1 text-muted">{t.designers.count(d.projects.length)}</p>
       <section className="mt-10">
         <h2 className="mb-6 border-b border-line pb-2 text-lg font-medium">{t.designers.projects}</h2>

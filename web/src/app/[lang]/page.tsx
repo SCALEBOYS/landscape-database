@@ -35,7 +35,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
       <div className="wrap pointer-events-none absolute inset-x-0 bottom-[110px] md:bottom-[96px]">
         <div className="grid max-w-[980px] gap-3.5">
           <span className="eyebrow !text-white/75">{fmt(t.heroEyebrow, items.length)}</span>
-          <h1 className="text-[clamp(36px,6.4vw,92px)] font-extrabold leading-[1.02] tracking-[-0.035em]">{t.heroTitle}</h1>
+          <h1 className="text-[clamp(36px,6.4vw,92px)] font-extrabold leading-[1.02] tracking-[-0.022em]">{t.heroTitle}</h1>
           <p className="hidden max-w-[52ch] text-[15px] leading-[1.8] text-white/85 md:block">{t.heroLead}</p>
         </div>
       </div>

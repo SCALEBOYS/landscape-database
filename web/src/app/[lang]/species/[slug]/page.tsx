@@ -52,7 +52,7 @@ export default async function SpeciesPage({ params }: PageProps<"/[lang]/species
           )}
         </figure>
         <div className="min-w-0">
-          <h1 className="text-[40px] font-extrabold leading-tight tracking-[-0.03em]">{title}</h1>
+          <h1 className="text-[40px] font-extrabold leading-tight tracking-[-0.02em]">{title}</h1>
           <p className="mt-1 text-lg italic text-muted">{s.scientific_name}</p>
         </div>
       </div>

@@ -38,7 +38,7 @@ export default async function LawPage({ params }: PageProps<"/[lang]/laws/[slug]
         <span>/</span>
         <span>{t.kinds[law.kind]}</span>
       </nav>
-      <h1 className="mt-3 flex items-center gap-3 text-[40px] font-extrabold leading-tight tracking-[-0.03em]">
+      <h1 className="mt-3 flex items-center gap-3 text-[40px] font-extrabold leading-tight tracking-[-0.02em]">
         <Icon name={`law-${law.kind}`} className="ico !h-8 !w-8" />
         {localName(lang, law.name_ja, law.name_en)}
       </h1>

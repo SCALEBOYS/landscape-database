@@ -135,7 +135,7 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
       >
         <div className="wrap grid gap-2.5">
           <span className="eyebrow !text-white/80">{useLabel} · {place(p, lang)}</span>
-          <h1 className="text-[clamp(34px,6vw,84px)] font-extrabold leading-[1.04] tracking-[-0.035em]">{name}</h1>
+          <h1 className="text-[clamp(34px,6vw,84px)] font-extrabold leading-[1.04] tracking-[-0.022em]">{name}</h1>
           {lang === "ja" && p.name_en && <span className="text-[15px] opacity-80">{p.name_en}</span>}
         </div>
       </SiteHero>
