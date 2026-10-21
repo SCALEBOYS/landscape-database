@@ -70,3 +70,17 @@ export async function readLocation(file: File): Promise<ShotLocation | null> {
     return null;
   }
 }
+
+// 撮影日（EXIF の DateTimeOriginal）を YYYY-MM-DD で返す。無ければ null
+export async function readTakenOn(file: File): Promise<string | null> {
+  try {
+    const exifr = (await import("exifr")).default;
+    const tags = (await exifr.parse(file, { pick: ["DateTimeOriginal", "CreateDate"] })) as { DateTimeOriginal?: Date; CreateDate?: Date } | undefined;
+    const d = tags?.DateTimeOriginal ?? tags?.CreateDate;
+    if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null;
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  } catch {
+    return null;
+  }
+}

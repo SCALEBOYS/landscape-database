@@ -10,6 +10,7 @@ export function AdminHeader({ email }: { email: string }) {
       </Link>
       <div className="flex items-center gap-4 text-sm text-muted">
         <Link href="/admin/import" className="hover:text-ink">一括取り込み</Link>
+        <Link href="/admin/bulk-photos" className="hover:text-ink">写真のまとめ取り込み</Link>
         <Link href="/admin/materials" className="hover:text-ink">素材の分類</Link>
         <Link href="/admin/species" className="hover:text-ink">樹種の写真</Link>
         <Link href="/admin/research" className="hover:text-ink">研究</Link>
