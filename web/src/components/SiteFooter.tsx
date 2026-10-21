@@ -51,6 +51,11 @@ export function SiteFooter({ lang }: { lang: Locale }) {
           <h2 className="eyebrow !text-white/45">{f.about}</h2>
           <p className="text-[13px] leading-[1.8] text-white/65">{f.policy}</p>
           <p className="text-[13px] leading-[1.8] text-white/65">{f.photos}</p>
+          <nav className="mt-1 grid gap-2 text-sm" aria-label={f.site}>
+            {([["about", f.aboutLink], ["contact", f.contact], ["terms", f.terms], ["privacy", f.privacy]] as const).map(([k, label]) => (
+              <Link key={k} href={`/${lang}/${k}`} className="text-white/85 hover:text-white hover:underline">{label}</Link>
+            ))}
+          </nav>
         </div>
       </div>
       <div className="border-t border-white/15">

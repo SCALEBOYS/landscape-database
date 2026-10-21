@@ -13,7 +13,7 @@ export function supabase() {
 
 export type SpeciesRef = { slug: string; name_ja: string; name_en: string | null; scientific_name: string; growth_form?: string | null };
 export type ShotLocation = { lat: number; lng: number; heading: number | null };
-export type PartyRef = { slug: string; name_ja: string; name_en: string | null };
+export type PartyRef = { slug: string; name_ja: string; name_en: string | null; aliases?: { alias: string }[] };
 
 export type Project = {
   id: string;
@@ -90,7 +90,7 @@ export type LawRef = {
 const PROJECT_SELECT = `
   id, slug, parent_id, name_ja, name_en, use_category, prefecture, municipality, completed_year, site_area_m2,
   summary_ja, summary_en, summary_en_status,
-  credits:project_credits(role, sort_order, party:parties(slug, name_ja, name_en)),
+  credits:project_credits(role, sort_order, party:parties(slug, name_ja, name_en, aliases:party_aliases(alias))),
   plantings:project_plantings(layer, species:species(slug, name_ja, name_en, scientific_name, growth_form)),
   components:project_components(product_name, maker_name, category:component_categories(kind, slug, name_ja, name_en)),
   photos(storage_path, is_cover, sort_order, caption_ja, caption_en, location:photo_locations(lat, lng, heading),

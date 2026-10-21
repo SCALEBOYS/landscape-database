@@ -7,6 +7,7 @@ import { Body, DraftBadge, PaperRow } from "@/components/research/ResearchParts"
 import { fieldOf } from "@/lib/research-fields";
 import { getDictionary, hasLocale, locales } from "@/lib/i18n";
 import { getResearch } from "@/lib/research";
+import { alternates } from "@/lib/site";
 
 export async function generateStaticParams() {
   const { methods } = await getResearch();
@@ -16,7 +17,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/[lang]/research/methods/[slug]">): Promise<Metadata> {
   const { lang, slug } = await params;
   const m = (await getResearch()).methods.find((x) => x.slug === slug);
-  return m && hasLocale(lang) ? { title: lang === "en" ? m.name_en : m.name_ja } : {};
+  return m && hasLocale(lang) ? { title: lang === "en" ? m.name_en : m.name_ja, alternates: alternates(lang, `/research/methods/${slug}`) } : {};
 }
 
 export default async function MethodPage({ params }: PageProps<"/[lang]/research/methods/[slug]">) {

@@ -6,10 +6,11 @@ import { Explore, ExploreFromUrl } from "@/components/browse/Browser";
 import { getBrowseItems, getLawOptions } from "@/lib/browse-data";
 import { getDictionary, hasLocale } from "@/lib/i18n";
 import { yearRange } from "@/lib/years";
+import { alternates } from "@/lib/site";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/explore">): Promise<Metadata> {
   const { lang } = await params;
-  return hasLocale(lang) ? { title: getDictionary(lang).browse.mapTitle } : {};
+  return hasLocale(lang) ? { title: getDictionary(lang).browse.mapTitle, alternates: alternates(lang, "/explore") } : {};
 }
 
 export default async function ExplorePage({ params }: PageProps<"/[lang]/explore">) {

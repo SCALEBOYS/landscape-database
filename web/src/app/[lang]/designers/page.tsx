@@ -4,10 +4,11 @@ import { notFound } from "next/navigation";
 
 import { getDesigners } from "@/lib/data";
 import { getDictionary, hasLocale, localName } from "@/lib/i18n";
+import { alternates } from "@/lib/site";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/designers">): Promise<Metadata> {
   const { lang } = await params;
-  return hasLocale(lang) ? { title: getDictionary(lang).designers.title } : {};
+  return hasLocale(lang) ? { title: getDictionary(lang).designers.title, alternates: alternates(lang, "/designers") } : {};
 }
 
 export default async function DesignersIndex({ params }: PageProps<"/[lang]/designers">) {

@@ -6,6 +6,7 @@ import { Icon } from "@/components/Icon";
 import { DraftBadge, paperTitle } from "@/components/research/ResearchParts";
 import { getDictionary, hasLocale, localName, locales } from "@/lib/i18n";
 import { citation, getResearch, paperLink } from "@/lib/research";
+import { alternates, jsonLd } from "@/lib/site";
 
 export async function generateStaticParams() {
   const { papers } = await getResearch();
@@ -15,7 +16,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/[lang]/research/papers/[slug]">): Promise<Metadata> {
   const { lang, slug } = await params;
   const p = (await getResearch()).papers.find((x) => x.slug === slug);
-  return p && hasLocale(lang) ? { title: paperTitle(p, lang) } : {};
+  return p && hasLocale(lang) ? { title: paperTitle(p, lang), alternates: alternates(lang, `/research/papers/${slug}`) } : {};
 }
 
 export default async function PaperPage({ params }: PageProps<"/[lang]/research/papers/[slug]">) {
@@ -32,8 +33,21 @@ export default async function PaperPage({ params }: PageProps<"/[lang]/research/
   const summary = lang === "en" ? p.summary_en ?? p.summary_ja : p.summary_ja;
   const chip = "rounded-sm border border-line px-3 py-1.5 text-[13px] hover:border-ink";
 
+  // 論文の書誌（検索エンジン向け）
+  const structured = {
+    "@context": "https://schema.org",
+    "@type": p.kind === "book" ? "Book" : p.kind === "report" ? "Report" : "ScholarlyArticle",
+    name: p.title,
+    author: p.authors.split(/[;；]/).map((a) => ({ "@type": "Person", name: a.trim() })),
+    datePublished: String(p.year),
+    ...(p.kind === "article" ? { isPartOf: { "@type": "Periodical", name: p.venue } } : { publisher: p.venue }),
+    ...(link ? { sameAs: link } : {}),
+    inLanguage: p.language,
+  };
+
   return (
     <div className="wrap max-w-[860px] pt-10">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(structured) }} />
       <nav className="flex gap-2 text-xs text-muted">
         <Link href={`/${lang}/research`} className="hover:text-ink hover:underline">{t.title}</Link>
         <span>/</span>

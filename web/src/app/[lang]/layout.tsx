@@ -5,6 +5,8 @@ import { Inter, Noto_Sans_JP } from "next/font/google";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { Analytics } from "@vercel/analytics/next";
+
 import { Icon } from "@/components/Icon";
 import { LangSwitcher } from "@/components/LangSwitcher";
 import { MobileMenu } from "@/components/MobileMenu";
@@ -51,6 +53,8 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
   return (
     <html lang={lang} className={`${noto.variable} ${inter.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
+        {/* キーボードで操作する人が、ヘッダーを飛ばして本文へ移れるように */}
+        <a href="#main" className="skip-link">{lang === "en" ? "Skip to content" : "本文へ移動"}</a>
         <header id="top" className="sticky top-0 z-30 bg-ink text-white">
           <div className="mx-auto flex h-[var(--hdr)] max-w-none items-center gap-6 px-4 md:px-8">
             {/* ロゴは文字だけのシンプルな形。添え書きや装飾は付けない */}
@@ -73,8 +77,10 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
             </div>
           </div>
         </header>
-        <main className="fade-in flex-1">{children}</main>
+        <main id="main" className="fade-in flex-1">{children}</main>
         <SiteFooter lang={lang} />
+        {/* アクセス計測（Cookie を使わない Vercel Web Analytics） */}
+        <Analytics />
       </body>
     </html>
   );

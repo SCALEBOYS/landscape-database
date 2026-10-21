@@ -12,6 +12,7 @@ import { fmt, type BrowseText, type Locale } from "@/lib/i18n";
 
 import { CategoryRows } from "./CategoryRows";
 import { FilterButton, FilterPanel, type Tab } from "./FilterPanel";
+import { ZeroResults } from "./ZeroResults";
 import { rememberRecent } from "@/lib/recent";
 import { SearchBar } from "./SearchBar";
 
@@ -82,11 +83,11 @@ export function HomeBrowser({ lang, items, lawOptions, t, years, hero, after, in
           <SearchBar items={items} filters={filters} update={update} t={t} lang={lang} years={years} onSubmit={goExplore} />
         </div>
       </section>
-      <div className="wrap flex items-start gap-5 pt-9">
+      <div className="wrap flex items-start gap-5 pt-7">
         <CategoryRows items={items} filters={filters} update={update} t={t} lang={lang} lawOptions={lawOptions} />
         <FilterButton filters={filters} t={t} onClick={() => setPanel(true)} />
       </div>
-      <section className="wrap grid gap-6 pt-14">
+      <section className="wrap grid gap-6 pt-9">
         <div className="flex flex-wrap items-baseline justify-between gap-4 border-b border-line pb-3">
           <h2 className="text-[30px] font-extrabold tracking-[-0.02em]">{t.newest}</h2>
           <span className="text-[13px] text-muted">{fmt(t.count, list.length)}</span>
@@ -111,7 +112,7 @@ export function HomeBrowser({ lang, items, lawOptions, t, years, hero, after, in
             )}
           </>
         ) : (
-          <p className="py-12 text-sm text-muted">{t.none}</p>
+          <ZeroResults items={items} filters={filters} update={update} t={t} lang={lang} lawOptions={lawOptions} />
         )}
       </section>
       {after}
@@ -178,7 +179,7 @@ export function Explore({ lang, items, lawOptions, t, years, initial = EMPTY, fi
                 ))}
               </div>
             ) : (
-              <p className="py-10 text-sm text-muted">{t.none}</p>
+              <ZeroResults items={items} filters={filters} update={update} t={t} lang={lang} lawOptions={lawOptions} />
             )}
           </div>
         </Sheet>

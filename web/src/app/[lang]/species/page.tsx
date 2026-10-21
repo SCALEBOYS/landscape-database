@@ -4,10 +4,11 @@ import { notFound } from "next/navigation";
 
 import { getProjects, getSpeciesList } from "@/lib/data";
 import { getDictionary, growthFormLabels, hasLocale, label, localName } from "@/lib/i18n";
+import { alternates } from "@/lib/site";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/species">): Promise<Metadata> {
   const { lang } = await params;
-  return hasLocale(lang) ? { title: getDictionary(lang).species.title } : {};
+  return hasLocale(lang) ? { title: getDictionary(lang).species.title, alternates: alternates(lang, "/species") } : {};
 }
 
 const FORMS = ["tree", "shrub", "ground_cover", "climber", "grass", "fern", "bamboo", "aquatic", "other"];

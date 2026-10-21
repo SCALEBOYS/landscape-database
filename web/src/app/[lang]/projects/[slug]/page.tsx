@@ -24,6 +24,8 @@ import {
   localName,
   locales,
 } from "@/lib/i18n";
+import { satelliteImage } from "@/lib/mapbox";
+import { alternates, jsonLd, SITE_URL } from "@/lib/site";
 import { place, summary, toCard } from "@/lib/view";
 
 export async function generateStaticParams() {
@@ -35,7 +37,16 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/projects/[
   const { lang, slug } = await params;
   const found = hasLocale(lang) ? await getProject(slug) : null;
   if (!found || !hasLocale(lang)) return {};
-  return { title: localName(lang, found.project.name_ja, found.project.name_en) };
+  const p = found.project;
+  const title = localName(lang, p.name_ja, p.name_en);
+  const image = coverPhoto(p) ?? (p.lat !== null && p.lng !== null ? satelliteImage(p.lat, p.lng, { w: 1200, h: 630, zoom: 16 }) : null);
+  const description = summary(p, lang) ?? `${title} — ${place(p, lang)}`;
+  return {
+    title,
+    description,
+    alternates: alternates(lang, `/projects/${slug}`),
+    openGraph: { title, description, type: "article", ...(image ? { images: [{ url: image }] } : {}) },
+  };
 }
 
 const LAYERS = ["tall_tree", "mid_tree", "shrub", "ground_cover", "climber", "other"];
@@ -121,8 +132,21 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
     ],
   ];
 
+  // 検索エンジン向けの構造化データ（場所としての事例）
+  const structured = {
+    "@context": "https://schema.org",
+    "@type": "Place",
+    name,
+    url: `${SITE_URL}/${lang}/projects/${p.slug}`,
+    ...(text ? { description: text } : {}),
+    address: { "@type": "PostalAddress", addressCountry: "JP", addressRegion: p.prefecture, ...(p.municipality ? { addressLocality: p.municipality } : {}) },
+    ...(p.lat !== null && p.lng !== null ? { geo: { "@type": "GeoCoordinates", latitude: p.lat, longitude: p.lng } } : {}),
+    ...(coverPhoto(p) ? { image: coverPhoto(p) } : {}),
+  };
+
   return (
     <article>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(structured) }} />
       <SiteHero
         photo={coverPhoto(p)}
         lat={p.lat}
@@ -292,7 +316,7 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
               {facts.map(([k, v]) => (
                 <div key={k} className="contents">
                   <dt className="border-b border-line py-3.5 text-xs text-muted">{k}</dt>
-                  <dd className="border-b border-line py-3 text-sm">{v ?? "—"}</dd>
+                  <dd className="border-b border-line py-3 text-sm">{v ?? <span className="text-xs text-muted">{t.notRecorded}</span>}</dd>
                 </div>
               ))}
             </dl>

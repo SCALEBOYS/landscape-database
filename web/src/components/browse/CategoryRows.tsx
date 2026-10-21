@@ -30,8 +30,12 @@ export function CategoryRows({
     key: "uses" | "els" | "laws",
     title: string,
     rule: string,
-    list: { key: string; label: string; n: number; icon?: string }[],
-  ) => (
+    all: { key: string; label: string; n: number; total: number; icon?: string }[],
+  ) => {
+    // どの事例にも付いていない項目は出さない（選択中のものは残す）。行ごと空なら行を出さない
+    const list = all.filter((c) => c.total > 0 || filters[key].includes(c.key));
+    if (!list.length) return null;
+    return (
     <div className="catrow">
       <span className="rl">
         {title}
@@ -52,13 +56,14 @@ export function CategoryRows({
         })}
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="grid min-w-0 flex-1 gap-1">
-      {row("uses", t.useRow, t.useRule, USE_KEYS.map((k) => ({ key: k, label: categoryLabels[k][lang], n: countUse(k) })))}
-      {row("els", t.elRow, t.elRule, ELEMENTS.map((e) => ({ key: e.key, label: e[lang], n: countEl(e.key) })))}
-      {row("laws", t.lawRow, t.elRule, lawOptions.map((l) => ({ key: l.slug, label: l.label, n: countLaw(l.slug), icon: `law-${l.kind}` })))}
+      {row("uses", t.useRow, t.useRule, USE_KEYS.map((k) => ({ key: k, label: categoryLabels[k][lang], n: countUse(k), total: items.filter((it) => it.use === k).length })))}
+      {row("els", t.elRow, t.elRule, ELEMENTS.map((e) => ({ key: e.key, label: e[lang], n: countEl(e.key), total: items.filter((it) => it.elements.includes(e.key)).length })))}
+      {row("laws", t.lawRow, t.elRule, lawOptions.map((l) => ({ key: l.slug, label: l.label, n: countLaw(l.slug), total: items.filter((it) => it.laws.some((x) => x.slug === l.slug)).length, icon: `law-${l.kind}` })))}
     </div>
   );
 }

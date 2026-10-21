@@ -6,6 +6,7 @@ import { CardGrid } from "@/components/ProjectCard";
 import { getDesigners } from "@/lib/data";
 import { getDictionary, hasLocale, localName, locales } from "@/lib/i18n";
 import { toCard } from "@/lib/view";
+import { alternates } from "@/lib/site";
 
 export async function generateStaticParams() {
   const designers = await getDesigners();
@@ -15,7 +16,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/[lang]/designers/[slug]">): Promise<Metadata> {
   const { lang, slug } = await params;
   const d = (await getDesigners()).find((x) => x.party.slug === slug);
-  return d && hasLocale(lang) ? { title: localName(lang, d.party.name_ja, d.party.name_en) } : {};
+  return d && hasLocale(lang) ? { title: localName(lang, d.party.name_ja, d.party.name_en), alternates: alternates(lang, `/designers/${slug}`) } : {};
 }
 
 export default async function DesignerPage({ params }: PageProps<"/[lang]/designers/[slug]">) {

@@ -31,6 +31,7 @@ export type Filters = {
   munis: string[];
   y0: number | null;
   y1: number | null;
+  ynull: boolean; // 竣工年で絞るとき、竣工年が未登録の事例も含めるか
   species: string[];
   designers: string[];
   paving: string[];
@@ -40,7 +41,7 @@ export type Filters = {
 // 探す画面の法令の行に並べる候補（kind はアイコンの出し分けに使う）
 export type LawOption = { slug: string; label: string; kind: string };
 
-export const EMPTY: Filters = { q: "", uses: [], els: [], prefs: [], munis: [], y0: null, y1: null, species: [], designers: [], paving: [], laws: [] };
+export const EMPTY: Filters = { q: "", uses: [], els: [], prefs: [], munis: [], y0: null, y1: null, ynull: false, species: [], designers: [], paving: [], laws: [] };
 
 const LIST_KEYS = ["uses", "els", "prefs", "munis", "species", "designers", "paving", "laws"] as const;
 
@@ -50,6 +51,7 @@ export function parseFilters(params: URLSearchParams): Filters {
   const y0 = Number(params.get("y0")), y1 = Number(params.get("y1"));
   f.y0 = y0 || null;
   f.y1 = y1 || null;
+  f.ynull = params.get("ynull") === "1";
   return f;
 }
 
@@ -59,6 +61,7 @@ export function toQuery(f: Filters) {
   for (const k of LIST_KEYS) if (f[k].length) p.set(k, f[k].join(","));
   if (f.y0) p.set("y0", String(f.y0));
   if (f.y1) p.set("y1", String(f.y1));
+  if (f.ynull && (f.y0 || f.y1)) p.set("ynull", "1");
   const s = p.toString();
   return s ? `?${s}` : "";
 }
@@ -73,9 +76,12 @@ export function matches(it: BrowseItem, f: Filters, skip?: "uses" | "els" | "law
     if (!f.munis.includes(it.muni)) return false;
   } else if (f.prefs.length && !f.prefs.includes(it.pref)) return false;
   if (skip !== "years" && (f.y0 || f.y1)) {
-    if (it.year === null) return false;
-    if (f.y0 && it.year < f.y0) return false;
-    if (f.y1 && it.year > f.y1) return false;
+    if (it.year === null) {
+      if (!f.ynull) return false;
+    } else {
+      if (f.y0 && it.year < f.y0) return false;
+      if (f.y1 && it.year > f.y1) return false;
+    }
   }
   if (!f.species.every((s) => it.species.some((x) => x.slug === s))) return false;
   if (f.designers.length && !it.designers.some((d) => f.designers.includes(d.slug))) return false;

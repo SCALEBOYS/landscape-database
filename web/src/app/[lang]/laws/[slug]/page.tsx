@@ -7,6 +7,7 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { getLaws, getProjects } from "@/lib/data";
 import { getDictionary, hasLocale, localName, locales } from "@/lib/i18n";
 import { toCard } from "@/lib/view";
+import { alternates } from "@/lib/site";
 
 export async function generateStaticParams() {
   const laws = await getLaws();
@@ -16,7 +17,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/[lang]/laws/[slug]">): Promise<Metadata> {
   const { lang, slug } = await params;
   const law = (await getLaws()).find((l) => l.slug === slug);
-  return law && hasLocale(lang) ? { title: localName(lang, law.name_ja, law.name_en) } : {};
+  return law && hasLocale(lang) ? { title: localName(lang, law.name_ja, law.name_en), alternates: alternates(lang, `/laws/${slug}`) } : {};
 }
 
 export default async function LawPage({ params }: PageProps<"/[lang]/laws/[slug]">) {

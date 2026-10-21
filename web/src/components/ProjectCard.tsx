@@ -48,7 +48,7 @@ export function ProjectCard({
         {img ? (
           // 写真は Supabase Storage、代用の航空写真は Mapbox。サイズ最適化は本番前に next/image へ切り替える
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={img} alt={card.cover ? card.name : ""} loading="lazy" />
+          <img src={img} alt={card.cover ? card.name : lang === "en" ? `${card.name} — aerial view` : `${card.name}の航空写真`} loading="lazy" />
         ) : (
           <div className="flex h-full items-center justify-center text-muted">
             <Icon name={card.use} className="ico !h-10 !w-10" />

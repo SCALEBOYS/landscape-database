@@ -13,9 +13,16 @@ import { Icon } from "@/components/Icon";
 import { fmt, getDictionary, hasLocale, localName } from "@/lib/i18n";
 import { satelliteImage } from "@/lib/mapbox";
 import { yearRange } from "@/lib/years";
+import type { Metadata } from "next";
+import { alternates, jsonLd, SITE_URL } from "@/lib/site";
 
 // 樹種・設計者は、最近探したものと事例の多いものを合わせてこの件数まで。ほかは地図で探す
 const TAG_LIMIT = 15;
+
+export async function generateMetadata({ params }: PageProps<"/[lang]">): Promise<Metadata> {
+  const { lang } = await params;
+  return hasLocale(lang) ? { alternates: alternates(lang, "") } : {};
+}
 
 export default async function Home({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;
@@ -30,13 +37,13 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   });
 
   const hero = (
-    <div className="relative h-[clamp(440px,52vw,640px)] overflow-hidden bg-ink text-white">
+    <div className="relative h-[clamp(300px,34vw,460px)] overflow-hidden bg-ink text-white">
       <HeroSlides lang={lang} slides={slides} labels={{ pause: t.slidePause, play: t.slidePlay, go: t.slideGo }} />
-      <div className="wrap pointer-events-none absolute inset-x-0 bottom-[110px] md:bottom-[96px]">
+      <div className="wrap pointer-events-none absolute inset-x-0 bottom-[76px] md:bottom-[72px]">
         <div className="grid max-w-[980px] gap-3.5">
           <span className="eyebrow !text-white/75">{fmt(t.heroEyebrow, items.length)}</span>
-          <h1 className="text-[clamp(36px,6.4vw,92px)] font-extrabold leading-[1.02] tracking-[-0.022em]">{t.heroTitle}</h1>
-          <p className="hidden max-w-[52ch] text-[15px] leading-[1.8] text-white/85 md:block">{t.heroLead}</p>
+          <h1 className="text-[clamp(30px,4.6vw,66px)] font-extrabold leading-[1.04] tracking-[-0.022em]">{t.heroTitle}</h1>
+          <p className="hidden max-w-[52ch] text-[14px] leading-[1.75] text-white/85 lg:block">{t.heroLead}</p>
         </div>
       </div>
     </div>
@@ -102,9 +109,22 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   );
 
   const props = { lang, items, lawOptions, t, years: yearRange(items), hero, after };
+  // サイト全体の情報と、サイト内検索の入口（検索エンジン向け）
+  const site = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "Landscape Database",
+    url: `${SITE_URL}/${lang}`,
+    inLanguage: lang,
+    publisher: { "@type": "Organization", name: "Joulis Research & Architecture" },
+    potentialAction: { "@type": "SearchAction", target: `${SITE_URL}/${lang}/explore?q={search_term_string}`, "query-input": "required name=search_term_string" },
+  };
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(site) }} />
     <Suspense fallback={<HomeBrowser {...props} />}>
       <HomeBrowserFromUrl {...props} />
     </Suspense>
+    </>
   );
 }

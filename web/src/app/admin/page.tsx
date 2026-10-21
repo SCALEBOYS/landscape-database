@@ -24,6 +24,16 @@ async function ProjectList() {
     .order("updated_at", { ascending: false });
   if (error) throw error;
 
+  // 直近30日の0件検索を、同じ条件ごとにまとめて多い順に
+  const since = daysAgo(30);
+  const { data: misses } = await supabase.from("search_misses").select("q, filters, path, created_at").gte("created_at", since).order("created_at", { ascending: false }).limit(500);
+  const missGroups = [...(misses ?? []).reduce((m, r) => {
+    const label = [r.q && `「${r.q}」`, ...Object.entries(r.filters as Record<string, unknown>).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(",") : String(v)}`)].filter(Boolean).join(" / ") || "（条件なし）";
+    const cur = m.get(label);
+    m.set(label, { label, n: (cur?.n ?? 0) + 1, last: cur?.last ?? r.created_at });
+    return m;
+  }, new Map<string, { label: string; n: number; last: string }>()).values()].sort((a, b) => b.n - a.n).slice(0, 15);
+
   return (
     <>
       <AdminHeader email={user.email ?? ""} />
@@ -64,6 +74,29 @@ async function ProjectList() {
           ))}
         </tbody>
       </table>
+
+      <section className="mt-10 rounded-md border border-line bg-white p-5 text-sm">
+        <h2 className="mb-1 font-medium">0件になった検索（直近30日）</h2>
+        <p className="mb-3 text-xs text-muted">探されているのに事例がない条件です。事例を足す順番の参考にしてください。</p>
+        {missGroups.length ? (
+          <ol className="grid gap-1.5">
+            {missGroups.map((g) => (
+              <li key={g.label} className="flex gap-3">
+                <span className="num w-8 flex-none text-right text-muted">{g.n}</span>
+                <span className="min-w-0 flex-1 truncate">{g.label}</span>
+                <span className="flex-none text-xs text-muted">{new Date(g.last).toLocaleDateString("ja-JP")}</span>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="text-muted">まだ記録はありません</p>
+        )}
+      </section>
     </>
   );
+}
+
+// n 日前の日時（ISO 形式）
+function daysAgo(n: number) {
+  return new Date(Date.now() - n * 86400000).toISOString();
 }

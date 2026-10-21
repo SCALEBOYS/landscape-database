@@ -4,10 +4,11 @@ import { notFound } from "next/navigation";
 import { GraphView } from "@/components/graph/GraphView";
 import { getGraph } from "@/lib/graph";
 import { getDictionary, hasLocale } from "@/lib/i18n";
+import { alternates } from "@/lib/site";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/graph">): Promise<Metadata> {
   const { lang } = await params;
-  return hasLocale(lang) ? { title: getDictionary(lang).graph.title } : {};
+  return hasLocale(lang) ? { title: getDictionary(lang).graph.title, alternates: alternates(lang, "/graph") } : {};
 }
 
 export default async function GraphPage({ params }: PageProps<"/[lang]/graph">) {

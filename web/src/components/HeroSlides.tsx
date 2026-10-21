@@ -15,7 +15,8 @@ export function HeroSlides({ lang, slides, labels }: { lang: string; slides: Sli
   const n = slides.length;
 
   useEffect(() => {
-    if (n < 2 || paused || hover) return;
+    // 動きを減らす設定の人には自動で切り替えない（ボタンでは切り替えられる）
+    if (n < 2 || paused || hover || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const id = setTimeout(() => setI((x) => (x + 1) % n), INTERVAL);
     return () => clearTimeout(id);
   }, [i, n, paused, hover]);

@@ -9,6 +9,7 @@ import { getProjects, getSpeciesList, photoUrl } from "@/lib/data";
 import { getResearch } from "@/lib/research";
 import { getDictionary, growthFormLabels, hasLocale, label, layerLabels, localName, locales } from "@/lib/i18n";
 import { toCard } from "@/lib/view";
+import { alternates } from "@/lib/site";
 
 export async function generateStaticParams() {
   const species = await getSpeciesList();
@@ -18,7 +19,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps<"/[lang]/species/[slug]">): Promise<Metadata> {
   const { lang, slug } = await params;
   const s = (await getSpeciesList()).find((x) => x.slug === slug);
-  return s && hasLocale(lang) ? { title: `${localName(lang, s.name_ja, s.name_en)} (${s.scientific_name})` } : {};
+  return s && hasLocale(lang) ? { title: `${localName(lang, s.name_ja, s.name_en)} (${s.scientific_name})`, alternates: alternates(lang, `/species/${slug}`) } : {};
 }
 
 export default async function SpeciesPage({ params }: PageProps<"/[lang]/species/[slug]">) {

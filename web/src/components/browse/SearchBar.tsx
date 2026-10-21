@@ -272,8 +272,13 @@ function YearsPop({ items, filters, update, t, years, onClose }: Omit<Props, "la
           ),
         )}
       </div>
+      <label className="opt mt-3">
+        <input type="checkbox" checked={filters.ynull} onChange={(e) => update({ ynull: e.target.checked })} />
+        {t.includeUnknownYear}
+        <span className="c">{items.filter((it) => it.year === null).length}</span>
+      </label>
       <div className="pop-foot">
-        <button type="button" className="linkbtn" onClick={() => update({ y0: null, y1: null })}>
+        <button type="button" className="linkbtn" onClick={() => update({ y0: null, y1: null, ynull: false })}>
           {t.clear}
         </button>
         <span className="text-muted">{t.yearsNote}</span>

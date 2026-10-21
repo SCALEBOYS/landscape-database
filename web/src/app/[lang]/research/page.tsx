@@ -7,10 +7,11 @@ import { paperTitle } from "@/components/research/ResearchParts";
 import { getDictionary, hasLocale } from "@/lib/i18n";
 import { getResearch } from "@/lib/research";
 import { FIELDS } from "@/lib/research-fields";
+import { alternates } from "@/lib/site";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/research">): Promise<Metadata> {
   const { lang } = await params;
-  return hasLocale(lang) ? { title: getDictionary(lang).research.title } : {};
+  return hasLocale(lang) ? { title: getDictionary(lang).research.title, alternates: alternates(lang, "/research") } : {};
 }
 
 export default async function ResearchIndex({ params }: PageProps<"/[lang]/research">) {

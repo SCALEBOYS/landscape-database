@@ -5,10 +5,11 @@ import { notFound } from "next/navigation";
 import { Icon } from "@/components/Icon";
 import { getLaws, getProjects } from "@/lib/data";
 import { getDictionary, hasLocale, localName } from "@/lib/i18n";
+import { alternates } from "@/lib/site";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/laws">): Promise<Metadata> {
   const { lang } = await params;
-  return hasLocale(lang) ? { title: getDictionary(lang).laws.title } : {};
+  return hasLocale(lang) ? { title: getDictionary(lang).laws.title, alternates: alternates(lang, "/laws") } : {};
 }
 
 const KINDS = ["law", "system", "ordinance"] as const;

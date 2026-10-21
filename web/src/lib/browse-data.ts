@@ -16,7 +16,7 @@ export async function getBrowseItems(lang: Locale): Promise<BrowseItem[]> {
     const paving = [...new Map(p.components.filter((c) => c.category.kind === "paving").map((c) => [c.category.slug, c.category])).values()];
     const terms = [
       p.name_ja, p.name_en, p.prefecture, p.municipality,
-      ...designers.flatMap((d) => [d.name_ja, d.name_en]),
+      ...designers.flatMap((d) => [d.name_ja, d.name_en, ...(d.aliases ?? []).map((a) => a.alias)]),
       ...species.flatMap((s) => [s.name_ja, s.name_en, s.scientific_name, ...(aliasesBySlug.get(s.slug) ?? [])]),
       ...p.laws.flatMap(({ law }) => [law.name_ja, law.name_en, law.short_ja]),
     ];
