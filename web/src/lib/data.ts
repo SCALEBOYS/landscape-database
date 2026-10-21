@@ -205,7 +205,7 @@ export function coverPhoto(p: Project) {
   return photo ? photoUrl(photo.storage_path) : null;
 }
 
-export type Material = { slug: string; kind: string; name_ja: string; name_en: string | null; projects: { slug: string; name_ja: string; name_en: string | null }[] };
+export type Material = { slug: string; kind: string; name_ja: string; name_en: string | null; colors: string[]; textures: string[]; photo: string | null; photo_credit: string | null; projects: { slug: string; name_ja: string; name_en: string | null }[] };
 
 // 素材の分類と、それを使っている公開事例（素材から探す）
 export async function getMaterials(): Promise<Material[]> {
@@ -214,15 +214,19 @@ export async function getMaterials(): Promise<Material[]> {
   cacheTag("projects");
   const { data, error } = await supabase()
     .from("component_categories")
-    .select("slug, kind, name_ja, name_en, sort_order, uses:project_components(project:projects(slug, name_ja, name_en, status))")
+    .select("slug, kind, name_ja, name_en, sort_order, colors, textures, photo_path, photo_credit, uses:project_components(project:projects(slug, name_ja, name_en, status))")
     .order("sort_order");
   if (error) throw error;
-  type Row = { slug: string; kind: string; name_ja: string; name_en: string | null; uses: { project: { slug: string; name_ja: string; name_en: string | null; status: string } | null }[] };
+  type Row = { slug: string; kind: string; name_ja: string; name_en: string | null; colors: string[]; textures: string[]; photo_path: string | null; photo_credit: string | null; uses: { project: { slug: string; name_ja: string; name_en: string | null; status: string } | null }[] };
   return (data as unknown as Row[]).map((c) => ({
     slug: c.slug,
     kind: c.kind,
     name_ja: c.name_ja,
     name_en: c.name_en,
+    colors: c.colors,
+    textures: c.textures,
+    photo: c.photo_path ? photoUrl(c.photo_path) : null,
+    photo_credit: c.photo_credit,
     projects: [...new Map(c.uses.flatMap((u) => (u.project && u.project.status === "published" ? [[u.project.slug, u.project] as const] : []))).values()].map(({ slug, name_ja, name_en }) => ({ slug, name_ja, name_en })),
   }));
 }

@@ -126,7 +126,7 @@ export function HomeBrowser({ lang, items, lawOptions, t, years, hero, before, a
 }
 
 // find があれば（トップの「ほかは地図で探す」から来たとき）、そのタブで絞り込みパネルを開いておく
-export function Explore({ lang, items, lawOptions, t, years, initial = EMPTY, find }: Props & { initial?: Filters; find?: Tab }) {
+export function Explore({ lang, items, lawOptions, t, years, hero, initial = EMPTY, find }: Props & { initial?: Filters; find?: Tab }) {
   const { filters, update } = useFilterState(initial);
   const [panel, setPanel] = useState(!!find);
   const [inView, setInView] = useState(true);
@@ -150,6 +150,7 @@ export function Explore({ lang, items, lawOptions, t, years, initial = EMPTY, fi
 
   return (
     <>
+      {hero}
       <div ref={top} className="compact border-b border-line bg-white">
         <div className="grid gap-1.5 px-4 py-2.5 md:px-8">
           <div className="max-w-[860px]">

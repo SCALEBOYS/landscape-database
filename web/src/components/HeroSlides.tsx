@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-export type Slide = { slug: string; name: string; caption: string; img: string };
+// href は画像を押したときの行き先（事例・樹種・素材のページ）
+export type Slide = { href: string; name: string; caption: string; img: string };
 
 const INTERVAL = 5000;
 
-// トップの大きな画像。5秒ごとに次の事例へ切り替える。マウスを乗せている間・停止ボタンで止まる
-export function HeroSlides({ lang, slides, labels }: { lang: string; slides: Slide[]; labels: { pause: string; play: string; go: string } }) {
+// ページ上部の大きな画像。5秒ごとに次の画像へ切り替える。マウスを乗せている間・停止ボタンで止まる
+export function HeroSlides({ slides, labels }: { slides: Slide[]; labels: { pause: string; play: string; go: string } }) {
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
   const [hover, setHover] = useState(false);
@@ -31,7 +32,7 @@ export function HeroSlides({ lang, slides, labels }: { lang: string; slides: Sli
       {slides.map((s, k) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          key={s.slug}
+          key={s.href}
           src={near(k) || k < i ? s.img : undefined}
           alt=""
           className="absolute inset-0 h-full w-full object-cover transition-opacity duration-[1200ms]"
@@ -40,8 +41,8 @@ export function HeroSlides({ lang, slides, labels }: { lang: string; slides: Sli
       ))}
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/25 to-black/65" />
       <Link
-        key={cur.slug}
-        href={`/${lang}/projects/${cur.slug}`}
+        key={cur.href}
+        href={cur.href}
         className="fade-in absolute right-4 top-4 z-10 text-right text-xs leading-relaxed text-white/85 hover:text-white md:right-8"
       >
         <b className="block text-sm font-medium">{cur.name}</b>
@@ -51,7 +52,7 @@ export function HeroSlides({ lang, slides, labels }: { lang: string; slides: Sli
         <div className="absolute bottom-[64px] right-4 z-10 flex items-center gap-2 md:right-8">
           {slides.map((s, k) => (
             <button
-              key={s.slug}
+              key={s.href}
               type="button"
               aria-label={`${labels.go}: ${s.name}`}
               aria-current={k === i}

@@ -19,7 +19,7 @@ async function Materials() {
   if (!isAdmin) return <NotAdmin email={user.email ?? ""} />;
 
   const [{ data: categories, error }, { data: used }] = await Promise.all([
-    supabase.from("component_categories").select("id, kind, slug, name_ja, name_en, sort_order").order("sort_order").order("name_ja"),
+    supabase.from("component_categories").select("id, kind, slug, name_ja, name_en, sort_order, colors, textures, photo_path, photo_credit").order("sort_order").order("name_ja"),
     supabase.from("project_components").select("category_id"),
   ]);
   if (error) throw error;
@@ -31,11 +31,12 @@ async function Materials() {
       <AdminHeader email={user.email ?? ""} />
       <h1 className="mb-1 text-xl">素材の分類</h1>
       <p className="mb-6 text-sm text-muted">
-        事例の「構成要素」で選ぶ分類です。ここで足した分類は、事例の入力画面にすぐ出ます。「探す」画面の「舗装」の候補には、その分類を使った事例を保存すると出ます。
+        事例の「構成要素」で選ぶ分類です。ここで足した分類は、事例の入力画面にすぐ出ます。「探す」画面の「舗装」の候補には、その分類を使った事例を保存すると出ます。色・質感は「素材から探す」の見た目の絞り込みに使います。写真がない素材は、色と質感の見本で表示します。
       </p>
       <MaterialManager
         kinds={Object.entries(componentKindLabels).map(([key, v]) => ({ key, label: v.ja }))}
         categories={(categories ?? []).map((c) => ({ ...c, used: usage.get(c.id) ?? 0 })) as Category[]}
+        supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL ?? ""}
       />
     </>
   );

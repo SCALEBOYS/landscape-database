@@ -3,6 +3,7 @@
 import { updateTag } from "next/cache";
 
 import { componentKindLabels } from "@/lib/i18n";
+import { MATERIAL_COLORS, MATERIAL_TEXTURES } from "@/lib/material-visual";
 import { requireUser } from "@/lib/supabase-server";
 
 export type CategoryInput = {
@@ -12,6 +13,8 @@ export type CategoryInput = {
   name_ja: string;
   name_en: string;
   sort_order: string;
+  colors: string[];
+  textures: string[];
 };
 
 export type CategoryResult = { ok: boolean; message: string };
@@ -32,8 +35,11 @@ export async function saveCategory(c: CategoryInput): Promise<CategoryResult> {
   const order = c.sort_order.trim() === "" ? 100 : Number(c.sort_order);
   if (!Number.isInteger(order) || order < 0 || order > 32000) return { ok: false, message: "並び順は 0〜32000 の整数で入力してください" };
 
+  const colors = c.colors.filter((x) => x in MATERIAL_COLORS);
+  const textures = c.textures.filter((x) => x in MATERIAL_TEXTURES);
+
   const supabase = await adminClient();
-  const row = { kind: c.kind, slug, name_ja: c.name_ja.trim(), name_en: c.name_en.trim(), sort_order: order };
+  const row = { kind: c.kind, slug, name_ja: c.name_ja.trim(), name_en: c.name_en.trim(), sort_order: order, colors, textures };
   const { error } = c.id ? await supabase.from("component_categories").update(row).eq("id", c.id) : await supabase.from("component_categories").insert(row);
   if (error) return { ok: false, message: error.message.includes("component_categories_slug_key") ? "この slug はすでに使われています" : error.message };
   updateTag("projects");
@@ -50,4 +56,19 @@ export async function deleteCategory(id: string): Promise<CategoryResult> {
   if (error) return { ok: false, message: error.message };
   updateTag("projects");
   return { ok: true, message: "削除しました" };
+}
+
+// 素材の写真を差し替える（path が null なら外す）。前の写真のファイルは消す
+export async function setMaterialPhoto(id: string, path: string | null, credit: string): Promise<CategoryResult> {
+  const supabase = await adminClient();
+  const { data: before, error: readError } = await supabase.from("component_categories").select("photo_path").eq("id", id).single();
+  if (readError) return { ok: false, message: readError.message };
+  const { error } = await supabase
+    .from("component_categories")
+    .update({ photo_path: path, photo_credit: path ? credit.trim() || null : null })
+    .eq("id", id);
+  if (error) return { ok: false, message: error.message };
+  if (before?.photo_path && before.photo_path !== path) await supabase.storage.from("photos").remove([before.photo_path]);
+  updateTag("projects");
+  return { ok: true, message: path ? "写真を入れました" : "写真を外しました" };
 }

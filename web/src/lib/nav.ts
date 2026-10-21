@@ -39,7 +39,6 @@ export function siteNav(lang: Locale): NavGroup[] {
         { href: `${L}/research#methods`, label: g.research.methods, desc: g.research.methodsDesc, icon: "field-perception" },
         { href: `${L}/research#papers`, label: g.research.papers, desc: g.research.papersDesc, icon: "news" },
         { href: `${L}/laws`, label: g.research.laws, desc: g.research.lawsDesc, icon: "law-law" },
-        { href: `${L}/graph`, label: g.research.graph, desc: g.research.graphDesc, icon: "field-spatial" },
       ],
     },
     {
@@ -47,8 +46,9 @@ export function siteNav(lang: Locale): NavGroup[] {
       label: g.data.label,
       href: `${L}/data`,
       items: [
-        { href: `${L}/data/models`, label: g.data.models, desc: g.data.modelsDesc, icon: "cube" },
+        { href: `${L}/graph`, label: g.research.graph, desc: g.research.graphDesc, icon: "field-spatial" },
         { href: `${L}/data/photos`, label: g.data.photos, desc: g.data.photosDesc, icon: "camera" },
+        { href: `${L}/data/models`, label: g.data.models, desc: g.data.modelsDesc, icon: "cube" },
       ],
     },
   ];

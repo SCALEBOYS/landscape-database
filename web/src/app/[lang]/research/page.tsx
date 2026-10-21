@@ -97,11 +97,10 @@ export default async function ResearchIndex({ params }: PageProps<"/[lang]/resea
           </dl>
         </div>
       </div>
-      {/* RESEARCH の中の、法令とつながりへの入口 */}
+      {/* RESEARCH の中の、法令への入口（つながりは DATA へ移した） */}
       <div className="wrap grid gap-3 pt-6 sm:grid-cols-2">
         {[
           { href: `/${lang}/laws`, icon: "law-law", label: g.laws, desc: g.lawsDesc },
-          { href: `/${lang}/graph`, icon: "field-spatial", label: g.graph, desc: g.graphDesc },
         ].map((c) => (
           <Link key={c.href} href={c.href} className="group flex items-center gap-4 rounded-sm border border-line p-4 hover:border-ink">
             <span className="grid h-11 w-11 flex-none place-items-center rounded-full bg-soft"><Icon name={c.icon} className="ico !h-5 !w-5" /></span>

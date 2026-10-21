@@ -255,14 +255,14 @@ function Timeline({ papers, match, colorOf, onPick, label }: { papers: BrowserPa
   const decades = Array.from({ length: (y1 - y0) / 10 + 1 }, (_, i) => y0 + i * 10);
 
   return (
-    <figure className="relative mb-8 rounded-sm bg-ink px-2 pt-3 text-white">
-      <figcaption className="px-3 text-[11px] tracking-[.12em] text-white/60">{label}</figcaption>
+    <figure className="relative mb-8 rounded-sm border border-line bg-white px-2 pt-3">
+      <figcaption className="px-3 text-[11px] tracking-[.12em] text-muted">{label}</figcaption>
       <svg viewBox={`0 0 ${W} ${H}`} className="block h-auto w-full" role="img" aria-label={label}>
-        <line x1={PAD} x2={W - PAD} y1={BASE} y2={BASE} stroke="rgba(255,255,255,.35)" />
+        <line x1={PAD} x2={W - PAD} y1={BASE} y2={BASE} stroke="var(--line)" />
         {decades.map((d) => (
           <g key={d}>
-            <line x1={x(d)} x2={x(d)} y1={BASE - 4} y2={BASE + 4} stroke="rgba(255,255,255,.5)" />
-            <text x={x(d)} y={BASE + 20} textAnchor="middle" fontSize="12" fill="rgba(255,255,255,.65)">{d}</text>
+            <line x1={x(d)} x2={x(d)} y1={BASE - 4} y2={BASE + 4} stroke="var(--muted)" />
+            <text x={x(d)} y={BASE + 20} textAnchor="middle" fontSize="12" fill="var(--muted)">{d}</text>
           </g>
         ))}
         {dots.map(({ p, cx, cy }) => {
@@ -274,7 +274,7 @@ function Timeline({ papers, match, colorOf, onPick, label }: { papers: BrowserPa
               cy={cy}
               r={hover?.slug === p.slug ? 8 : 6}
               fill={colorOf(p)}
-              stroke="rgba(255,255,255,.9)"
+              stroke="#fff"
               strokeWidth="1.5"
               opacity={on ? 1 : 0.18}
               className="cursor-pointer transition-[r,opacity]"
@@ -288,7 +288,7 @@ function Timeline({ papers, match, colorOf, onPick, label }: { papers: BrowserPa
         })}
       </svg>
       {hover && (
-        <p className="pointer-events-none absolute right-4 top-3 max-w-[60%] truncate text-right text-xs text-white/85">
+        <p className="pointer-events-none absolute right-4 top-3 max-w-[60%] truncate text-right text-xs text-ink">
           <span className="num mr-2">{hover.year}</span>
           {hover.title}
         </p>
