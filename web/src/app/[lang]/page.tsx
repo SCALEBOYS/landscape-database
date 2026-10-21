@@ -85,10 +85,9 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
       </section>
     );
 
+  const before = postSection("NEWS", news);
   const after = (
     <>
-      {postSection(nt.features, features)}
-      {postSection("NEWS", news)}
       <section className="wrap pt-16">
         <div className="grid overflow-hidden rounded-sm border border-line md:grid-cols-[1.2fr_1fr]">
           <div className="relative min-h-[300px]">
@@ -104,6 +103,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
           </div>
         </div>
       </section>
+      {postSection(nt.features, features)}
       <section className="wrap grid gap-12 pt-16 md:grid-cols-2">
         <div className="grid content-start gap-4">
           <div className="flex items-baseline justify-between border-b border-line pb-3">
@@ -130,7 +130,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
     </>
   );
 
-  const props = { lang, items, lawOptions, t, years: yearRange(items), hero, after };
+  const props = { lang, items, lawOptions, t, years: yearRange(items), hero, before, after };
   // サイト全体の情報と、サイト内検索の入口（検索エンジン向け）
   const site = {
     "@context": "https://schema.org",

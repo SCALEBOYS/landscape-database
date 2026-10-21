@@ -26,6 +26,7 @@ type Props = {
   t: BrowseText;
   years: [number, number];
   hero?: React.ReactNode;
+  before?: React.ReactNode; // 一覧の上に出すもの（トップの NEWS）
   after?: React.ReactNode;
   title?: string; // 一覧の見出し（既定は「新着の事例」）
   limit?: number; // 最初に出す件数（既定は25件。残りは「もっと見る」）
@@ -68,7 +69,7 @@ export function ExploreFromUrl(props: Props) {
   return <Explore {...props} initial={parseFilters(new URLSearchParams(params.toString()))} find={find === "species" || find === "designers" ? find : undefined} />;
 }
 
-export function HomeBrowser({ lang, items, lawOptions, t, years, hero, after, title, limit = NEWEST_LIMIT, initial = EMPTY }: Props & { initial?: Filters }) {
+export function HomeBrowser({ lang, items, lawOptions, t, years, hero, before, after, title, limit = NEWEST_LIMIT, initial = EMPTY }: Props & { initial?: Filters }) {
   const { filters, update } = useFilterState(initial);
   const [panel, setPanel] = useState(false);
   const router = useRouter();
@@ -89,6 +90,7 @@ export function HomeBrowser({ lang, items, lawOptions, t, years, hero, after, ti
         <CategoryRows items={items} filters={filters} update={update} t={t} lang={lang} lawOptions={lawOptions} />
         <FilterButton filters={filters} t={t} onClick={() => setPanel(true)} />
       </div>
+      {before}
       <section className="wrap grid gap-6 pt-9">
         <div className="flex flex-wrap items-baseline justify-between gap-4 border-b border-line pb-3">
           <h2 className="text-[30px] font-extrabold tracking-[-0.02em]">{title ?? t.newest}</h2>
