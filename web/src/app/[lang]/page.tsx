@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 import { HomeBrowser, HomeBrowserFromUrl } from "@/components/browse/Browser";
 import { RecentTags } from "@/components/browse/RecentTags";
-import { HeroSlides, type Slide } from "@/components/HeroSlides";
+import { ProjectHero } from "@/components/browse/ProjectHero";
 import { ExploreMap } from "@/components/map/ExploreMap";
 import type { BrowseItem, Ref } from "@/lib/browse";
 import { getBrowseItems, getLawOptions } from "@/lib/browse-data";
@@ -13,7 +13,6 @@ import { getPosts } from "@/lib/posts";
 import { PostCard } from "@/components/news/PostCard";
 import { Icon } from "@/components/Icon";
 import { fmt, getDictionary, hasLocale, localName } from "@/lib/i18n";
-import { satelliteImage } from "@/lib/mapbox";
 import { yearRange } from "@/lib/years";
 import type { Metadata } from "next";
 import { alternates, jsonLd, SITE_URL } from "@/lib/site";
@@ -32,24 +31,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   const t = getDictionary(lang).browse;
   const [items, lawOptions, speciesMaster, posts] = await Promise.all([getBrowseItems(lang), getLawOptions(lang), getSpeciesList(), getPosts()]);
 
-  // ヒーローは5秒ごとに事例を切り替える。自分の写真があれば写真、なければ航空写真
-  const slides: Slide[] = items.flatMap((it) => {
-    const img = it.photo ?? (it.lat !== null && it.lng !== null ? satelliteImage(it.lat, it.lng, { w: 1280, h: 640, zoom: 16 }) : null);
-    return img ? [{ slug: it.slug, name: it.name, caption: it.photo ? it.place : t.aerialCaption, img }] : [];
-  });
-
-  const hero = (
-    <div className="relative h-[clamp(300px,34vw,460px)] overflow-hidden bg-ink text-white">
-      <HeroSlides lang={lang} slides={slides} labels={{ pause: t.slidePause, play: t.slidePlay, go: t.slideGo }} />
-      <div className="wrap pointer-events-none absolute inset-x-0 bottom-[76px] md:bottom-[72px]">
-        <div className="grid max-w-[980px] gap-3.5">
-          <span className="eyebrow !text-white/75">{fmt(t.heroEyebrow, items.length)}</span>
-          <h1 className="text-[clamp(30px,4.6vw,66px)] font-extrabold leading-[1.04] tracking-[-0.022em]">{t.heroTitle}</h1>
-          <p className="hidden max-w-[52ch] text-[14px] leading-[1.75] text-white/85 lg:block">{t.heroLead}</p>
-        </div>
-      </div>
-    </div>
-  );
+  const hero = <ProjectHero lang={lang} items={items} t={t} title={t.heroTitle} lead={t.heroLead} />;
 
   const tally = (pick: (it: BrowseItem) => Ref[]) => {
     const m = new Map<string, Ref & { n: number }>();
