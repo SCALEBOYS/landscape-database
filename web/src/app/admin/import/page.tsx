@@ -5,6 +5,9 @@ import { requireUser } from "@/lib/supabase-server";
 import { AdminHeader, NotAdmin } from "../AdminHeader";
 import { ImportTool } from "./ImportTool";
 
+// 座標の検索は外部サービスに何度か問い合わせるので、時間の上限を延ばす
+export const maxDuration = 60;
+
 export default function ImportPage() {
   return (
     <Suspense fallback={<p className="text-muted">読み込み中…</p>}>

@@ -39,21 +39,27 @@ export async function geocode(row: { name_ja: string; prefecture: string; munici
   const names = nameVariants(row.name_ja);
   // 地理院は地区名・川の名前にも当たるので、先頭の語だけの形（「中之島」など）は使わない
   const queries: [string, boolean][] = [[row.address, true], ...names.slice(0, -1).flatMap((n): [string, boolean][] => [[`${row.municipality}${n}`, false], [n, false]])];
-  for (const [q, isAddress] of queries) {
-    if (!q.trim()) continue;
-    try {
-      const res = await fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(8000) });
-      const hits = (await res.json()) as { geometry: { coordinates: [number, number] }; properties: { title: string; addressCode?: string } }[];
-      const hit = isAddress ? hits[0] : hits.find((h) => !pref || h.properties.addressCode?.startsWith(pref));
-      if (hit) {
-        const [lng, lat] = hit.geometry.coordinates;
-        return { lat, lng, label: hit.properties.title, via: "gsi" };
+  // 地理院への問い合わせはまとめて送り、優先順の早いものから採る
+  const answers = await Promise.all(
+    queries.map(async ([q, isAddress]) => {
+      if (!q.trim()) return null;
+      try {
+        const res = await fetch(`https://msearch.gsi.go.jp/address-search/AddressSearch?q=${encodeURIComponent(q)}`, { signal: AbortSignal.timeout(6000) });
+        const hits = (await res.json()) as { geometry: { coordinates: [number, number] }; properties: { title: string; addressCode?: string } }[];
+        return (isAddress ? hits[0] : hits.find((h) => !pref || h.properties.addressCode?.startsWith(pref))) ?? null;
+      } catch {
+        return null;
       }
-    } catch {
-      // 次の方法を試す
-    }
+    }),
+  );
+  const gsi = answers.find(Boolean);
+  if (gsi) {
+    const [lng, lat] = gsi.geometry.coordinates;
+    return { lat, lng, label: gsi.properties.title, via: "gsi" };
   }
-  for (const [i, n] of names.entries()) {
+  // OpenStreetMap は3回まで: 元の名称、言葉を外した名称、先頭の語だけ
+  const osm = [...new Set([names[0], names[1], names[names.length - 1]].filter(Boolean))];
+  for (const [i, n] of osm.entries()) {
     // OpenStreetMap は1秒に1回までの約束なので間をあける
     if (i) await new Promise((r) => setTimeout(r, 1100));
     const hit = await nominatim([n, row.municipality.split("・")[0], row.prefecture].filter(Boolean).join(" "));
@@ -77,7 +83,7 @@ async function nominatim(q: string): Promise<GeoHit> {
   try {
     const res = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=jp&q=${encodeURIComponent(q)}`, {
       headers: { "User-Agent": "LandscapeDatabase/1.0 (https://landscapedatabase.com)" },
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(6000),
     });
     const [hit] = (await res.json()) as { lat: string; lon: string; display_name: string }[];
     if (hit) return { lat: Number(hit.lat), lng: Number(hit.lon), label: hit.display_name, via: "osm" };
