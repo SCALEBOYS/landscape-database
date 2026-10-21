@@ -2,9 +2,16 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { defaultLocale, hasLocale, LANG_COOKIE, locales } from "@/lib/i18n";
+import { SITE_URL } from "@/lib/site";
+
+// 本番の vercel.app の URL は、独自ドメインへ恒久転送する（検索エンジンに同じページが二重に載らないように）
+const LEGACY_HOST = "landscape-database.vercel.app";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  if (request.headers.get("host") === LEGACY_HOST) {
+    return NextResponse.redirect(new URL(pathname + request.nextUrl.search, SITE_URL), 308);
+  }
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return refreshSession(request);
   if (locales.some((l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`))) return;
 
