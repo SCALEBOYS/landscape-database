@@ -51,9 +51,14 @@ export function ImportTool() {
   const run = () =>
     start(async () => {
       const picked = rows.filter((r) => r.pick && !r.result?.ok);
-      setStatus(`${picked.length} 件を取り込んでいます…`);
-      const results = await importProjects(picked);
-      setRows((rs) => rs.map((r) => ({ ...r, result: results.find((x) => x.line === r.line) ?? r.result })));
+      // 1回の通信が時間の上限を超えないよう、5件ずつ送る
+      const results: ImportResult[] = [];
+      for (let i = 0; i < picked.length; i += 5) {
+        setStatus(`取り込んでいます（${Math.min(i + 5, picked.length)}/${picked.length}）…`);
+        const part = await importProjects(picked.slice(i, i + 5));
+        results.push(...part);
+        setRows((rs) => rs.map((r) => ({ ...r, result: part.find((x) => x.line === r.line) ?? r.result })));
+      }
       const ok = results.filter((x) => x.ok).length;
       setStatus(`${ok} 件を下書きで取り込みました${results.length - ok ? `（${results.length - ok} 件は取り込めませんでした）` : ""}`);
     });
