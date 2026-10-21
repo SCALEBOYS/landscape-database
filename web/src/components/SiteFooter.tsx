@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { categoryLabels, getDictionary, type Locale } from "@/lib/i18n";
+import { siteNav } from "@/lib/nav";
 
 import { Icon } from "./Icon";
 
@@ -11,15 +12,7 @@ const FOOTER_USES = ["park", "plaza", "waterfront", "street", "office", "rooftop
 export function SiteFooter({ lang }: { lang: Locale }) {
   const t = getDictionary(lang);
   const f = t.footer;
-  const links: [string, string][] = [
-    [`/${lang}`, t.nav.projects],
-    [`/${lang}/explore`, t.nav.explore],
-    [`/${lang}/species`, t.nav.species],
-    [`/${lang}/designers`, t.nav.designers],
-    [`/${lang}/laws`, t.nav.laws],
-    [`/${lang}/research`, t.nav.research],
-    [`/${lang}/graph`, t.nav.graph],
-  ];
+  const groups = siteNav(lang).filter((g) => g.key !== "home");
 
   return (
     <footer className="site-footer mt-24 bg-ink text-white">
@@ -30,12 +23,16 @@ export function SiteFooter({ lang }: { lang: Locale }) {
           </Link>
           <p className="max-w-[34ch] text-sm leading-[1.8] text-white/65">{f.lead}</p>
         </div>
-        <nav className="grid content-start gap-3" aria-label={f.browse}>
-          <h2 className="eyebrow !text-white/45">{f.browse}</h2>
-          {links.map(([href, name]) => (
-            <Link key={href} href={href} className="text-sm text-white/85 hover:text-white hover:underline">
-              {name}
-            </Link>
+        <nav className="grid content-start gap-6" aria-label={f.browse}>
+          {groups.map((g) => (
+            <div key={g.key} className="grid gap-2.5">
+              <h2 className="eyebrow !text-white/45">{g.label}</h2>
+              {g.items.map((it) => (
+                <Link key={it.href} href={it.href} className="text-sm text-white/85 hover:text-white hover:underline">
+                  {it.label}
+                </Link>
+              ))}
+            </div>
           ))}
         </nav>
         <nav className="grid content-start gap-3" aria-label={f.byUse}>

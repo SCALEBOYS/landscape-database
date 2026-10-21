@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+import { Icon } from "@/components/Icon";
 import { ResearchBrowser, ResearchBrowserFromUrl, type BrowserMethod, type BrowserPaper } from "@/components/research/ResearchBrowser";
 import { paperTitle } from "@/components/research/ResearchParts";
 import { getDictionary, hasLocale } from "@/lib/i18n";
@@ -18,6 +20,7 @@ export default async function ResearchIndex({ params }: PageProps<"/[lang]/resea
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
   const t = getDictionary(lang).research;
+  const g = getDictionary(lang).groups.research;
   const { methods, papers } = await getResearch();
   const name = (slug: string) => {
     const m = methods.find((x) => x.slug === slug);
@@ -93,6 +96,22 @@ export default async function ResearchIndex({ params }: PageProps<"/[lang]/resea
             ))}
           </dl>
         </div>
+      </div>
+      {/* RESEARCH の中の、法令とつながりへの入口 */}
+      <div className="wrap grid gap-3 pt-6 sm:grid-cols-2">
+        {[
+          { href: `/${lang}/laws`, icon: "law-law", label: g.laws, desc: g.lawsDesc },
+          { href: `/${lang}/graph`, icon: "field-spatial", label: g.graph, desc: g.graphDesc },
+        ].map((c) => (
+          <Link key={c.href} href={c.href} className="group flex items-center gap-4 rounded-sm border border-line p-4 hover:border-ink">
+            <span className="grid h-11 w-11 flex-none place-items-center rounded-full bg-soft"><Icon name={c.icon} className="ico !h-5 !w-5" /></span>
+            <span className="grid">
+              <span className="font-semibold group-hover:underline">{c.label}</span>
+              <span className="text-xs text-muted">{c.desc}</span>
+            </span>
+            <Icon name="arrow" className="ico ml-auto !h-4 !w-4 text-muted" />
+          </Link>
+        ))}
       </div>
       <div className="wrap pt-6">
         <Suspense fallback={<ResearchBrowser {...props} />}>

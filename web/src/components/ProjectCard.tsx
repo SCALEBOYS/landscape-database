@@ -1,6 +1,9 @@
 import Link from "next/link";
 
+import { getDictionary, type Locale } from "@/lib/i18n";
 import { satelliteImage } from "@/lib/mapbox";
+
+import { CompareToggle } from "./compare/CompareToggle";
 
 import { Icon } from "./Icon";
 
@@ -54,6 +57,7 @@ export function ProjectCard({
             <Icon name={card.use} className="ico !h-10 !w-10" />
           </div>
         )}
+        <CompareToggle slug={card.slug} labels={getDictionary(lang as Locale).compare} />
         <span className="card-tag">
           <Icon name={card.use} />
           {card.useLabel}

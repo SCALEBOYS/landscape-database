@@ -9,9 +9,14 @@ import { Analytics } from "@vercel/analytics/next";
 
 import { Icon } from "@/components/Icon";
 import { LangSwitcher } from "@/components/LangSwitcher";
+import { CompareTray } from "@/components/compare/CompareTray";
 import { MobileMenu } from "@/components/MobileMenu";
+import { cardImage } from "@/components/ProjectCard";
+import { getBrowseItems } from "@/lib/browse-data";
+import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { getDictionary, hasLocale, locales } from "@/lib/i18n";
+import { siteNav } from "@/lib/nav";
 import { INDEXABLE, SITE_URL } from "@/lib/site";
 
 const noto = Noto_Sans_JP({ variable: "--font-noto-sans-jp", weight: ["400", "500", "700"], preload: false });
@@ -40,15 +45,9 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
   const t = getDictionary(lang);
-  const menu = [
-    { href: `/${lang}`, label: t.nav.projects, desc: t.menu.desc.projects, icon: "grid" },
-    { href: `/${lang}/explore`, label: t.nav.explore, desc: t.menu.desc.explore, icon: "map" },
-    { href: `/${lang}/species`, label: t.nav.species, desc: t.menu.desc.species, icon: "shade" },
-    { href: `/${lang}/designers`, label: t.nav.designers, desc: t.menu.desc.designers, icon: "field-design" },
-    { href: `/${lang}/laws`, label: t.nav.laws, desc: t.menu.desc.laws, icon: "law-law" },
-    { href: `/${lang}/research`, label: t.nav.research, desc: t.menu.desc.research, icon: "field-perception" },
-    { href: `/${lang}/graph`, label: t.nav.graph, desc: t.menu.desc.graph, icon: "field-spatial" },
-  ];
+  const groups = siteNav(lang);
+  // 画面下の「比較」欄に出すための、事例の名前と小さな画像
+  const trayProjects = (await getBrowseItems(lang)).map((it) => ({ slug: it.slug, name: it.name, img: cardImage({ cover: it.photo, lat: it.lat, lng: it.lng }) }));
 
   return (
     <html lang={lang} className={`${noto.variable} ${inter.variable} h-full antialiased`}>
@@ -62,23 +61,22 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
               {t.siteName}
             </Link>
             {/* PC・タブレットは横並び。スマホは「地図」だけ出して、ほかはメニューから */}
-            <nav className="ml-auto hidden items-center gap-5 whitespace-nowrap text-sm font-medium md:flex lg:gap-6">
-              {menu.map((it) => (
-                <Link key={it.href} href={it.href} className="opacity-75 hover:opacity-100">{it.label}</Link>
-              ))}
-              <LangSwitcher current={lang} />
+            <nav className="ml-auto hidden items-center gap-4 whitespace-nowrap md:flex" aria-label="main">
+              <SiteNav groups={groups} lang={lang} />
+              <span className="text-sm"><LangSwitcher current={lang} /></span>
             </nav>
             <div className="ml-auto flex items-center gap-3 text-[13px] font-medium md:hidden">
               <Link href={`/${lang}/explore`} className="flex items-center gap-1.5 rounded-full border border-white/25 px-3 py-1.5 hover:bg-white/10">
                 <Icon name="map" className="ico !h-4 !w-4" />
                 {t.nav.explore}
               </Link>
-              <MobileMenu lang={lang} items={menu} labels={{ open: t.menu.open, close: t.menu.close }} />
+              <MobileMenu lang={lang} groups={groups} labels={{ open: t.menu.open, close: t.menu.close }} />
             </div>
           </div>
         </header>
         <main id="main" className="fade-in flex-1">{children}</main>
         <SiteFooter lang={lang} />
+        <CompareTray lang={lang} projects={trayProjects} labels={t.compare} />
         {/* アクセス計測（Cookie を使わない Vercel Web Analytics） */}
         <Analytics />
       </body>

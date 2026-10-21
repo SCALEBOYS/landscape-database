@@ -8,6 +8,7 @@ import { ModelSection } from "@/components/ModelSection";
 import { PhotoCarousel, type PhotoPoint, type Slide } from "@/components/PhotoCarousel";
 import { PhotoSpotMap, type Spot } from "@/components/PhotoSpotMap";
 import { PaperRow } from "@/components/research/ResearchParts";
+import { CompareToggle } from "@/components/compare/CompareToggle";
 import { getResearch } from "@/lib/research";
 import { SiteHero } from "@/components/map/SiteHero";
 import { CardGrid, ProjectCard } from "@/components/ProjectCard";
@@ -165,8 +166,9 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
       </SiteHero>
 
       <div className="wrap">
-        <nav className="flex flex-wrap gap-2 pt-4 text-xs text-muted">
-          <Link href={`/${lang}`} className="hover:text-ink hover:underline">{dict.nav.projects}</Link>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-4">
+        <nav className="flex flex-wrap gap-2 text-xs text-muted">
+          <Link href={`/${lang}/projects`} className="hover:text-ink hover:underline">{dict.nav.projects}</Link>
           <span>/</span>
           {parent ? (
             <Link href={`/${lang}/projects/${parent.slug}`} className="hover:text-ink hover:underline">{localName(lang, parent.name_ja, parent.name_en)}</Link>
@@ -176,6 +178,8 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
           <span>/</span>
           <span>{name}</span>
         </nav>
+        <CompareToggle slug={p.slug} labels={dict.compare} variant="page" />
+        </div>
 
         {slides.length > 0 && (
           <section className="pt-8">

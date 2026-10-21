@@ -8,11 +8,10 @@ import { Icon } from "./Icon";
 import { LangSwitcher } from "./LangSwitcher";
 
 import type { Locale } from "@/lib/i18n";
-
-export type MenuItem = { href: string; label: string; desc: string; icon: string };
+import type { NavGroup } from "@/lib/nav";
 
 // スマホのヘッダー右端のメニュー。ヘッダーの下に全面で開き、各ページへ移れる
-export function MobileMenu({ lang, items, labels }: { lang: Locale; items: MenuItem[]; labels: { open: string; close: string } }) {
+export function MobileMenu({ lang, groups, labels }: { lang: Locale; groups: NavGroup[]; labels: { open: string; close: string } }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
@@ -29,7 +28,10 @@ export function MobileMenu({ lang, items, labels }: { lang: Locale; items: MenuI
     };
   }, [open]);
 
-  const current = (href: string) => (href === `/${lang}` ? pathname === href : pathname === href || pathname.startsWith(`${href}/`));
+  const current = (href: string) => {
+    const path = href.split("#")[0];
+    return path === `/${lang}` ? pathname === path : pathname === path || pathname.startsWith(`${path}/`);
+  };
 
   return (
     <>
@@ -49,29 +51,34 @@ export function MobileMenu({ lang, items, labels }: { lang: Locale; items: MenuI
         hidden={!open}
         className="fade-in fixed inset-x-0 bottom-0 top-[var(--hdr)] z-40 overflow-y-auto bg-ink text-white md:hidden"
       >
-        <nav className="grid gap-1 px-4 pb-10 pt-3">
-          {items.map((it, i) => {
-            const on = current(it.href);
-            return (
-              <Link
-                key={it.href}
-                href={it.href}
-                onClick={() => setOpen(false)}
-                aria-current={on ? "page" : undefined}
-                className={`menu-item group flex items-center gap-4 rounded-lg px-3 py-3.5 ${on ? "bg-white/10" : "hover:bg-white/5"}`}
-                style={{ animationDelay: `${i * 35}ms` }}
-              >
-                <span className={`grid h-11 w-11 flex-none place-items-center rounded-full ${on ? "bg-white text-ink" : "bg-white/10 text-white"}`}>
-                  <Icon name={it.icon} className="ico !h-5 !w-5" />
-                </span>
-                <span className="grid min-w-0 gap-0.5">
-                  <span className="text-[19px] font-semibold leading-tight tracking-[-0.01em]">{it.label}</span>
-                  <span className="truncate text-[13px] text-white/55">{it.desc}</span>
-                </span>
-                <Icon name="arrow" className="ico ml-auto !h-4 !w-4 flex-none opacity-40 transition group-hover:translate-x-0.5 group-hover:opacity-80" />
-              </Link>
-            );
-          })}
+        <nav className="grid gap-6 px-4 pb-10 pt-4">
+          {groups.map((g, gi) => (
+            <section key={g.key} className="grid gap-1">
+              <h2 className="px-3 pb-1 text-[11px] font-semibold tracking-[.16em] text-white/45">{g.label}</h2>
+              {g.items.map((it, i) => {
+                const on = current(it.href);
+                return (
+                  <Link
+                    key={it.href}
+                    href={it.href}
+                    onClick={() => setOpen(false)}
+                    aria-current={on ? "page" : undefined}
+                    className={`menu-item group flex items-center gap-4 rounded-lg px-3 py-2.5 ${on ? "bg-white/10" : "hover:bg-white/5"}`}
+                    style={{ animationDelay: `${(gi * 3 + i) * 25}ms` }}
+                  >
+                    <span className={`grid h-10 w-10 flex-none place-items-center rounded-full ${on ? "bg-white text-ink" : "bg-white/10 text-white"}`}>
+                      <Icon name={it.icon} className="ico !h-5 !w-5" />
+                    </span>
+                    <span className="grid min-w-0 gap-0.5">
+                      <span className="text-[17px] font-semibold leading-tight tracking-[-0.01em]">{it.label}</span>
+                      <span className="truncate text-[12px] text-white/55">{it.desc}</span>
+                    </span>
+                    <Icon name="arrow" className="ico ml-auto !h-4 !w-4 flex-none opacity-40 transition group-hover:translate-x-0.5 group-hover:opacity-80" />
+                  </Link>
+                );
+              })}
+            </section>
+          ))}
           <div className="mt-4 flex items-center justify-between border-t border-white/15 px-3 pt-5 text-sm">
             <span className="text-white/50">Landscape Database</span>
             <span onClick={() => setOpen(false)}>

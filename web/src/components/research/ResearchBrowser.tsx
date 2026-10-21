@@ -141,7 +141,7 @@ export function ResearchBrowser({ lang, methods, papers, t, initial = { q: "", f
       </div>
 
       {/* 手法 */}
-      <section className="mt-10">
+      <section id="methods" className="mt-10 scroll-mt-[calc(var(--hdr)+120px)]">
         <h2 className="mb-4 flex items-baseline gap-3 text-lg font-medium">
           {t.methods}
           <span className="num text-sm text-muted">{shownMethods.length}</span>
@@ -184,7 +184,7 @@ export function ResearchBrowser({ lang, methods, papers, t, initial = { q: "", f
       </section>
 
       {/* 論文 */}
-      <section className="mt-14">
+      <section id="papers" className="mt-14 scroll-mt-[calc(var(--hdr)+120px)]">
         <h2 className="mb-4 flex items-baseline gap-3 text-lg font-medium">
           {t.papers}
           <span className="num text-sm text-muted">{shownPapers.length}</span>

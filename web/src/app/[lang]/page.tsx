@@ -9,6 +9,8 @@ import { ExploreMap } from "@/components/map/ExploreMap";
 import type { BrowseItem, Ref } from "@/lib/browse";
 import { getBrowseItems, getLawOptions } from "@/lib/browse-data";
 import { getSpeciesList } from "@/lib/data";
+import { getPosts } from "@/lib/posts";
+import { PostCard } from "@/components/news/PostCard";
 import { Icon } from "@/components/Icon";
 import { fmt, getDictionary, hasLocale, localName } from "@/lib/i18n";
 import { satelliteImage } from "@/lib/mapbox";
@@ -28,7 +30,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
   const t = getDictionary(lang).browse;
-  const [items, lawOptions, speciesMaster] = await Promise.all([getBrowseItems(lang), getLawOptions(lang), getSpeciesList()]);
+  const [items, lawOptions, speciesMaster, posts] = await Promise.all([getBrowseItems(lang), getLawOptions(lang), getSpeciesList(), getPosts()]);
 
   // ヒーローは5秒ごとに事例を切り替える。自分の写真があれば写真、なければ航空写真
   const slides: Slide[] = items.flatMap((it) => {
@@ -65,8 +67,28 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
     <RecentTags lang={lang} kind={kind} base={kind} options={list} limit={TAG_LIMIT} recentLabel={t.recentMark} empty={t.noOptions} />
   );
 
+  const news = posts.filter((p) => p.kind === "news").slice(0, 3);
+  const features = posts.filter((p) => p.kind === "feature").slice(0, 3);
+  const nt = getDictionary(lang).news;
+  const postSection = (title: string, list: typeof posts) =>
+    list.length > 0 && (
+      <section className="wrap pt-16">
+        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-4 border-b border-line pb-3">
+          <h2 className="text-[30px] font-extrabold tracking-[-0.02em]">{title}</h2>
+          <Link href={`/${lang}/news`} className="inline-flex items-center gap-1.5 text-sm font-medium hover:underline">
+            {nt.all} <Icon name="arrow" />
+          </Link>
+        </div>
+        <ul className="grid gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+          {list.map((p) => <li key={p.slug}><PostCard post={p} lang={lang} featureLabel={nt.feature} /></li>)}
+        </ul>
+      </section>
+    );
+
   const after = (
     <>
+      {postSection(nt.features, features)}
+      {postSection("NEWS", news)}
       <section className="wrap pt-16">
         <div className="grid overflow-hidden rounded-sm border border-line md:grid-cols-[1.2fr_1fr]">
           <div className="relative min-h-[300px]">

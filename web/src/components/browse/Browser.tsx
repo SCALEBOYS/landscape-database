@@ -27,6 +27,8 @@ type Props = {
   years: [number, number];
   hero?: React.ReactNode;
   after?: React.ReactNode;
+  title?: string; // 一覧の見出し（既定は「新着の事例」）
+  limit?: number; // 最初に出す件数（既定は25件。残りは「もっと見る」）
 };
 
 const toCard = (it: BrowseItem, t: BrowseText): CardData => ({
@@ -66,13 +68,13 @@ export function ExploreFromUrl(props: Props) {
   return <Explore {...props} initial={parseFilters(new URLSearchParams(params.toString()))} find={find === "species" || find === "designers" ? find : undefined} />;
 }
 
-export function HomeBrowser({ lang, items, lawOptions, t, years, hero, after, initial = EMPTY }: Props & { initial?: Filters }) {
+export function HomeBrowser({ lang, items, lawOptions, t, years, hero, after, title, limit = NEWEST_LIMIT, initial = EMPTY }: Props & { initial?: Filters }) {
   const { filters, update } = useFilterState(initial);
   const [panel, setPanel] = useState(false);
   const router = useRouter();
   const list = useMemo(() => items.filter((it) => matches(it, filters)), [items, filters]);
   const [more, setMore] = useState(false);
-  const shown = more ? list : list.slice(0, NEWEST_LIMIT);
+  const shown = more ? list : list.slice(0, limit);
   const goExplore = () => router.push(`/${lang}/explore${toQuery(filters)}`);
 
   return (
@@ -89,7 +91,7 @@ export function HomeBrowser({ lang, items, lawOptions, t, years, hero, after, in
       </div>
       <section className="wrap grid gap-6 pt-9">
         <div className="flex flex-wrap items-baseline justify-between gap-4 border-b border-line pb-3">
-          <h2 className="text-[30px] font-extrabold tracking-[-0.02em]">{t.newest}</h2>
+          <h2 className="text-[30px] font-extrabold tracking-[-0.02em]">{title ?? t.newest}</h2>
           <span className="text-[13px] text-muted">{fmt(t.count, list.length)}</span>
           <Link href={`/${lang}/explore${toQuery(filters)}`} className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium hover:underline">
             {t.seeOnMap} <Icon name="arrow" />
@@ -105,9 +107,9 @@ export function HomeBrowser({ lang, items, lawOptions, t, years, hero, after, in
                 ))}
               </div>
             </div>
-            {list.length > NEWEST_LIMIT && (
+            {list.length > limit && (
               <button type="button" onClick={() => setMore((m) => !m)} className="fbtn justify-self-center">
-                {more ? t.showLess : fmt(t.showMore, list.length - NEWEST_LIMIT)}
+                {more ? t.showLess : fmt(t.showMore, list.length - limit)}
               </button>
             )}
           </>

@@ -204,3 +204,25 @@ export function coverPhoto(p: Project) {
   const photo = p.photos.find((ph) => ph.is_cover) ?? p.photos[0];
   return photo ? photoUrl(photo.storage_path) : null;
 }
+
+export type Material = { slug: string; kind: string; name_ja: string; name_en: string | null; projects: { slug: string; name_ja: string; name_en: string | null }[] };
+
+// 素材の分類と、それを使っている公開事例（素材から探す）
+export async function getMaterials(): Promise<Material[]> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag("projects");
+  const { data, error } = await supabase()
+    .from("component_categories")
+    .select("slug, kind, name_ja, name_en, sort_order, uses:project_components(project:projects(slug, name_ja, name_en, status))")
+    .order("sort_order");
+  if (error) throw error;
+  type Row = { slug: string; kind: string; name_ja: string; name_en: string | null; uses: { project: { slug: string; name_ja: string; name_en: string | null; status: string } | null }[] };
+  return (data as unknown as Row[]).map((c) => ({
+    slug: c.slug,
+    kind: c.kind,
+    name_ja: c.name_ja,
+    name_en: c.name_en,
+    projects: [...new Map(c.uses.flatMap((u) => (u.project && u.project.status === "published" ? [[u.project.slug, u.project] as const] : []))).values()].map(({ slug, name_ja, name_en }) => ({ slug, name_ja, name_en })),
+  }));
+}
