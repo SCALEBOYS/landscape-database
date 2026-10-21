@@ -10,3 +10,13 @@ export function alternates(lang: string, path: string) {
 
 // 構造化データ（JSON-LD）を <script> に入れる文字列。</script> で途切れないようにする
 export const jsonLd = (data: unknown) => JSON.stringify(data).replace(/</g, "\\u003c");
+
+// ソーシャルメディアのアカウント。URL を入れたものだけフッターに出し、検索エンジン向けの sameAs にも載せる
+export const SOCIAL = [
+  { key: "instagram", label: "Instagram", url: "" },
+  { key: "x", label: "X", url: "" },
+  { key: "youtube", label: "YouTube", url: "" },
+  { key: "note", label: "note", url: "" },
+  { key: "pinterest", label: "Pinterest", url: "" },
+] as const;
+export const socialLinks = () => SOCIAL.filter((s) => s.url);

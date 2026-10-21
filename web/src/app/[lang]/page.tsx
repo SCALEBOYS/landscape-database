@@ -15,7 +15,7 @@ import { Icon } from "@/components/Icon";
 import { fmt, getDictionary, hasLocale, localName } from "@/lib/i18n";
 import { yearRange } from "@/lib/years";
 import type { Metadata } from "next";
-import { alternates, jsonLd, SITE_URL } from "@/lib/site";
+import { alternates, jsonLd, SITE_URL, socialLinks } from "@/lib/site";
 
 // 樹種・設計者は、最近探したものと事例の多いものを合わせてこの件数まで。ほかは地図で探す
 const TAG_LIMIT = 15;
@@ -121,6 +121,7 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
     url: `${SITE_URL}/${lang}`,
     inLanguage: lang,
     publisher: { "@type": "Organization", name: "Joulis Research & Architecture" },
+    ...(socialLinks().length ? { sameAs: socialLinks().map((s) => s.url) } : {}),
     potentialAction: { "@type": "SearchAction", target: `${SITE_URL}/${lang}/explore?q={search_term_string}`, "query-input": "required name=search_term_string" },
   };
   return (

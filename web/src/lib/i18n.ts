@@ -218,6 +218,7 @@ const ja = {
     terms: "利用規約",
     privacy: "プライバシーポリシー",
     contact: "お問い合わせ・訂正依頼",
+    follow: "ソーシャルメディア",
   },
   graph: {
     title: "つながり",
@@ -545,6 +546,7 @@ const en: Dict = {
     terms: "Terms of use",
     privacy: "Privacy policy",
     contact: "Contact and corrections",
+    follow: "Social media",
   },
   graph: {
     title: "Connections",
