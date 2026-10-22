@@ -3,14 +3,12 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 
-import { parseTable, TEMPLATE_EXAMPLE, TEMPLATE_HEADERS, toImportRows, type ImportRow } from "@/lib/import-projects";
+import { parseTable, TEMPLATE_EXAMPLE, TEMPLATE_HEADERS, toCsv, toImportRows, type ImportRow } from "@/lib/import-projects";
 import { categoryLabels } from "@/lib/i18n";
 
 import { geocode, importProjects, type GeoHit, type ImportResult } from "./actions";
 
 type Row = ImportRow & { pick: boolean; geo?: GeoHit | "searching" | "none"; result?: ImportResult };
-
-const csvCell = (s: string) => (/[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
 
 export function ImportTool() {
   const [text, setText] = useState("");
@@ -28,7 +26,7 @@ export function ImportTool() {
   const update = (i: number, patch: Partial<Row>) => setRows((rs) => rs.map((r, k) => (k === i ? { ...r, ...patch } : r)));
 
   const template = () => {
-    const csv = [TEMPLATE_HEADERS, TEMPLATE_EXAMPLE].map((r) => r.map(csvCell).join(",")).join("\n");
+    const csv = toCsv([TEMPLATE_HEADERS, TEMPLATE_EXAMPLE]);
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv" }));
     a.download = "landscape-database-import.csv";
@@ -67,10 +65,16 @@ export function ImportTool() {
 
   return (
     <div className="grid gap-6">
+      <section className="flex flex-wrap items-center gap-3 rounded-md border border-line bg-white p-5 text-sm">
+        <h2 className="mr-2 font-medium">CSV ファイル</h2>
+        <button type="button" onClick={template} className="rounded-md bg-accent px-4 py-2 text-white">取り込み用のひな形をダウンロード</button>
+        {/* ファイルのダウンロードなので、ページ移動の Link ではなく通常のリンクにする */}
+        <a href="/admin/export" download className="rounded-md border border-ink px-4 py-2 hover:bg-ink hover:text-white">登録済みの事例を書き出す</a>
+        <p className="w-full text-xs text-muted">ひな形は 1 行目が列名、2 行目が記入例です。書き出しは下書きも含めた全事例を、ひな形と同じ列の並びに、樹種・素材・写真の枚数などの確認用の列を足して出します。Excel・Google スプレッドシートで開けます。</p>
+      </section>
       <section className="grid gap-3 rounded-md border border-line bg-white p-5 text-sm">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-medium">1. 表を貼り付ける</h2>
-          <button type="button" onClick={template} className="text-accent hover:underline">ひな形（CSV）をダウンロード</button>
         </div>
         <p className="text-xs text-muted">
           使える列: {TEMPLATE_HEADERS.join("・")}。名称・用途・都道府県は必須です。用途は「公園」「広場」などの言葉でかまいません。設計・受賞は「／」で区切ると複数入れられます。

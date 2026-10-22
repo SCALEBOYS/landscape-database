@@ -150,3 +150,7 @@ export function toImportRows(table: string[][]): { rows: ImportRow[]; unknownCol
 // 取り込み用のひな形（スプレッドシートの1行目にそのまま使える）
 export const TEMPLATE_HEADERS = ["名称", "英語名", "用途", "都道府県", "市区町村", "住所", "緯度", "経度", "竣工年", "面積", "設計", "受賞", "受賞年", "出典", "概要"];
 export const TEMPLATE_EXAMPLE = ["東遊園地再整備", "Higashi Yuenchi Park", "公園", "兵庫県", "神戸市中央区", "兵庫県神戸市中央区加納町6丁目4", "", "", "2023", "", "空間創研／公園マネジメント研究所", "CLA賞設計部門最優秀賞", "2023", "https://www.cla.or.jp/", "（自分の言葉で短く）"];
+
+// CSV に書き出す（ひな形と書き出しで共通）。カンマ・改行・引用符を含むセルは引用符で囲む
+const csvCell = (s: string) => (/[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
+export const toCsv = (rows: string[][]) => rows.map((r) => r.map(csvCell).join(",")).join("\r\n");

@@ -58,9 +58,13 @@ async function ProjectList() {
       </section>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl">物件（{projects.length}件）</h1>
-        <Link href="/admin/projects/new" className="rounded-md bg-accent px-4 py-2 text-sm text-white">
-          新規登録
-        </Link>
+        <span className="flex gap-2">
+          {/* ファイルのダウンロードなので、ページ移動の Link ではなく通常のリンクにする */}
+          <a href="/admin/export" download className="rounded-md border border-ink px-4 py-2 text-sm hover:bg-ink hover:text-white">CSV で書き出す</a>
+          <Link href="/admin/projects/new" className="rounded-md bg-accent px-4 py-2 text-sm text-white">
+            新規登録
+          </Link>
+        </span>
       </div>
       <table className="w-full border-collapse bg-white text-sm">
         <thead>
