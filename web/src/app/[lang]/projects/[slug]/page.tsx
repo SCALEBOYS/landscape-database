@@ -11,7 +11,7 @@ import { PaperRow } from "@/components/research/ResearchParts";
 import { CompareToggle } from "@/components/compare/CompareToggle";
 import { getResearch } from "@/lib/research";
 import { SiteHero } from "@/components/map/SiteHero";
-import { CardGrid, ProjectCard } from "@/components/ProjectCard";
+import { CardGrid } from "@/components/ProjectCard";
 import { getBrowseItems } from "@/lib/browse-data";
 import { ELEMENTS, elementsOf } from "@/lib/catalog";
 import { coverPhoto, getProject, getProjects, modelUrl, photoUrl, completedLabel } from "@/lib/data";
@@ -27,6 +27,7 @@ import {
 } from "@/lib/i18n";
 import { satelliteImage } from "@/lib/mapbox";
 import { alternates, jsonLd, SITE_URL } from "@/lib/site";
+import { relatedGroups } from "@/lib/related";
 import { place, summary, toCard } from "@/lib/view";
 
 export async function generateStaticParams() {
@@ -81,11 +82,10 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
   const componentKinds = [...new Set(p.components.map((c) => c.category.kind))];
   const elements = elementsOf(p);
 
-  // 前後の事例（一覧と同じ並び）と、位置の小さな地図
+  // 関連する事例（設計・用途・年代・場所が近いもの）と、位置の小さな地図
   const [projects, research] = await Promise.all([getProjects(), getResearch()]);
   const papers = research.papers.filter((pa) => pa.projects.some((x) => x.project.slug === p.slug));
-  const i = projects.findIndex((x) => x.id === p.id);
-  const neighbours = projects.length > 1 ? [projects[(i + projects.length - 1) % projects.length], projects[(i + 1) % projects.length]] : [];
+  const related = relatedGroups(p, projects, lang);
   const mapItems = (await getBrowseItems(lang)).filter((it) => it.slug === p.slug && it.lat !== null);
 
   // 写真のカルーセル: カバー写真を先頭に。ポイントの素材には、この事例の構成要素から製品名・メーカーを添える
@@ -209,7 +209,6 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
           </section>
         )}
 
-        {spots.length > 0 && <PhotoSpotMap spots={spots} total={slides.length} labels={{ title: t.spots, hint: t.spotsHint, close: t.close }} />}
 
         {p.models.length > 0 && (
           <ModelSection
@@ -358,16 +357,15 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
           </aside>
         </div>
 
-        {neighbours.length > 0 && (
-          <div className="grid gap-6 pt-16 md:grid-cols-2">
-            {neighbours.map((x, k) => (
-              <div key={`${k}-${x.slug}`} className="grid gap-2.5">
-                <span className="eyebrow">{k === 0 ? (lang === "ja" ? "前の事例" : "Previous") : lang === "ja" ? "次の事例" : "Next"}</span>
-                <ProjectCard lang={lang} card={toCard(x, lang)} />
-              </div>
-            ))}
-          </div>
-        )}
+        {/* 撮影地点は本文の後ろに小さめに */}
+        {spots.length > 0 && <PhotoSpotMap spots={spots} total={slides.length} labels={{ title: t.spots, hint: t.spotsHint, close: t.close }} />}
+
+        {related.map((g) => (
+          <section key={g.key} className="grid gap-5 pt-14">
+            <h2 className="border-t border-ink pt-3 text-[13px] font-medium tracking-[.1em] text-muted">{t.relatedTitles[g.key]}</h2>
+            <CardGrid lang={lang} cards={g.items.map((x) => toCard(x.project, lang, x.note))} />
+          </section>
+        ))}
       </div>
     </article>
   );

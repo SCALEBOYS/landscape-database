@@ -107,13 +107,13 @@ export function PhotoCarousel({ slides, labels }: { slides: Slide[]; labels: Car
           </>
         )}
       </div>
-      <div ref={track} className="flex snap-x snap-mandatory gap-3 overflow-x-auto [--rh:clamp(220px,24vw,340px)] pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={track} className="flex snap-x snap-mandatory gap-3 overflow-x-auto [--rh:clamp(170px,17vw,240px)] pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {slides.map((s, i) => (
           <figure
             key={s.src}
             className="min-w-0 snap-start"
-            // 幅は「高さ × 縦横比」を基準に、余白があれば同じ割合で広げる（全部の写真の高さがそろう）。広げすぎないよう 1.6 倍まで
-            style={{ flex: `${ratios[s.src] ?? 4 / 3} 0 calc(var(--rh) * ${ratios[s.src] ?? 4 / 3})`, maxWidth: `min(85vw, calc(var(--rh) * ${(ratios[s.src] ?? 4 / 3) * 1.6}))` }}
+            // 幅は「高さ × 縦横比」を基準に、余白があれば同じ割合で広げる（全部の写真の高さがそろう）。広げすぎないよう 1.3 倍まで
+            style={{ flex: `${ratios[s.src] ?? 4 / 3} 0 calc(var(--rh) * ${ratios[s.src] ?? 4 / 3})`, maxWidth: `min(85vw, calc(var(--rh) * ${(ratios[s.src] ?? 4 / 3) * 1.3}))` }}
           >
             {/* ポイントは写真の幅・高さに対する割合で置くので、写真は切り抜かずに全体を出す（高さをそろえる） */}
             <div className="relative">

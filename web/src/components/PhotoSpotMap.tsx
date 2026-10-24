@@ -62,12 +62,12 @@ export function PhotoSpotMap({ spots, total, labels }: { spots: Spot[]; total: n
   }, [spots]);
 
   return (
-    <section className="grid gap-3 pt-10">
+    <section className="grid gap-3 pt-14">
       <div className="flex flex-wrap items-baseline justify-between gap-3 border-t border-ink pt-3">
         <h2 className="text-[13px] font-medium tracking-[.1em] text-muted">{labels.title}</h2>
         <span className="text-xs text-muted">{labels.hint}</span>
       </div>
-      <div className="relative h-[clamp(300px,40vw,480px)] overflow-hidden rounded-sm bg-placeholder">
+      <div className="relative h-[clamp(220px,26vw,320px)] overflow-hidden rounded-sm bg-placeholder">
         {/* Mapbox の CSS が地図の箱を position: relative にするので、外側の箱で大きさを決める */}
         <div className="absolute inset-0">
           <div ref={box} className="h-full w-full" />
