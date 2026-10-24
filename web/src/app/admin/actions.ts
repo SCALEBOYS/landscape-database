@@ -59,6 +59,12 @@ export async function saveProject(_: SaveResult | null, formData: FormData): Pro
     return { ok: false, message: "緯度と経度は両方とも数値で入力してください" };
   }
 
+  // 出典は URL だけ（賞の名前などは「受賞」の欄へ）
+  const badSource = p.sources.map((u) => u.trim()).find((u) => u && !/^https?:\/\/\S+$/.test(u));
+  if (badSource) return { ok: false, message: `出典URLの欄に URL でないものがあります:「${badSource}」。賞の名前は「受賞」の欄に入れてください` };
+  const badLawSource = p.laws.map((x) => x.source_url.trim()).find((u) => u && !/^https?:\/\/\S+$/.test(u));
+  if (badLawSource) return { ok: false, message: `法令の出典URLに URL でないものがあります:「${badLawSource}」` };
+
   const supabase = await adminClient();
   const row = {
     slug: p.slug,

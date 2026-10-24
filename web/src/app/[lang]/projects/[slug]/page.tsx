@@ -50,6 +50,15 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/projects/[
   };
 }
 
+// 出典のホスト名（URL でない文字が入っていても止まらないように）
+const hostOf = (url: string) => {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+};
+
 const LAYERS = ["tall_tree", "mid_tree", "shrub", "ground_cover", "climber", "other"];
 
 export default async function ProjectPage({ params }: PageProps<"/[lang]/projects/[slug]">) {
@@ -230,9 +239,9 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
                           {law.kind === "ordinance" && <span className="text-xs text-muted">{lang === "en" ? law.jurisdiction_en ?? law.jurisdiction_ja : law.jurisdiction_ja}</span>}
                         </span>
                         {note && <span className="text-sm leading-relaxed">{note}</span>}
-                        {source_url && (
+                        {source_url && hostOf(source_url) && (
                           <a href={source_url} target="_blank" rel="noopener noreferrer" className="break-all text-xs text-accent hover:underline">
-                            {dict.laws.source}: {new URL(source_url).hostname}
+                            {dict.laws.source}: {hostOf(source_url)}
                           </a>
                         )}
                       </li>
@@ -301,7 +310,11 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
                 <ul className="grid gap-1 break-all text-sm">
                   {p.sources.map((s) => (
                     <li key={s.url}>
-                      <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">{s.title ?? new URL(s.url).hostname}</a>
+                      {hostOf(s.url) ? (
+                        <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">{s.title ?? hostOf(s.url)}</a>
+                      ) : (
+                        s.title ?? s.url
+                      )}
                     </li>
                   ))}
                 </ul>
