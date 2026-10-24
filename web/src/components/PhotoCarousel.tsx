@@ -12,13 +12,24 @@ export type CarouselLabels = { species: string; material: string; more: string; 
 const CARD_W = 224;
 const GAP = 12;
 
-// 事例の写真を横に並べるカルーセル。1画面の枚数は スマホ 約1.4枚（次が半分ほどのぞく）・タブレット 3枚・PC 4枚
+// 事例の写真を横に並べるカルーセル。写真は高さをそろえ、幅は写真の縦横比のまま（縦長の写真は細く、横長は広く）
 // 写真の上のポイントを押すと、その場所の樹種・素材がわかる（tecture のような仕組み）
 export function PhotoCarousel({ slides, labels }: { slides: Slide[]; labels: CarouselLabels }) {
   const track = useRef<HTMLDivElement>(null);
   // 説明の箱は写真の枠に切られないよう、画面に対して位置を決めて出す
   const [open, setOpen] = useState<{ id: string; point: PhotoPoint; left: number; top: number } | null>(null);
   const [showPoints, setShowPoints] = useState(true);
+  // 写真ごとの縦横比（読み込んだら実際の値に置き換える）。高さをそろえたまま、枚数が少なければ幅いっぱいに広げる
+  const [ratios, setRatios] = useState<Record<string, number>>({});
+  const measure = (img: HTMLImageElement) => {
+    const { naturalWidth: w, naturalHeight: h } = img;
+    const src = img.dataset.src;
+    if (w && h && src) setRatios((r) => (r[src] === w / h ? r : { ...r, [src]: w / h }));
+  };
+  // 画面を描く前に読み込み終わった写真は onLoad が呼ばれないので、ここで測る
+  useEffect(() => {
+    track.current?.querySelectorAll<HTMLImageElement>("img[data-src]").forEach((img) => img.complete && measure(img));
+  }, [slides]);
   const hasPoints = slides.some((s) => s.points.length);
 
   // スクロールや画面サイズの変更で位置がずれるので、そのときは閉じる
@@ -73,13 +84,26 @@ export function PhotoCarousel({ slides, labels }: { slides: Slide[]; labels: Car
           </>
         )}
       </div>
-      <div ref={track} className="flex snap-x snap-mandatory items-start gap-3 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={track} className="flex snap-x snap-mandatory gap-3 overflow-x-auto [--rh:clamp(220px,24vw,340px)] pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {slides.map((s, i) => (
-          <figure key={s.src} className="w-[70%] flex-none snap-start md:w-[calc((100%-24px)/3)] lg:w-[calc((100%-36px)/4)]">
-            {/* ポイントは写真の幅・高さに対する割合で置くので、写真は切り抜かずに全体を出す */}
+          <figure
+            key={s.src}
+            className="min-w-0 snap-start"
+            // 幅は「高さ × 縦横比」を基準に、余白があれば同じ割合で広げる（全部の写真の高さがそろう）。広げすぎないよう 1.6 倍まで
+            style={{ flex: `${ratios[s.src] ?? 4 / 3} 0 calc(var(--rh) * ${ratios[s.src] ?? 4 / 3})`, maxWidth: `min(85vw, calc(var(--rh) * ${(ratios[s.src] ?? 4 / 3) * 1.6}))` }}
+          >
+            {/* ポイントは写真の幅・高さに対する割合で置くので、写真は切り抜かずに全体を出す（高さをそろえる） */}
             <div className="relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={s.src} alt={s.alt} loading={i < 4 ? "eager" : "lazy"} className="block w-full rounded-sm" />
+              <img
+                src={s.src}
+                alt={s.alt}
+                loading={i < 4 ? "eager" : "lazy"}
+                data-src={s.src}
+                onLoad={(e) => measure(e.currentTarget)}
+                className="block h-auto w-full rounded-sm bg-soft"
+                style={{ aspectRatio: ratios[s.src] ?? 4 / 3 }}
+              />
               {showPoints &&
                 s.points.map((pt, j) => {
                   const id = `${i}-${j}`;

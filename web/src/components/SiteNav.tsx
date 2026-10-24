@@ -34,7 +34,7 @@ export function SiteNav({ groups, lang }: { groups: NavGroup[]; lang: string }) 
 
   return (
     <ul ref={root} className="flex items-center gap-1 text-[13px] font-semibold tracking-[.08em] lg:gap-2">
-      {groups.map((g) => (
+      {groups.map((g, i) => (
         <li key={g.key} className="group relative">
           <Link
             href={g.href}
@@ -49,7 +49,8 @@ export function SiteNav({ groups, lang }: { groups: NavGroup[]; lang: string }) 
             {g.label}
             <span className={`absolute inset-x-2.5 bottom-3 h-px bg-white transition-opacity ${inGroup(g) ? "opacity-100" : "opacity-0"}`} />
           </Link>
-          <div className={`invisible absolute left-1/2 top-full z-40 -translate-x-1/2 pt-1 opacity-0 transition-[opacity,visibility] duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100 ${open === g.key ? "!visible !opacity-100" : ""}`}>
+          {/* 右寄りの大分類（RESEARCH・DATA）は、メニューを右端にそろえる。中央寄せだと画面の右からはみ出し、ページ全体が横にずれる */}
+          <div className={`invisible absolute top-full z-40 pt-1 ${i >= groups.length - 2 ? "right-0" : "left-1/2 -translate-x-1/2"} opacity-0 transition-[opacity,visibility] duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100 ${open === g.key ? "!visible !opacity-100" : ""}`}>
             <ul className="grid w-[300px] gap-0.5 rounded-lg border border-white/10 bg-[#141414] p-2 tracking-normal shadow-[0_18px_40px_rgba(0,0,0,.45)]">
               {g.items.map((it) => (
                 <li key={it.href}>
