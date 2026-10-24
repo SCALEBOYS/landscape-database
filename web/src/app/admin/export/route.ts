@@ -11,7 +11,7 @@ export async function GET() {
     supabase
       .from("projects")
       .select(
-        `id, slug, name_ja, name_en, use_category, prefecture, municipality, address_ja, completed_year, site_area_m2, summary_ja, status, updated_at,
+        `id, slug, name_ja, name_en, use_category, other_uses, prefecture, municipality, address_ja, completed_year, completed_on, completed_precision, site_area_m2, summary_ja, status, updated_at,
         credits:project_credits(sort_order, party:parties(name_ja)),
         awards:project_awards(award_name, award_year),
         sources(url),
@@ -27,8 +27,8 @@ export async function GET() {
   if (error) return new Response(error.message, { status: 500 });
 
   type Row = {
-    id: string; slug: string; name_ja: string; name_en: string | null; use_category: string; prefecture: string; municipality: string | null; address_ja: string | null;
-    completed_year: number | null; site_area_m2: number | null; summary_ja: string | null; status: string; updated_at: string;
+    id: string; slug: string; name_ja: string; name_en: string | null; use_category: string; other_uses: string[]; prefecture: string; municipality: string | null; address_ja: string | null;
+    completed_year: number | null; completed_on: string | null; completed_precision: string; site_area_m2: number | null; summary_ja: string | null; status: string; updated_at: string;
     credits: { sort_order: number; party: { name_ja: string } | null }[];
     awards: { award_name: string; award_year: number | null }[];
     sources: { url: string }[];
@@ -48,13 +48,14 @@ export async function GET() {
     const byHeader: Record<string, string> = {
       名称: p.name_ja,
       英語名: p.name_en ?? "",
-      用途: categoryLabels[p.use_category]?.ja ?? p.use_category,
+      用途: [p.use_category, ...(p.other_uses ?? [])].map((u) => categoryLabels[u]?.ja ?? u).join("／"),
       都道府県: p.prefecture,
       市区町村: p.municipality ?? "",
       住所: p.address_ja ?? "",
       緯度: c?.lat != null ? String(c.lat) : "",
       経度: c?.lng != null ? String(c.lng) : "",
-      竣工年: p.completed_year ? String(p.completed_year) : "",
+      // 月・日まで分かっていればその精度で（取り込みでも読める形）
+      竣工年: !p.completed_year ? "" : p.completed_on && p.completed_precision === "day" ? p.completed_on : p.completed_on && p.completed_precision === "month" ? p.completed_on.slice(0, 7) : String(p.completed_year),
       面積: p.site_area_m2 ? String(p.site_area_m2) : "",
       設計: join([...p.credits].sort((a, b) => a.sort_order - b.sort_order).map((x) => x.party?.name_ja)),
       受賞: join(p.awards.map((a) => a.award_name)),

@@ -22,7 +22,7 @@ export function CategoryRows({
   lang: Locale;
 }) {
   const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
-  const countUse = (k: string) => items.filter((it) => it.use === k && matches(it, filters, "uses")).length;
+  const countUse = (k: string) => items.filter((it) => it.allUses.includes(k) && matches(it, filters, "uses")).length;
   const countEl = (k: string) => items.filter((it) => it.elements.includes(k) && matches(it, filters, "els")).length;
   const countLaw = (k: string) => items.filter((it) => it.laws.some((l) => l.slug === k) && matches(it, filters, "laws")).length;
 
@@ -61,7 +61,7 @@ export function CategoryRows({
 
   return (
     <div className="grid min-w-0 flex-1 gap-1">
-      {row("uses", t.useRow, t.useRule, USE_KEYS.map((k) => ({ key: k, label: categoryLabels[k][lang], n: countUse(k), total: items.filter((it) => it.use === k).length })))}
+      {row("uses", t.useRow, t.useRule, USE_KEYS.map((k) => ({ key: k, label: categoryLabels[k][lang], n: countUse(k), total: items.filter((it) => it.allUses.includes(k)).length })))}
       {row("els", t.elRow, t.elRule, ELEMENTS.map((e) => ({ key: e.key, label: e[lang], n: countEl(e.key), total: items.filter((it) => it.elements.includes(e.key)).length })))}
       {row("laws", t.lawRow, t.elRule, lawOptions.map((l) => ({ key: l.slug, label: l.label, n: countLaw(l.slug), total: items.filter((it) => it.laws.some((x) => x.slug === l.slug)).length, icon: `law-${l.kind}` })))}
     </div>

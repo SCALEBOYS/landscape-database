@@ -15,7 +15,7 @@ export type CompareProject = {
   img: string | null;
   use: string;
   place: string;
-  year: number | null;
+  year: string | null; // 分かっている精度で（例: 2023年4月）
   area: number | null;
   designers: string[];
   awards: string[];

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { cardImage } from "@/components/ProjectCard";
-import { coverPhoto, getProjects } from "@/lib/data";
+import { coverPhoto, getProjects, completedLabel } from "@/lib/data";
 import { categoryLabels, getDictionary, hasLocale, label, localName } from "@/lib/i18n";
 import { alternates } from "@/lib/site";
 import { place } from "@/lib/view";
@@ -25,9 +25,9 @@ export default async function ComparePage({ params, searchParams }: PageProps<"/
     slug: p.slug,
     name: localName(lang, p.name_ja, p.name_en),
     img: cardImage({ cover: coverPhoto(p), lat: p.lat, lng: p.lng }),
-    use: label(categoryLabels, p.use_category, lang),
+    use: [p.use_category, ...(p.other_uses ?? []).filter((u) => u !== p.use_category)].map((u) => label(categoryLabels, u, lang)).join(lang === "en" ? ", " : "・"),
     place: place(p, lang),
-    year: p.completed_year,
+    year: completedLabel(p, lang),
     area: p.site_area_m2 ? Number(p.site_area_m2) : null,
     designers: [...new Set(p.credits.map((c) => localName(lang, c.party.name_ja, c.party.name_en)))],
     awards: p.awards.map((a) => [a.award_name, a.award_year].filter(Boolean).join(" ")),

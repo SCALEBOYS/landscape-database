@@ -83,12 +83,51 @@ export function ProjectForm({
           <label className="text-sm">
             slug（URL）*<input required pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="例: higashi-yuenchi" className={input} {...field("slug")} />
           </label>
-          <label className="text-sm">
-            用途*
-            <select className={input} {...field("use_category")}>
-              {Object.entries(categoryLabels).map(([k, v]) => <option key={k} value={k}>{v.ja}</option>)}
-            </select>
-          </label>
+          <div className="text-sm sm:col-span-2">
+            用途*（複数選べます。★ が主な用途で、カードやアイコンに出ます）
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {Object.entries(categoryLabels).map(([k, v]) => {
+                const main = p.use_category === k;
+                const on = main || p.other_uses.includes(k);
+                return (
+                  <span key={k} className={`inline-flex items-center overflow-hidden rounded-full border text-xs ${on ? "border-ink bg-ink text-white" : "border-line bg-white"}`}>
+                    <button
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => {
+                        if (!on) {
+                          // 何も選んでいなければ主な用途に、選んであればそのほかの用途に足す
+                          if (!p.use_category) set("use_category", k);
+                          else set("other_uses", [...p.other_uses, k]);
+                        } else if (main) {
+                          // 主な用途を外したら、残りの最初を主な用途にする（1つは必ず残す）
+                          const [next, ...rest] = p.other_uses;
+                          if (next) setP((x) => ({ ...x, use_category: next, other_uses: rest }));
+                        } else {
+                          set("other_uses", p.other_uses.filter((u) => u !== k));
+                        }
+                      }}
+                      className="px-3 py-1.5"
+                    >
+                      {main && "★ "}
+                      {v.ja}
+                    </button>
+                    {on && !main && (
+                      <button
+                        type="button"
+                        title="主な用途にする"
+                        aria-label={`${v.ja}を主な用途にする`}
+                        onClick={() => setP((x) => ({ ...x, use_category: k, other_uses: [x.use_category, ...x.other_uses.filter((u) => u !== k)] }))}
+                        className="border-l border-white/30 px-2 py-1.5 text-white/70 hover:text-white"
+                      >
+                        ☆
+                      </button>
+                    )}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
           <label className="text-sm">
             親物件（再開発の中の広場など）
             <select className={input} value={p.parent_id ?? ""} onChange={(e) => set("parent_id", e.target.value || null)}>
@@ -112,7 +151,37 @@ export function ProjectForm({
           <label className="text-sm sm:col-span-2">住所<input className={input} {...field("address_ja")} /></label>
           <label className="text-sm">緯度<input inputMode="decimal" placeholder="34.6895" className={input} {...field("lat")} /></label>
           <label className="text-sm">経度<input inputMode="decimal" placeholder="135.1960" className={input} {...field("lng")} /></label>
-          <label className="text-sm">竣工年<input inputMode="numeric" className={input} {...field("completed_year")} /></label>
+          <div className="text-sm">
+            竣工
+            <div className="mt-1 flex gap-2">
+              <select
+                aria-label="竣工がどこまで分かっているか"
+                className="rounded-md border border-line bg-white px-2 py-2 text-sm"
+                value={p.completed_precision}
+                onChange={(e) => {
+                  const precision = e.target.value as ProjectPayload["completed_precision"];
+                  // 精度を変えたら、分かっている部分を引き継ぐ
+                  const y = p.completed_year || p.completed_date.slice(0, 4);
+                  const date = precision === "year" ? "" : precision === "month" ? (p.completed_date.slice(0, 7) || (y ? `${y}-01` : "")) : p.completed_date.length === 10 ? p.completed_date : p.completed_date ? `${p.completed_date.slice(0, 7)}-01` : y ? `${y}-01-01` : "";
+                  setP((x) => ({ ...x, completed_precision: precision, completed_date: date, completed_year: y }));
+                }}
+              >
+                <option value="year">年まで</option>
+                <option value="month">月まで</option>
+                <option value="day">日まで</option>
+              </select>
+              {p.completed_precision === "year" ? (
+                <input inputMode="numeric" placeholder="例: 2023" className={input + " !mt-0"} {...field("completed_year")} />
+              ) : (
+                <input
+                  type={p.completed_precision === "month" ? "month" : "date"}
+                  className={input + " !mt-0"}
+                  value={p.completed_date}
+                  onChange={(e) => setP((x) => ({ ...x, completed_date: e.target.value, completed_year: e.target.value.slice(0, 4) }))}
+                />
+              )}
+            </div>
+          </div>
           <label className="text-sm">竣工の補足（段階竣工など）<input className={input} {...field("completion_note")} /></label>
           <label className="text-sm">敷地面積（m²）<input inputMode="decimal" className={input} {...field("site_area_m2")} /></label>
         </div>

@@ -30,6 +30,7 @@ export async function getBrowseItems(lang: Locale): Promise<BrowseItem[]> {
       year: p.completed_year,
       use: p.use_category,
       useLabel: label(categoryLabels, p.use_category, lang),
+      allUses: [p.use_category, ...(p.other_uses ?? []).filter((u) => u !== p.use_category)],
       elements: elementsOf(p),
       species: species.map((s) => ({ slug: s.slug, label: localName(lang, s.name_ja, s.name_en), sub: s.scientific_name })),
       designers: designers.map((d) => ({ slug: d.slug, label: localName(lang, d.name_ja, d.name_en) })),

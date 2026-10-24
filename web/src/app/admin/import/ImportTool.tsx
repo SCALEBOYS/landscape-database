@@ -77,7 +77,7 @@ export function ImportTool() {
           <h2 className="font-medium">1. 表を貼り付ける</h2>
         </div>
         <p className="text-xs text-muted">
-          使える列: {TEMPLATE_HEADERS.join("・")}。名称・用途・都道府県は必須です。用途は「公園」「広場」などの言葉でかまいません。設計・受賞は「／」で区切ると複数入れられます。
+          使える列: {TEMPLATE_HEADERS.join("・")}。名称・用途・都道府県は必須です。用途は「公園」「広場」などの言葉でかまいません。用途・設計・受賞は「／」で区切ると複数入れられます（用途は最初に書いたものが主な用途）。
         </p>
         <textarea value={text} onChange={(e) => setText(e.target.value)} rows={8} placeholder="ここにスプレッドシートのセルを貼り付け" className="w-full rounded-md border border-line p-3 font-mono text-xs" />
         <div className="flex flex-wrap items-center gap-3">
@@ -134,7 +134,7 @@ export function ImportTool() {
                     </td>
                     <td className="num text-muted">{r.line}</td>
                     <td className="max-w-[220px] font-medium">{r.name_ja || "—"}</td>
-                    <td>{categoryLabels[r.use_category]?.ja ?? "—"}</td>
+                    <td>{[r.use_category, ...r.other_uses].map((u) => categoryLabels[u]?.ja).filter(Boolean).join("・") || "—"}</td>
                     <td>{[r.prefecture, r.municipality].filter(Boolean).join(" ")}</td>
                     <td className="max-w-[180px] truncate" title={r.designers.join("／")}>{r.designers.join("／") || "—"}</td>
                     <td className="max-w-[160px] truncate" title={r.awards.map((a) => a.name).join("／")}>{r.awards.length ? `${r.awards.length}件` : "—"}</td>

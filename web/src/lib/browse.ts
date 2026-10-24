@@ -9,8 +9,9 @@ export type BrowseItem = {
   prefLabel: string;
   muni: string;
   year: number | null;
-  use: string;
+  use: string; // 主な用途（アイコン・カードに出す）
   useLabel: string;
+  allUses: string[]; // 主な用途とそのほかの用途（絞り込みに使う）
   elements: string[];
   species: Ref[];
   designers: Ref[];
@@ -69,7 +70,7 @@ export function toQuery(f: Filters) {
 // 用途どうしは「いずれか」、要素どうし・法令どうしは「すべて」、軸の間は「かつ」
 export function matches(it: BrowseItem, f: Filters, skip?: "uses" | "els" | "laws" | "years") {
   if (f.q && !it.search.includes(f.q.toLowerCase())) return false;
-  if (skip !== "uses" && f.uses.length && !f.uses.includes(it.use)) return false;
+  if (skip !== "uses" && f.uses.length && !f.uses.some((u) => it.allUses.includes(u))) return false;
   if (skip !== "els" && !f.els.every((e) => it.elements.includes(e))) return false;
   if (skip !== "laws" && !f.laws.every((l) => it.laws.some((x) => x.slug === l))) return false;
   if (f.munis.length) {

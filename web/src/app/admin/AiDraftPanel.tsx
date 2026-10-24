@@ -39,7 +39,7 @@ export function AiDraftPanel({ p, apply, species, categories }: { p: ProjectPayl
     if (d.name_en) v.name_en = { show: d.name_en, patch: { name_en: d.name_en } };
     if (d.municipality) v.municipality = { show: d.municipality, patch: { municipality: d.municipality } };
     if (d.address_ja) v.address_ja = { show: d.address_ja, patch: { address_ja: d.address_ja } };
-    if (d.completed_year) v.completed_year = { show: String(d.completed_year), patch: { completed_year: String(d.completed_year) } };
+    if (d.completed_year) v.completed_year = { show: String(d.completed_year), patch: { completed_year: String(d.completed_year), completed_precision: "year", completed_date: "" } };
     if (d.site_area_m2) v.site_area_m2 = { show: `${d.site_area_m2} m²`, patch: { site_area_m2: String(d.site_area_m2) } };
     if (d.designers.length) v.designers = { show: d.designers.join("、"), patch: { designers: d.designers } };
     if (d.awards.length)

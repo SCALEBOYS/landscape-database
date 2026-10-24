@@ -22,9 +22,12 @@ export type Project = {
   name_ja: string;
   name_en: string | null;
   use_category: string;
+  other_uses: string[]; // 主な用途のほかの用途
   prefecture: string;
   municipality: string | null;
   completed_year: number | null;
+  completed_on: string | null; // 竣工日（月まで分かっているときは 1 日）
+  completed_precision: "year" | "month" | "day";
   site_area_m2: number | null;
   summary_ja: string | null;
   summary_en: string | null;
@@ -88,7 +91,7 @@ export type LawRef = {
 };
 
 const PROJECT_SELECT = `
-  id, slug, parent_id, name_ja, name_en, use_category, prefecture, municipality, completed_year, site_area_m2,
+  id, slug, parent_id, name_ja, name_en, use_category, other_uses, prefecture, municipality, completed_year, completed_on, completed_precision, site_area_m2,
   summary_ja, summary_en, summary_en_status,
   credits:project_credits(role, sort_order, party:parties(slug, name_ja, name_en, aliases:party_aliases(alias))),
   plantings:project_plantings(layer, species:species(slug, name_ja, name_en, scientific_name, growth_form)),
@@ -229,4 +232,16 @@ export async function getMaterials(): Promise<Material[]> {
     photo_credit: c.photo_credit,
     projects: [...new Map(c.uses.flatMap((u) => (u.project && u.project.status === "published" ? [[u.project.slug, u.project] as const] : []))).values()].map(({ slug, name_ja, name_en }) => ({ slug, name_ja, name_en })),
   }));
+}
+
+// 竣工を分かっている精度で書く（例: 2023年4月、2023年4月1日 / April 2023）
+export function completedLabel(p: Pick<Project, "completed_year" | "completed_on" | "completed_precision">, lang: "ja" | "en") {
+  if (!p.completed_year) return null;
+  if (!p.completed_on || p.completed_precision === "year") return String(p.completed_year);
+  const [y, m, d] = p.completed_on.split("-").map(Number);
+  if (lang === "en") {
+    const month = new Date(Date.UTC(y, m - 1, 1)).toLocaleString("en", { month: "long", timeZone: "UTC" });
+    return p.completed_precision === "day" ? `${month} ${d}, ${y}` : `${month} ${y}`;
+  }
+  return p.completed_precision === "day" ? `${y}年${m}月${d}日` : `${y}年${m}月`;
 }

@@ -13,7 +13,7 @@ export async function siteKnowledge(lang: Locale) {
   const projectLines = projects.map((p) =>
     line([
       `[${p.name_ja}${p.name_en ? ` (${p.name_en})` : ""}](${L}/projects/${p.slug})`,
-      categoryLabels[p.use_category]?.ja,
+      [p.use_category, ...(p.other_uses ?? [])].map((u) => categoryLabels[u]?.ja).filter(Boolean).join("・"),
       `${p.prefecture}${p.municipality ?? ""}`,
       p.completed_year ? `竣工${p.completed_year}` : "竣工年未登録",
       p.site_area_m2 ? `${p.site_area_m2}㎡` : null,

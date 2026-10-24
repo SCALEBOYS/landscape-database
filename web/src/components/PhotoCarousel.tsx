@@ -7,7 +7,7 @@ import { Icon } from "./Icon";
 
 export type PhotoPoint = { x: number; y: number; kind: "species" | "material"; title: string; sub?: string; note?: string; href?: string };
 export type Slide = { src: string; alt: string; caption?: string; points: PhotoPoint[] };
-export type CarouselLabels = { species: string; material: string; more: string; prev: string; next: string; show: string; hide: string; close: string };
+export type CarouselLabels = { species: string; material: string; more: string; prev: string; next: string; show: string; hide: string; close: string; enlarge: string };
 
 const CARD_W = 224;
 const GAP = 12;
@@ -65,6 +65,29 @@ export function PhotoCarousel({ slides, labels }: { slides: Slide[]; labels: Car
 
   const p = open?.point;
 
+  // 写真を押すと大きく見る画面を開く。←→ キー・左右のボタン・スワイプで送る
+  const [view, setView] = useState<number | null>(null);
+  const n = slides.length;
+  const go = (d: 1 | -1) => setView((v) => (v === null ? v : (v + d + n) % n));
+  useEffect(() => {
+    if (view === null) return;
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setView(null);
+      else if (e.key === "ArrowRight") go(1);
+      else if (e.key === "ArrowLeft") go(-1);
+    };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", key);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", key);
+    };
+    // go は n だけに依存する
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view === null, n]);
+  const touchX = useRef<number | null>(null);
+
   return (
     <div className="relative">
       <div className="mb-3 flex items-center justify-end gap-2">
@@ -94,6 +117,7 @@ export function PhotoCarousel({ slides, labels }: { slides: Slide[]; labels: Car
           >
             {/* ポイントは写真の幅・高さに対する割合で置くので、写真は切り抜かずに全体を出す（高さをそろえる） */}
             <div className="relative">
+              <button type="button" onClick={() => setView(i)} aria-label={`${labels.enlarge}: ${s.alt}`} className="block w-full cursor-zoom-in">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={s.src}
@@ -104,6 +128,7 @@ export function PhotoCarousel({ slides, labels }: { slides: Slide[]; labels: Car
                 className="block h-auto w-full rounded-sm bg-soft"
                 style={{ aspectRatio: ratios[s.src] ?? 4 / 3 }}
               />
+              </button>
               {showPoints &&
                 s.points.map((pt, j) => {
                   const id = `${i}-${j}`;
@@ -132,6 +157,45 @@ export function PhotoCarousel({ slides, labels }: { slides: Slide[]; labels: Car
         ))}
       </div>
 
+      {view !== null && slides[view] && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={slides[view].alt}
+          className="fade-in fixed inset-0 z-[70] flex flex-col bg-black/95 text-white"
+          onClick={(e) => e.target === e.currentTarget && setView(null)}
+          onTouchStart={(e) => (touchX.current = e.touches[0].clientX)}
+          onTouchEnd={(e) => {
+            if (touchX.current === null) return;
+            const dx = e.changedTouches[0].clientX - touchX.current;
+            if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+            touchX.current = null;
+          }}
+        >
+          <div className="flex items-center justify-between px-4 py-3 text-sm text-white/80">
+            <span className="num">{view + 1} / {n}</span>
+            <button type="button" onClick={() => setView(null)} aria-label={labels.close} className="grid h-10 w-10 place-items-center rounded-full hover:bg-white/10" autoFocus>
+              <Icon name="close" />
+            </button>
+          </div>
+          <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 sm:px-16" onClick={(e) => e.target === e.currentTarget && setView(null)}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img key={slides[view].src} src={slides[view].src} alt={slides[view].alt} className="fade-in max-h-full max-w-full select-none object-contain" draggable={false} />
+            {n > 1 && (
+              <>
+                <button type="button" onClick={() => go(-1)} aria-label={labels.prev} className="absolute left-2 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-black/40 hover:bg-white/15 sm:left-4">
+                  <Icon name="arrow" className="ico rotate-180" />
+                </button>
+                <button type="button" onClick={() => go(1)} aria-label={labels.next} className="absolute right-2 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full bg-black/40 hover:bg-white/15 sm:right-4">
+                  <Icon name="arrow" className="ico" />
+                </button>
+              </>
+            )}
+          </div>
+          <p className="px-4 py-3 text-center text-xs text-white/70">{slides[view].caption}</p>
+        </div>
+      )}
+
       {open && p && (
         <>
           <button type="button" aria-label={labels.close} onClick={() => setOpen(null)} className="fixed inset-0 z-40 cursor-default" />
@@ -139,7 +203,7 @@ export function PhotoCarousel({ slides, labels }: { slides: Slide[]; labels: Car
             <div className="flex items-start justify-between gap-2">
               <span className="text-[10px] uppercase tracking-[.12em] text-muted">{p.kind === "species" ? labels.species : labels.material}</span>
               <button type="button" onClick={() => setOpen(null)} aria-label={labels.close} className="text-muted hover:text-ink">
-                <Icon name="x" className="ico !h-4 !w-4" />
+                <Icon name="close" className="ico !h-4 !w-4" />
               </button>
             </div>
             <p className="mt-0.5 font-medium leading-snug">{p.title}</p>

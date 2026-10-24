@@ -14,7 +14,7 @@ import { SiteHero } from "@/components/map/SiteHero";
 import { CardGrid, ProjectCard } from "@/components/ProjectCard";
 import { getBrowseItems } from "@/lib/browse-data";
 import { ELEMENTS, elementsOf } from "@/lib/catalog";
-import { coverPhoto, getProject, getProjects, modelUrl, photoUrl } from "@/lib/data";
+import { coverPhoto, getProject, getProjects, modelUrl, photoUrl, completedLabel } from "@/lib/data";
 import {
   categoryLabels,
   componentKindLabels,
@@ -73,6 +73,9 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
   const name = localName(lang, p.name_ja, p.name_en);
   const text = summary(p, lang);
   const useLabel = label(categoryLabels, p.use_category, lang);
+  // 主な用途とそのほかの用途
+  const uses = [p.use_category, ...(p.other_uses ?? []).filter((u) => u !== p.use_category)];
+  const usesLabel = uses.map((u) => label(categoryLabels, u, lang)).join(lang === "en" ? ", " : "・");
 
   const plantingsByLayer = LAYERS.map((layer) => ({ layer, items: p.plantings.filter((pl) => pl.layer === layer) })).filter((g) => g.items.length);
   const componentKinds = [...new Set(p.components.map((c) => c.category.kind))];
@@ -115,9 +118,16 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
 
   const facts: [string, React.ReactNode][] = [
     [t.location, place(p, lang)],
-    [t.completed, p.completed_year ? <span className="num text-lg">{p.completed_year}</span> : null],
+    [t.completed, p.completed_year ? <span className="num text-lg">{completedLabel(p, lang)}</span> : null],
     [t.area, p.site_area_m2 ? <span className="num text-lg">{Number(p.site_area_m2).toLocaleString()} m²</span> : null],
-    [t.use, <Link key="use" href={`/${lang}/explore?uses=${p.use_category}`} className="underline decoration-line underline-offset-4 hover:decoration-ink">{useLabel}</Link>],
+    [
+      t.use,
+      <span key="use" className="flex flex-wrap gap-x-3 gap-y-1">
+        {uses.map((u) => (
+          <Link key={u} href={`/${lang}/explore?uses=${u}`} className="underline decoration-line underline-offset-4 hover:decoration-ink">{label(categoryLabels, u, lang)}</Link>
+        ))}
+      </span>,
+    ],
     [
       t.designers,
       p.credits.length ? (
@@ -168,7 +178,7 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
           .map((m) => ({ url: modelUrl(m.storage_path), offsetEast: m.offset_east_m, offsetNorth: m.offset_north_m, altitude: m.altitude_m, rotation: m.rotation_deg, scale: m.scale }))}
       >
         <div className="wrap grid gap-2.5">
-          <span className="eyebrow !text-white/80">{useLabel} · {place(p, lang)}</span>
+          <span className="eyebrow !text-white/80">{usesLabel} · {place(p, lang)}</span>
           <h1 className="text-[clamp(34px,6vw,84px)] font-extrabold leading-[1.04] tracking-[-0.022em]">{name}</h1>
           {lang === "ja" && p.name_en && <span className="text-[15px] opacity-80">{p.name_en}</span>}
         </div>
@@ -194,7 +204,7 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
           <section className="pt-8">
             <PhotoCarousel
               slides={slides}
-              labels={{ species: t.pointSpecies, material: t.pointMaterial, more: t.pointMore, prev: t.photoPrev, next: t.photoNext, show: t.showPoints, hide: t.hidePoints, close: t.close }}
+              labels={{ species: t.pointSpecies, material: t.pointMaterial, more: t.pointMore, prev: t.photoPrev, next: t.photoNext, show: t.showPoints, hide: t.hidePoints, close: t.close, enlarge: t.photoEnlarge }}
             />
           </section>
         )}

@@ -207,7 +207,12 @@ export async function applyProposal(project_id: string, changes: Proposal["chang
   for (const k of EDITABLE) {
     const v = changes[k];
     if (v === undefined) continue;
-    if (k === "completed_year") row[k] = Number.isInteger(Number(v)) ? Number(v) : null;
+    if (k === "completed_year") {
+      row[k] = Number.isInteger(Number(v)) ? Number(v) : null;
+      // 年だけを直すので、月・日の記録は外す（年と食い違わないように）
+      row.completed_on = null;
+      row.completed_precision = "year";
+    }
     else if (k === "site_area_m2") row[k] = Number.isFinite(Number(v)) ? Number(v) : null;
     else row[k] = String(v).trim() || null;
   }

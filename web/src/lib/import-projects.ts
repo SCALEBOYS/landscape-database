@@ -8,12 +8,15 @@ export type ImportRow = {
   name_ja: string;
   name_en: string;
   use_category: string;
+  other_uses: string[];
   prefecture: string;
   municipality: string;
   address: string;
   lat: number | null;
   lng: number | null;
   completed_year: number | null;
+  completed_on: string | null; // 月・日まで分かれば YYYY-MM-DD（月までなら 1 日）
+  completed_precision: "year" | "month" | "day";
   site_area_m2: number | null;
   designers: string[];
   awards: { name: string; year: number | null }[];
@@ -33,7 +36,7 @@ const ALIASES: Record<string, string[]> = {
   address: ["address", "address_ja", "住所", "所在地"],
   lat: ["lat", "latitude", "緯度"],
   lng: ["lng", "lon", "longitude", "経度"],
-  completed_year: ["completed_year", "竣工年", "竣工", "完成年", "開園年"],
+  completed_year: ["completed_year", "竣工年", "竣工", "竣工日", "完成年", "開園年"],
   site_area_m2: ["site_area_m2", "面積", "敷地面積", "面積（㎡）", "面積(m2)"],
   designers: ["designers", "設計", "設計者", "設計事務所", "designer"],
   award: ["award", "awards", "受賞", "受賞歴"],
@@ -88,6 +91,17 @@ const toYear = (s: string) => {
   const m = s.match(/(18|19|20)\d{2}/);
   return m ? Number(m[0]) : null;
 };
+// 竣工: 「2023」「2023-04」「2023/4/1」「2023年4月1日」などを、年・日付・精度にする
+function toCompletion(v: string): { completed_year: number | null; completed_on: string | null; completed_precision: "year" | "month" | "day" } {
+  const m = v.match(/((?:18|19|20)\d{2})\s*[-/.年]\s*(\d{1,2})(?:\s*[-/.月]\s*(\d{1,2}))?/);
+  const pad = (n: string) => n.padStart(2, "0");
+  if (m && Number(m[2]) >= 1 && Number(m[2]) <= 12) {
+    const y = Number(m[1]);
+    if (m[3] && Number(m[3]) >= 1 && Number(m[3]) <= 31) return { completed_year: y, completed_on: `${m[1]}-${pad(m[2])}-${pad(m[3])}`, completed_precision: "day" };
+    return { completed_year: y, completed_on: `${m[1]}-${pad(m[2])}-01`, completed_precision: "month" };
+  }
+  return { completed_year: toYear(v), completed_on: null, completed_precision: "year" };
+}
 // 「／」「/」「、」「,」「;」「改行」で分ける
 const splitList = (s: string) => s.split(/[／/、,，;；\n]+/).map((x) => x.trim()).filter(Boolean);
 
@@ -116,11 +130,16 @@ export function toImportRows(table: string[][]): { rows: ImportRow[]; unknownCol
     const errors: string[] = [];
     const name_ja = get(r, "name_ja");
     const rawUse = get(r, "use_category");
-    const use_category = useKey(rawUse);
+    // 「公園／広場」のように複数書ける。最初が主な用途
+    const useParts = splitList(rawUse);
+    const useKeys = useParts.map(useKey);
+    const use_category = useKeys[0] ?? "";
+    const badUse = useParts.find((u, i) => !useKeys[i]);
     const prefecture = get(r, "prefecture");
     if (!name_ja) errors.push("名称がありません");
     if (!prefecture) errors.push("都道府県がありません");
-    if (!use_category) errors.push(rawUse ? `用途「${rawUse}」が分かりません` : "用途がありません");
+    if (!rawUse) errors.push("用途がありません");
+    else if (badUse) errors.push(`用途「${badUse}」が分かりません`);
     const lat = toNum(get(r, "lat"));
     const lng = toNum(get(r, "lng"));
     if ((lat === null) !== (lng === null) || (lat !== null && (Math.abs(lat) > 90 || Math.abs(lng!) > 180))) errors.push("緯度・経度が正しくありません");
@@ -129,12 +148,13 @@ export function toImportRows(table: string[][]): { rows: ImportRow[]; unknownCol
       name_ja,
       name_en: get(r, "name_en"),
       use_category,
+      other_uses: [...new Set(useKeys.slice(1))].filter((u) => u && u !== use_category),
       prefecture,
       municipality: get(r, "municipality"),
       address: get(r, "address"),
       lat: errors.some((e) => e.startsWith("緯度")) ? null : lat,
       lng: errors.some((e) => e.startsWith("緯度")) ? null : lng,
-      completed_year: toYear(get(r, "completed_year")),
+      ...toCompletion(get(r, "completed_year")),
       site_area_m2: toNum(get(r, "site_area_m2")),
       designers: splitList(get(r, "designers")),
       awards: splitList(get(r, "award")).map((name) => ({ name, year: awardYear })),
@@ -149,7 +169,7 @@ export function toImportRows(table: string[][]): { rows: ImportRow[]; unknownCol
 
 // 取り込み用のひな形（スプレッドシートの1行目にそのまま使える）
 export const TEMPLATE_HEADERS = ["名称", "英語名", "用途", "都道府県", "市区町村", "住所", "緯度", "経度", "竣工年", "面積", "設計", "受賞", "受賞年", "出典", "概要"];
-export const TEMPLATE_EXAMPLE = ["東遊園地再整備", "Higashi Yuenchi Park", "公園", "兵庫県", "神戸市中央区", "兵庫県神戸市中央区加納町6丁目4", "", "", "2023", "", "空間創研／公園マネジメント研究所", "CLA賞設計部門最優秀賞", "2023", "https://www.cla.or.jp/", "（自分の言葉で短く）"];
+export const TEMPLATE_EXAMPLE = ["東遊園地再整備", "Higashi Yuenchi Park", "公園／広場", "兵庫県", "神戸市中央区", "兵庫県神戸市中央区加納町6丁目4", "", "", "2023", "", "空間創研／公園マネジメント研究所", "CLA賞設計部門最優秀賞", "2023", "https://www.cla.or.jp/", "（自分の言葉で短く）"];
 
 // CSV に書き出す（ひな形と書き出しで共通）。カンマ・改行・引用符を含むセルは引用符で囲む
 const csvCell = (s: string) => (/[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);

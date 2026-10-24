@@ -5,6 +5,8 @@ import { createHash } from "node:crypto";
 import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { categoryLabels } from "@/lib/i18n";
+
 import { requireUser } from "@/lib/supabase-server";
 
 export type ProjectPayload = {
@@ -13,13 +15,16 @@ export type ProjectPayload = {
   parent_id: string | null;
   name_ja: string;
   name_en: string;
-  use_category: string;
+  use_category: string; // 主な用途
+  other_uses: string[]; // そのほかの用途
   prefecture: string;
   municipality: string;
   address_ja: string;
   lat: string;
   lng: string;
   completed_year: string;
+  completed_precision: "year" | "month" | "day"; // 竣工がどこまで分かっているか
+  completed_date: string; // 月まで: YYYY-MM、日まで: YYYY-MM-DD（年までのときは空）
   completion_note: string;
   site_area_m2: string;
   summary_ja: string;
@@ -34,6 +39,14 @@ export type ProjectPayload = {
   laws: { law_id: string; note_ja: string; source_url: string }[];
   notes: { impressions: string; rating: string; detail_notes: string; cost_notes: string; visit_notes: string };
 };
+
+// 竣工の入力を、竣工年・竣工日・精度の3つの列にする
+function completion(p: ProjectPayload) {
+  const d = p.completed_date?.trim() ?? "";
+  if (p.completed_precision === "day" && /^\d{4}-\d{2}-\d{2}$/.test(d)) return { completed_year: Number(d.slice(0, 4)), completed_on: d, completed_precision: "day" };
+  if (p.completed_precision === "month" && /^\d{4}-\d{2}/.test(d)) return { completed_year: Number(d.slice(0, 4)), completed_on: `${d.slice(0, 7)}-01`, completed_precision: "month" };
+  return { completed_year: num(p.completed_year), completed_on: null, completed_precision: "year" };
+}
 
 export type SaveResult = { ok: boolean; message: string };
 
@@ -72,11 +85,13 @@ export async function saveProject(_: SaveResult | null, formData: FormData): Pro
     name_ja: p.name_ja.trim(),
     name_en: blank(p.name_en),
     use_category: p.use_category,
+    other_uses: [...new Set(p.other_uses ?? [])].filter((u) => u !== p.use_category && u in categoryLabels),
     prefecture: p.prefecture.trim(),
     municipality: blank(p.municipality),
     address_ja: blank(p.address_ja),
     location: lat !== null ? `SRID=4326;POINT(${lng} ${lat})` : null,
-    completed_year: num(p.completed_year),
+    // 竣工: 月・日まで分かっていれば日付も残す（年は日付からそろえる）
+    ...completion(p),
     completion_note: blank(p.completion_note),
     site_area_m2: num(p.site_area_m2),
     summary_ja: blank(p.summary_ja),
