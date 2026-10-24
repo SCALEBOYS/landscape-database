@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { draftPaper } from "../ai-actions";
 import { deletePaper, savePaper, type PaperInput } from "./actions";
 
 export type PaperFormData = PaperInput;
@@ -28,6 +29,31 @@ export function PaperForm({ initial, methods, projects, species, categories }: {
     </label>
   );
 
+  // DOI か URL から AI が下書きを作り、空でない値だけを入力欄に入れる（保存はしない）
+  const [ref, setRef] = useState(initial.doi || initial.url);
+  const [drafting, startDraft] = useTransition();
+  const [aiMsg, setAiMsg] = useState("");
+  const draft = () =>
+    startDraft(async () => {
+      setAiMsg("");
+      const r = await draftPaper(ref, { methods, projects, species, categories });
+      if (!r.ok) return setAiMsg(r.message);
+      const d = r.draft;
+      const str = (v: string | number | null) => (v === null ? "" : String(v));
+      setF((x) => {
+        const next = { ...x };
+        for (const k of ["title", "title_ja", "authors", "venue", "volume", "issue", "pages", "url", "doi", "summary_ja", "summary_en"] as const) if (d[k]) next[k] = d[k];
+        if (d.year) next.year = str(d.year);
+        if (!x.slug && d.slug) next.slug = d.slug;
+        next.kind = d.kind;
+        next.language = d.language;
+        next.review_status = "draft";
+        for (const k of ["method_ids", "project_ids", "species_ids", "category_ids"] as const) next[k] = [...new Set([...x[k], ...d[k]])];
+        return next;
+      });
+      setAiMsg(`下書きを入力欄に入れました。内容を確かめてから保存してください。${d.caution ? `確かめたい点: ${d.caution}` : ""}`);
+    });
+
   const save = () =>
     start(async () => {
       const r = await savePaper(f);
@@ -38,6 +64,17 @@ export function PaperForm({ initial, methods, projects, species, categories }: {
 
   return (
     <div className="grid gap-6">
+      <section className="grid gap-3 rounded-md border border-accent/40 bg-accent/5 p-5 text-sm">
+        <h2 className="font-medium">✦ DOI・URL から AI で下書き</h2>
+        <p className="text-xs text-muted">DOI（10.xxxx/…）か論文のページの URL を入れると、書誌情報・要約・関係する手法や事例の下書きを入力欄に入れます。保存はされません。</p>
+        <div className="flex flex-wrap gap-2">
+          <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="10.1126/science.6143402 または https://…" className="min-w-0 flex-1 rounded-md border border-line bg-white px-3 py-2" />
+          <button type="button" disabled={drafting || !ref.trim()} onClick={draft} className="rounded-md bg-accent px-4 py-2 text-white disabled:opacity-50">
+            {drafting ? "読んでいます…" : "下書きを作る"}
+          </button>
+        </div>
+        {aiMsg && <p className="text-xs text-ink">{aiMsg}</p>}
+      </section>
       <section className="grid gap-4 rounded-md border border-line bg-white p-5 sm:grid-cols-2">
         <h2 className="font-medium sm:col-span-2">書誌情報</h2>
         {text("title", "原題*")}

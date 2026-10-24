@@ -1,30 +1,9 @@
-import Link from "next/link";
-
+import { AdminNav } from "./AdminNav";
 import { signOut } from "./auth-actions";
 
+// 各ページの上で呼ぶ。メニュー（PC は左、スマホは上）を出す
 export function AdminHeader({ email }: { email: string }) {
-  return (
-    <header className="mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
-      <Link href="/admin" className="font-medium">
-        Landscape Database 管理画面
-      </Link>
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
-        <Link href="/admin/news" className="hover:text-ink">NEWS</Link>
-        <Link href="/admin/inquiries" className="hover:text-ink">お問い合わせ</Link>
-        <Link href="/admin/import" className="hover:text-ink">一括取り込み</Link>
-        <Link href="/admin/bulk-photos" className="hover:text-ink">写真のまとめ取り込み</Link>
-        <Link href="/admin/designers" className="hover:text-ink">設計の名前</Link>
-        <Link href="/admin/materials" className="hover:text-ink">素材の分類</Link>
-        <Link href="/admin/species" className="hover:text-ink">樹種の写真</Link>
-        <Link href="/admin/research" className="hover:text-ink">研究</Link>
-        <Link href="/ja" className="hover:text-ink">公開サイト</Link>
-        <span>{email}</span>
-        <form action={signOut}>
-          <button type="submit" className="hover:text-ink">ログアウト</button>
-        </form>
-      </div>
-    </header>
-  );
+  return <AdminNav email={email} signOut={signOut} />;
 }
 
 export function NotAdmin({ email }: { email: string }) {

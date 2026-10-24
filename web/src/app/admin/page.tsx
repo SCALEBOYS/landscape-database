@@ -5,6 +5,8 @@ import { requireUser } from "@/lib/supabase-server";
 import { categoryLabels } from "@/lib/i18n";
 
 import { AdminHeader, NotAdmin } from "./AdminHeader";
+import { ProjectTable, type ProjectRow } from "./ProjectTable";
+import { projectChecks, STATUS_SELECT, type ProjectStatusSource } from "@/lib/admin-checks";
 
 export default function AdminHome() {
   return (
@@ -20,9 +22,22 @@ async function ProjectList() {
 
   const { data: projects, error } = await supabase
     .from("projects")
-    .select("id, slug, name_ja, use_category, prefecture, municipality, status, updated_at, photos(count)")
+    .select(`id, slug, name_ja, use_category, prefecture, municipality, status, updated_at, ${STATUS_SELECT}`)
     .order("updated_at", { ascending: false });
   if (error) throw error;
+  const { data: points } = await supabase.from("project_points").select("id, lat");
+  const located = new Set((points ?? []).filter((p) => p.lat !== null).map((p) => p.id));
+  const rows: ProjectRow[] = projects.map((p) => ({
+    id: p.id,
+    name_ja: p.name_ja,
+    slug: p.slug,
+    use: categoryLabels[p.use_category]?.ja ?? p.use_category,
+    place: `${p.prefecture}${p.municipality ?? ""}`,
+    status: p.status as ProjectRow["status"],
+    updated_at: p.updated_at,
+    photos: (p.photos as unknown as { count: number }[])[0]?.count ?? 0,
+    has: projectChecks(p as unknown as ProjectStatusSource, located.has(p.id)),
+  }));
 
   // 直近30日の0件検索を、同じ条件ごとにまとめて多い順に
   const since = daysAgo(30);
@@ -46,7 +61,20 @@ async function ProjectList() {
   return (
     <>
       <AdminHeader email={user.email ?? ""} />
-      <section className="mb-6 rounded-md border border-line bg-white p-4 text-sm">
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-xl font-medium">事例の一覧<span className="ml-2 text-sm font-normal text-muted">{projects.length}件</span></h1>
+        <span className="flex gap-2">
+          {/* ファイルのダウンロードなので、ページ移動の Link ではなく通常のリンクにする */}
+          <a href="/admin/export" download className="rounded-md border border-ink px-4 py-2 text-sm hover:bg-ink hover:text-white">CSV で書き出す</a>
+          <Link href="/admin/projects/new" className="rounded-md bg-accent px-4 py-2 text-sm text-white">
+            新規登録
+          </Link>
+        </span>
+      </div>
+      <ProjectTable rows={rows} />
+
+      <div className="mt-10 grid items-start gap-6 lg:grid-cols-2">
+      <section className="rounded-md border border-line bg-white p-5 text-sm">
         <h2 className="mb-2 font-medium">AI の利用（直近30日）</h2>
         <div className="flex flex-wrap gap-x-6 gap-y-1">
           {Object.entries(AI_KINDS).map(([k, label]) => (
@@ -56,49 +84,7 @@ async function ProjectList() {
           ))}
         </div>
       </section>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl">物件（{projects.length}件）</h1>
-        <span className="flex gap-2">
-          {/* ファイルのダウンロードなので、ページ移動の Link ではなく通常のリンクにする */}
-          <a href="/admin/export" download className="rounded-md border border-ink px-4 py-2 text-sm hover:bg-ink hover:text-white">CSV で書き出す</a>
-          <Link href="/admin/projects/new" className="rounded-md bg-accent px-4 py-2 text-sm text-white">
-            新規登録
-          </Link>
-        </span>
-      </div>
-      <table className="w-full border-collapse bg-white text-sm">
-        <thead>
-          <tr className="border-b border-line text-left text-muted">
-            <th className="p-2">名称</th>
-            <th className="p-2">用途</th>
-            <th className="p-2">所在地</th>
-            <th className="p-2">写真</th>
-            <th className="p-2">状態</th>
-            <th className="p-2">更新</th>
-          </tr>
-        </thead>
-        <tbody>
-          {projects.map((p) => (
-            <tr key={p.id} className="border-b border-line">
-              <td className="p-2">
-                <Link href={`/admin/projects/${p.id}`} className="text-accent hover:underline">{p.name_ja}</Link>
-                <div className="text-xs text-muted">{p.slug}</div>
-              </td>
-              <td className="p-2">{categoryLabels[p.use_category]?.ja ?? p.use_category}</td>
-              <td className="p-2">{p.prefecture}{p.municipality ?? ""}</td>
-              <td className="p-2">{(p.photos as unknown as { count: number }[])[0]?.count ?? 0}</td>
-              <td className="p-2">
-                <span className={`rounded px-2 py-0.5 text-xs ${p.status === "published" ? "bg-accent text-white" : "bg-placeholder"}`}>
-                  {p.status === "published" ? "公開" : "下書き"}
-                </span>
-              </td>
-              <td className="p-2 text-xs text-muted">{new Date(p.updated_at).toLocaleDateString("ja-JP")}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <section className="mt-10 rounded-md border border-line bg-white p-5 text-sm">
+      <section className="rounded-md border border-line bg-white p-5 text-sm">
         <h2 className="mb-1 font-medium">0件になった検索（直近30日）</h2>
         <p className="mb-3 text-xs text-muted">探されているのに事例がない条件です。事例を足す順番の参考にしてください。</p>
         {missGroups.length ? (
@@ -115,6 +101,7 @@ async function ProjectList() {
           <p className="text-muted">まだ記録はありません</p>
         )}
       </section>
+      </div>
     </>
   );
 }

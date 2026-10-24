@@ -198,3 +198,9 @@ body:has(.ex) .site-footer, body:has(.graph-page) .site-footer { display: none; 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* ---------- 管理画面 ---------- */
+@media (min-width: 1024px) {
+  body:has(aside.admin-nav) .admin-main { margin-left: 15rem; }
+}
+body:not(:has(.admin-nav)) .admin-main { padding-top: 1.5rem; }

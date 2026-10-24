@@ -9,6 +9,7 @@ import type { ProjectPayload } from "../../actions";
 import { PhotoManager, type AdminPhoto } from "../../PhotoManager";
 import { ModelManager, type AdminModel } from "../../ModelManager";
 import type { PointOption } from "../../PointEditor";
+import { EditorTabs, type EditorTab } from "../../EditorTabs";
 import { ProjectForm } from "../../ProjectForm";
 
 // AI（文章で探す・下書き・写真の候補）の処理を待てるように
@@ -157,11 +158,24 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
     center = point ?? null;
   }
 
+  // タブの横に、入力が足りているかの目安を出す
+  const blank = (v: string) => !v.trim();
+  const tabs: EditorTab[] = [
+    { key: "basic", label: "基本情報", ...(blank(initial.lat) || blank(initial.completed_year) ? { note: "未入力あり", warn: true } : {}) },
+    { key: "text", label: "説明文", ...(blank(initial.summary_ja) ? { note: "なし", warn: true } : initial.summary_en_status !== "reviewed" ? { note: "英訳未確認", warn: true } : {}) },
+    { key: "credits", label: "設計・受賞・出典", note: initial.designers.length ? String(initial.designers.length) : "設計なし", warn: !initial.designers.length },
+    { key: "plants", label: "植栽・素材", note: `${initial.plantings.length}・${initial.components.length}`, warn: !initial.plantings.length && !initial.components.length },
+    { key: "laws", label: "法令", ...(initial.laws.length ? { note: String(initial.laws.length) } : {}) },
+    { key: "photos", label: "写真", note: String(photos.length), warn: !photos.length },
+    { key: "model", label: "3D", ...(models.length ? { note: String(models.length) } : {}) },
+    { key: "memo", label: "非公開メモ" },
+  ];
+
   return (
     <>
       <AdminHeader email={user.email ?? ""} />
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl">{initial.id ? initial.name_ja : "物件の新規登録"}</h1>
+        <h1 className="text-xl font-medium">{initial.id ? initial.name_ja : "事例の新規登録"}</h1>
         {initial.id && initial.status === "published" && (
           <Link href={`/ja/projects/${initial.slug}`} className="text-sm text-accent hover:underline">
             公開ページを見る
@@ -169,6 +183,7 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
         )}
       </div>
       {saved && <p className="mb-4 rounded-md bg-accent/10 px-3 py-2 text-sm text-accent">保存しました</p>}
+      <EditorTabs tabs={tabs}>
       <ProjectForm
         initial={initial}
         species={speciesRes.data ?? []}
@@ -177,6 +192,7 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
         parents={(parentsRes.data ?? []).filter((x) => x.id !== initial.id)}
       />
       {initial.id ? (
+        <div data-tab="photos">
         <PhotoManager
           projectId={initial.id}
           projectSlug={initial.slug}
@@ -185,12 +201,16 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
           pointOptions={pointOptions(initial, speciesRes.data ?? [], categoriesRes.data ?? [])}
           center={center}
         />
+        </div>
       ) : null}
       {initial.id ? (
-        <ModelManager projectId={initial.id} projectSlug={initial.slug} models={models} supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!} />
+        <div data-tab="model">
+          <ModelManager projectId={initial.id} projectSlug={initial.slug} models={models} supabaseUrl={process.env.NEXT_PUBLIC_SUPABASE_URL!} />
+        </div>
       ) : (
-        <p className="mt-8 text-sm text-muted">写真と 3D モデルは、物件を一度保存した後に追加できます。</p>
+        <p data-tab="photos model" className="mt-8 text-sm text-muted">写真と 3D モデルは、事例を一度保存した後に追加できます。</p>
       )}
+      </EditorTabs>
     </>
   );
 }

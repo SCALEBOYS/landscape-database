@@ -15,7 +15,8 @@ export default function AdminLayout({ children }: LayoutProps<"/admin">) {
   return (
     <html lang="ja" className={`${noto.variable} h-full antialiased`}>
       <body className="min-h-full bg-placeholder/40">
-        <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">{children}</div>
+        {/* メニューがあるページ（ログイン後）は、PC で左のメニューの分だけ右に寄せる */}
+        <div className="admin-main mx-auto max-w-6xl px-4 pb-10 sm:px-6 lg:pt-8">{children}</div>
       </body>
     </html>
   );

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
+import { draftPost } from "../ai-actions";
 import { deletePost, savePost, type PostInput } from "./actions";
 
 const input = "mt-1 w-full rounded-md border border-line bg-white px-3 py-2 text-sm";
@@ -25,8 +26,32 @@ export function PostForm({ initial, projects }: { initial: PostInput; projects: 
     </label>
   );
 
+  // 箇条書きのメモから AI が記事の下書きを作る（保存はしない）
+  const [memo, setMemo] = useState("");
+  const [drafting, startDraft] = useTransition();
+  const [aiMsg, setAiMsg] = useState("");
+  const draft = () =>
+    startDraft(async () => {
+      setAiMsg("");
+      const r = await draftPost(memo, f.kind);
+      if (!r.ok) return setAiMsg(r.message);
+      setF((x) => ({ ...x, ...r.draft, slug: x.slug || r.draft.slug }));
+      setAiMsg("下書きを入力欄に入れました。内容を確かめてから保存してください。");
+    });
+
   return (
     <div className="grid gap-6">
+      <section className="grid gap-3 rounded-md border border-accent/40 bg-accent/5 p-5 text-sm">
+        <h2 className="font-medium">✦ メモから AI で下書き</h2>
+        <p className="text-xs text-muted">伝えたいことを箇条書きで書くと、下の「種類」に合わせて、タイトル・要約・本文（日本語・英語）の下書きを入れます。保存はされません。</p>
+        <textarea value={memo} onChange={(e) => setMemo(e.target.value)} rows={4} placeholder={"例:\n- 大阪の事例を10件追加した\n- 樹種から探すで写真が見られるようになった"} className="w-full rounded-md border border-line bg-white px-3 py-2" />
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="button" disabled={drafting || !memo.trim()} onClick={draft} className="rounded-md bg-accent px-4 py-2 text-white disabled:opacity-50">
+            {drafting ? "書いています…" : "下書きを作る"}
+          </button>
+          {aiMsg && <span className="text-xs text-ink">{aiMsg}</span>}
+        </div>
+      </section>
       <section className="grid gap-4 rounded-md border border-line bg-white p-5 sm:grid-cols-2">
         <label className="text-sm">
           種類

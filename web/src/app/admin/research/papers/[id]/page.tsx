@@ -6,6 +6,9 @@ import { requireUser } from "@/lib/supabase-server";
 import { AdminHeader, NotAdmin } from "../../../AdminHeader";
 import { PaperForm, type PaperFormData } from "../../PaperForm";
 
+// AI の下書きを待てるように
+export const maxDuration = 60;
+
 export default function PaperEditPage({ params }: PageProps<"/admin/research/papers/[id]">) {
   return (
     <Suspense fallback={<p className="text-muted">読み込み中…</p>}>

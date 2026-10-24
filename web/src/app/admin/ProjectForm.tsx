@@ -51,9 +51,17 @@ export function ProjectForm({
   };
 
   return (
-    <form action={action} className="space-y-6">
+    <form
+      action={action}
+      className="space-y-6"
+      // 必須の欄は「基本情報」タブにある。別のタブで保存して入力漏れがあったら、そのタブを開く
+      onInvalidCapture={() => {
+        window.location.hash = "basic";
+      }}
+    >
       <input type="hidden" name="payload" value={JSON.stringify(p)} />
 
+      <div data-tab="basic text">
       <AiDraftPanel
         key={formKey}
         p={p}
@@ -65,8 +73,9 @@ export function ProjectForm({
         species={species.map((sp) => ({ id: sp.id, label: `${sp.name_ja}（${sp.scientific_name}）` }))}
         categories={categories.map((c) => ({ id: c.id, label: c.name_ja }))}
       />
+      </div>
 
-      <section className={section}>
+      <section data-tab="basic" className={section}>
         <h2 className="mb-4 font-medium">基本情報</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-sm">名称（日本語）*<input required className={input} {...field("name_ja")} /></label>
@@ -109,7 +118,7 @@ export function ProjectForm({
         </div>
       </section>
 
-      <section className={section}>
+      <section data-tab="text" className={section}>
         <h2 className="mb-4 font-medium">説明文</h2>
         <label className="block text-sm">日本語（公開情報の要約。自分の文章で）<textarea rows={4} className={input} {...field("summary_ja")} /></label>
         <label className="mt-4 block text-sm">英語<textarea rows={4} className={input} {...field("summary_en")} /></label>
@@ -123,7 +132,7 @@ export function ProjectForm({
         </label>
       </section>
 
-      <section className={section}>
+      <section data-tab="credits" className={section}>
         <h2 className="mb-4 font-medium">設計・受賞・出典</h2>
         <label className="block text-sm">
           設計（1行に1社）
@@ -146,7 +155,7 @@ export function ProjectForm({
         </label>
       </section>
 
-      <section className={section}>
+      <section data-tab="plants" className={section}>
         <h2 className="mb-4 font-medium">植栽</h2>
         <datalist id="species">{species.map((sp) => <option key={sp.id} value={`${sp.name_ja}（${sp.scientific_name}）`} />)}</datalist>
         {p.plantings.map((pl, i) => (
@@ -168,7 +177,7 @@ export function ProjectForm({
         <p className="mt-2 text-xs text-muted">候補にない樹種は、樹種マスタへの追加が必要です（scripts/build_species_seed.py）。</p>
       </section>
 
-      <section className={section}>
+      <section data-tab="plants" className={section}>
         <h2 className="mb-4 font-medium">構成要素（舗装・ファニチャー・照明など）</h2>
         {p.components.map((c, i) => (
           <div key={i} className="mt-1 grid gap-2 text-sm sm:grid-cols-[1.3fr_1fr_1fr_auto]">
@@ -188,7 +197,7 @@ export function ProjectForm({
         <button type="button" onClick={() => set("components", [...p.components, { category_id: "", product_name: "", maker_name: "" }])} className="mt-2 text-sm text-accent">＋ 構成要素を追加</button>
       </section>
 
-      <section className={section}>
+      <section data-tab="laws" className={section}>
         <h2 className="mb-1 font-medium">関係する法令</h2>
         <p className="mb-4 text-xs text-muted">法律・制度・条例のどれが、どう使われたかと、その根拠の資料を記録します。公開ページの「関係する法令」と、法令ごとのページに出ます。</p>
         {p.laws.map((x, i) => {
@@ -214,7 +223,7 @@ export function ProjectForm({
         <button type="button" onClick={() => set("laws", [...p.laws, { law_id: "", note_ja: "", source_url: "" }])} className="mt-2 text-sm text-accent">＋ 法令を追加</button>
       </section>
 
-      <section className={`${section} border-amber-300 bg-amber-50/40`}>
+      <section data-tab="memo" className={`${section} border-amber-300 bg-amber-50/40`}>
         <h2 className="mb-1 font-medium">非公開メモ</h2>
         <p className="mb-4 text-xs text-muted">管理者だけが読めます。公開サイトには出ません。</p>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -232,7 +241,7 @@ export function ProjectForm({
         </div>
       </section>
 
-      <div className="sticky bottom-0 flex items-center gap-4 border-t border-line bg-white/95 py-3">
+      <div data-tab="basic text credits plants laws memo" className="sticky bottom-0 z-10 flex items-center gap-4 border-t border-line bg-white/95 py-3">
         <button type="submit" disabled={pending} className="rounded-md bg-accent px-6 py-2 text-white disabled:opacity-50">
           {pending ? "保存中…" : "保存"}
         </button>

@@ -3,43 +3,13 @@
 import { z } from "zod";
 
 import { AiError, aiErrorMessage, askJson } from "@/lib/ai";
+import { readSource } from "@/lib/source-reader";
 import { requireUser } from "@/lib/supabase-server";
 
 async function adminClient() {
   const { supabase, isAdmin } = await requireUser();
   if (!isAdmin) throw new Error("管理者の権限がありません");
   return supabase;
-}
-
-const MAX_BYTES = 15 * 1024 * 1024;
-const MAX_TEXT = 60000;
-
-// 出典のページ（HTML か PDF）を取ってきて、Claude に渡せる形にする
-async function readSource(url: string) {
-  const u = new URL(url);
-  if (u.protocol !== "https:" && u.protocol !== "http:") throw new Error("http(s) の URL を入れてください");
-  const res = await fetch(u, { signal: AbortSignal.timeout(20000), headers: { "User-Agent": "LandscapeDatabaseBot/1.0 (+https://landscapedatabase.com/ja/about)" } });
-  if (!res.ok) throw new Error(`ページを読めませんでした（${res.status}）`);
-  const buf = Buffer.from(await res.arrayBuffer());
-  if (buf.length > MAX_BYTES) throw new Error("ファイルが大きすぎます（15MB まで）");
-  const type = res.headers.get("content-type") ?? "";
-  if (type.includes("pdf") || u.pathname.toLowerCase().endsWith(".pdf")) {
-    return { type: "document" as const, source: { type: "base64" as const, media_type: "application/pdf" as const, data: buf.toString("base64") } };
-  }
-  const text = buf
-    .toString("utf8")
-    .replace(/<(script|style|noscript|svg)[\s\S]*?<\/\1>/gi, " ")
-    .replace(/<br\s*\/?>|<\/(p|div|li|h\d|tr)>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/[ \t]+/g, " ")
-    .replace(/\n\s*\n+/g, "\n")
-    .trim();
-  if (text.length < 50) throw new Error("ページから文章を読み取れませんでした");
-  return { type: "text" as const, text: `出典 ${url} の本文:\n${text.slice(0, MAX_TEXT)}` };
 }
 
 const Draft = z.object({
@@ -155,6 +125,143 @@ export async function guessPhotoPoints(photoId: string): Promise<PhotoGuessResul
         .filter((c) => labels.has(`${c.kind}:${c.id}`))
         .map((c) => ({ ...c, x: clamp(c.x), y: clamp(c.y), label: labels.get(`${c.kind}:${c.id}`)! })),
     };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false, message: aiErrorMessage(e.code, "ja") };
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+const PaperDraft = z.object({
+  kind: z.enum(["article", "report", "book"]),
+  title: z.string(),
+  title_ja: z.string(),
+  authors: z.string(),
+  year: z.number().int().nullable(),
+  venue: z.string(),
+  volume: z.string(),
+  issue: z.string(),
+  pages: z.string(),
+  url: z.string(),
+  language: z.enum(["ja", "en", "other"]),
+  slug: z.string(),
+  summary_ja: z.string(),
+  summary_en: z.string(),
+  method_ids: z.array(z.string()),
+  project_ids: z.array(z.string()),
+  species_ids: z.array(z.string()),
+  category_ids: z.array(z.string()),
+  caution: z.string(),
+});
+export type PaperDraftData = z.infer<typeof PaperDraft> & { doi: string };
+type Option = { id: string; label: string };
+
+// Crossref から書誌情報を取る（DOI があるとき）。著者・掲載誌・巻号はここを正とする
+async function crossref(doi: string) {
+  const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`, { signal: AbortSignal.timeout(15000), headers: { "User-Agent": "LandscapeDatabase/1.0 (https://landscapedatabase.com)" } });
+  if (!res.ok) return null;
+  const m = (await res.json()).message as Record<string, unknown>;
+  return JSON.stringify({
+    title: m.title,
+    author: (m.author as { family?: string; given?: string; name?: string }[] | undefined)?.map((a) => a.name ?? `${a.family}, ${a.given ?? ""}`.trim()),
+    year: (m.issued as { "date-parts"?: number[][] } | undefined)?.["date-parts"]?.[0]?.[0],
+    venue: (m["container-title"] as string[] | undefined)?.[0] ?? m.publisher,
+    volume: m.volume,
+    issue: m.issue,
+    page: m.page,
+    type: m.type,
+    url: m.URL,
+    abstract: typeof m.abstract === "string" ? m.abstract.replace(/<[^>]+>/g, " ").slice(0, 6000) : null,
+  });
+}
+
+// DOI か論文のページの URL から、論文カードの下書きを作る（保存はしない）
+export async function draftPaper(
+  ref: string,
+  options: { methods: Option[]; projects: Option[]; species: Option[]; categories: Option[] },
+): Promise<{ ok: true; draft: PaperDraftData } | { ok: false; message: string }> {
+  try {
+    const supabase = await adminClient();
+    const v = ref.trim();
+    const doi = v.match(/10\.\d{4,9}\/[^\s"<>]+/)?.[0]?.replace(/[.)]+$/, "") ?? "";
+    const parts: Parameters<typeof askJson>[0]["content"] = [];
+    const meta = doi ? await crossref(doi) : null;
+    if (meta) parts.push({ type: "text", text: `Crossref の書誌情報（DOI ${doi}）:\n${meta}` });
+    if (/^https?:\/\//.test(v)) {
+      try {
+        parts.push(await readSource(v));
+      } catch (e) {
+        if (!meta) throw e;
+      }
+    }
+    if (!parts.length) return { ok: false, message: "DOI（10.xxxx/…）か、論文のページの URL を入れてください" };
+    const list = (xs: Option[]) => xs.map((x) => `${x.id}=${x.label}`).join(", ");
+    const { data, usage } = await askJson({
+      schema: PaperDraft,
+      effort: "medium",
+      system: [
+        "ランドスケープの研究データベースに載せる論文カードの下書きを作ります。渡された書誌情報と本文・抄録だけを根拠にします。",
+        "書誌情報（著者・年・掲載誌・巻・号・ページ）は Crossref の情報があればそれを正とし、なければ本文から読み取ります。分からない欄は空にします。著者は「姓, 名; 姓, 名」の形で原文どおりにします。",
+        "summary_ja は抄録を写さず、何を調べ、何が分かり、設計や計画にどう生かせるかを自分の言葉で3〜4文にまとめます。summary_en はその英訳です。",
+        "title_ja は原題が日本語でないときだけ訳を入れます。slug は「筆頭著者の姓-年-内容を表す英単語2〜3語」を英小文字とハイフンで作ります。",
+        "method_ids・project_ids・species_ids・category_ids は、下の一覧の id から、論文の内容とはっきり関係するものだけを選びます。",
+        "caution には、確かめたほうがよい点を日本語で一文にまとめます。なければ空にします。",
+        "",
+        `手法: ${list(options.methods)}`,
+        `事例: ${list(options.projects)}`,
+        `樹種: ${list(options.species)}`,
+        `素材の分類: ${list(options.categories)}`,
+      ].join("\n"),
+      content: parts,
+    });
+    await supabase.from("ai_usage").insert({ kind: "draft", client_hash: "admin-paper", input_tokens: usage.input_tokens, output_tokens: usage.output_tokens });
+    const keep = (ids: string[], xs: Option[]) => ids.filter((id) => xs.some((x) => x.id === id));
+    return {
+      ok: true,
+      draft: {
+        ...data,
+        doi,
+        method_ids: keep(data.method_ids, options.methods),
+        project_ids: keep(data.project_ids, options.projects),
+        species_ids: keep(data.species_ids, options.species),
+        category_ids: keep(data.category_ids, options.categories),
+      },
+    };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false, message: aiErrorMessage(e.code, "ja") };
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+const PostDraft = z.object({
+  title_ja: z.string(),
+  title_en: z.string(),
+  slug: z.string(),
+  summary_ja: z.string(),
+  body_ja: z.string(),
+  summary_en: z.string(),
+  body_en: z.string(),
+});
+export type PostDraftData = z.infer<typeof PostDraft>;
+
+// 箇条書きのメモから、NEWS・特集の記事の下書きを作る（保存はしない）
+export async function draftPost(memo: string, kind: "news" | "feature"): Promise<{ ok: true; draft: PostDraftData } | { ok: false; message: string }> {
+  try {
+    const supabase = await adminClient();
+    if (!memo.trim()) return { ok: false, message: "メモを入れてください" };
+    const { data, usage } = await askJson({
+      schema: PostDraft,
+      effort: "medium",
+      system: [
+        `Landscape Database（関西から始めるランドスケープ事例のデータベース）の${kind === "news" ? "お知らせ（NEWS）" : "特集記事"}の下書きを、管理者のメモから作ります。`,
+        "メモにない事実は足しません。落ち着いた、です・ます調の日本語で書きます。",
+        kind === "news" ? "本文は2〜4段落の短いお知らせにします。" : "本文は導入・本論・まとめの流れで、小見出しの後に「- 」の箇条書きを使ってもかまいません。",
+        "本文の書き方: 段落は空行で区切ります。「- 」で始まる行は箇条書きになり、その前の1行は小見出しになります。",
+        "summary_ja は一覧に出る1〜2文の要約です。英語の欄はそれぞれの自然な英訳です。slug は「年-内容を表す英単語2〜3語」を英小文字とハイフンで作ります。",
+      ].join("\n"),
+      content: memo.slice(0, 8000),
+    });
+    await supabase.from("ai_usage").insert({ kind: "draft", client_hash: "admin-post", input_tokens: usage.input_tokens, output_tokens: usage.output_tokens });
+    return { ok: true, draft: data };
   } catch (e) {
     if (e instanceof AiError) return { ok: false, message: aiErrorMessage(e.code, "ja") };
     return { ok: false, message: e instanceof Error ? e.message : String(e) };

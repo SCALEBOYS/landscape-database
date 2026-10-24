@@ -7,6 +7,9 @@ import { AdminHeader, NotAdmin } from "../../AdminHeader";
 import type { PostInput } from "../actions";
 import { PostForm } from "../PostForm";
 
+// AI の下書きを待てるように
+export const maxDuration = 60;
+
 export default function PostEditPage({ params }: PageProps<"/admin/news/[id]">) {
   return (
     <Suspense fallback={<p className="text-muted">読み込み中…</p>}>
