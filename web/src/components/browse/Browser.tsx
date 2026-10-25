@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Icon } from "@/components/Icon";
@@ -72,28 +72,18 @@ export function ExploreFromUrl(props: Props) {
 export function HomeBrowser({ lang, items, lawOptions, t, years, hero, before, after, title, limit = NEWEST_LIMIT, initial = EMPTY }: Props & { initial?: Filters }) {
   const { filters, update } = useFilterState(initial);
   const [panel, setPanel] = useState(false);
-  const router = useRouter();
   const list = useMemo(() => items.filter((it) => matches(it, filters)), [items, filters]);
   const [more, setMore] = useState(false);
   const shown = more ? list : list.slice(0, limit);
-  const goExplore = () => router.push(`/${lang}/explore${toQuery(filters)}`);
+  // 条件を入れているあいだは、結果の一覧を NEWS などより上に出す。検索ボタンでは結果の位置まで送る
+  const searching = toQuery(filters) !== "";
+  const results = useRef<HTMLElement>(null);
+  const showResults = () => results.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
-  return (
-    <>
-      <section className="relative">
-        {hero}
-        <div className="wrap relative z-10 -mt-[38px]">
-          <SearchBar items={items} filters={filters} update={update} t={t} lang={lang} years={years} onSubmit={goExplore} />
-        </div>
-      </section>
-      <div className="wrap flex items-start gap-5 pt-7">
-        <CategoryRows items={items} filters={filters} update={update} t={t} lang={lang} lawOptions={lawOptions} />
-        <FilterButton filters={filters} t={t} onClick={() => setPanel(true)} />
-      </div>
-      {before}
-      <section className="wrap grid gap-6 pt-9">
+  const list_ = (
+      <section ref={results} className="wrap grid scroll-mt-[calc(var(--hdr)+12px)] gap-6 pt-9">
         <div className="flex flex-wrap items-baseline justify-between gap-4 border-b border-line pb-3">
-          <h2 className="text-[30px] font-extrabold tracking-[-0.02em]">{title ?? t.newest}</h2>
+          <h2 className="text-[30px] font-extrabold tracking-[-0.02em]">{searching ? t.searchResults : (title ?? t.newest)}</h2>
           <span className="text-[13px] text-muted">{fmt(t.count, list.length)}</span>
           <Link href={`/${lang}/explore${toQuery(filters)}`} className="ml-auto inline-flex items-center gap-1.5 text-sm font-medium hover:underline">
             {t.seeOnMap} <Icon name="arrow" />
@@ -119,6 +109,31 @@ export function HomeBrowser({ lang, items, lawOptions, t, years, hero, before, a
           <ZeroResults items={items} filters={filters} update={update} t={t} lang={lang} lawOptions={lawOptions} />
         )}
       </section>
+  );
+
+  return (
+    <>
+      <section className="relative">
+        {hero}
+        <div className="wrap relative z-10 -mt-[38px]">
+          <SearchBar items={items} filters={filters} update={update} t={t} lang={lang} years={years} onSubmit={showResults} />
+        </div>
+      </section>
+      <div className="wrap flex items-start gap-5 pt-7">
+        <CategoryRows items={items} filters={filters} update={update} t={t} lang={lang} lawOptions={lawOptions} />
+        <FilterButton filters={filters} t={t} onClick={() => setPanel(true)} />
+      </div>
+      {searching ? (
+        <>
+          {list_}
+          {before}
+        </>
+      ) : (
+        <>
+          {before}
+          {list_}
+        </>
+      )}
       {after}
       {panel && <FilterPanel items={items} filters={filters} update={update} t={t} onClose={() => setPanel(false)} />}
     </>
