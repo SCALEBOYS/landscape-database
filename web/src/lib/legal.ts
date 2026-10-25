@@ -6,7 +6,7 @@ export type Block = { h?: string; p?: string; list?: string[] };
 export type LegalPage = { title: string; lead: string; updated: string; blocks: Block[] };
 
 const OPERATOR = "Joulis Research & Architecture";
-const UPDATED = "2026-10-22";
+const UPDATED = "2026-10-26";
 
 const ja: Record<"about" | "terms" | "privacy", LegalPage> = {
   about: {
@@ -64,6 +64,7 @@ const ja: Record<"about" | "terms" | "privacy", LegalPage> = {
       { h: "1. 取得する情報と使い道", list: [
         "お問い合わせフォームに入力された内容（お名前・メールアドレス・所属・本文など）: お問い合わせへの回答と、掲載内容の訂正・削除などの対応に使います。",
         "アクセスの集計（Vercel Web Analytics）: ページの閲覧数などを匿名で集計し、サイトの改善に使います。Cookie は使わず、個人を特定する情報は集めません。",
+        "アクセスの記録（運営者による集計）: 表示されたページ、どのサイトから来たか（サイト名のみ）、国・地域、端末の種類（PC・スマホ・タブレット）を記録し、サイトの改善に使います。Cookie は使わず、IP アドレスは保存しません。同じ日の訪問を数えるため、IP アドレスとブラウザの情報から日ごとに変わる符号を作って記録しますが、そこから個人を特定することはできません。",
         "条件に合う事例がなかった検索の条件（キーワードと絞り込み条件）: 不足している事例を把握するために記録します。IP アドレスなど個人を特定する情報は記録しません。",
         "「最近探したもの」の履歴: お使いのブラウザの中だけに保存し、運営者には送られません。",
       ] },
@@ -136,6 +137,7 @@ const en: typeof ja = {
       { h: "1. What we collect and why", list: [
         "Contact form entries (name, email, organisation, message): to reply and to handle corrections or removals.",
         "Anonymous visit statistics (Vercel Web Analytics): to improve the site. No cookies and no personally identifying information.",
+        "Our own visit records: the page viewed, the referring site (name only), country or region and device type, used to improve the site. No cookies, and IP addresses are not stored. To count visits within a day we store a code derived from the IP address and browser that changes every day and cannot identify you.",
         "Search conditions that returned no projects (keywords and filters): to learn which projects are missing. No IP address or other identifying information is stored.",
         "“Recently viewed” history: stored only in your browser and never sent to us.",
       ] },

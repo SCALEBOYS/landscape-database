@@ -10,6 +10,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { Icon } from "@/components/Icon";
 import { LangSwitcher } from "@/components/LangSwitcher";
 import { CompareTray } from "@/components/compare/CompareTray";
+import { PageViewTracker } from "@/components/PageViewTracker";
 import { MobileMenu } from "@/components/MobileMenu";
 import { cardImage } from "@/components/ProjectCard";
 import { getBrowseItems } from "@/lib/browse-data";
@@ -79,6 +80,8 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
         <CompareTray lang={lang} projects={trayProjects} labels={t.compare} />
         {/* アクセス計測（Cookie を使わない Vercel Web Analytics） */}
         <Analytics />
+        {/* 管理画面のアクセス解析用（Cookie なし・IP は保存しない） */}
+        <PageViewTracker />
       </body>
     </html>
   );

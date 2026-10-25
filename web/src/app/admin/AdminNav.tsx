@@ -40,8 +40,11 @@ const GROUPS: { label: string; items: Item[] }[] = [
     ],
   },
   {
-    label: "受信",
-    items: [{ href: "/admin/inquiries", label: "お問い合わせ", icon: "contact" }],
+    label: "受信・解析",
+    items: [
+      { href: "/admin/analytics", label: "アクセス解析", icon: "field-spatial" },
+      { href: "/admin/inquiries", label: "お問い合わせ", icon: "contact" },
+    ],
   },
 ];
 
