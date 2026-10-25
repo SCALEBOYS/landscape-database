@@ -129,6 +129,11 @@ export function PhotoCarousel({ slides, labels }: { slides: Slide[]; labels: Car
                 style={{ aspectRatio: ratios[s.src] ?? 4 / 3 }}
               />
               </button>
+              {/* クレジットと番号は写真の下部に重ねる（押しても写真が開くよう、クリックは通す） */}
+              <figcaption className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-between gap-3 rounded-b-sm bg-gradient-to-t from-black/55 to-transparent px-2.5 pb-1.5 pt-6 text-[10px] text-white/90 [text-shadow:0_1px_2px_rgba(0,0,0,.4)]">
+                <span className="truncate">{s.caption}</span>
+                <span className="num flex-none">{i + 1} / {slides.length}</span>
+              </figcaption>
               {showPoints &&
                 s.points.map((pt, j) => {
                   const id = `${i}-${j}`;
@@ -149,10 +154,6 @@ export function PhotoCarousel({ slides, labels }: { slides: Slide[]; labels: Car
                   );
                 })}
             </div>
-            <figcaption className="mt-1 flex justify-between gap-3 text-[11px] text-muted">
-              <span className="truncate">{s.caption}</span>
-              <span className="num flex-none">{i + 1} / {slides.length}</span>
-            </figcaption>
           </figure>
         ))}
       </div>
