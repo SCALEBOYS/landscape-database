@@ -64,12 +64,18 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
             {/* PC・タブレットは横並び。スマホは「地図」だけ出して、ほかはメニューから */}
             <nav className="ml-auto hidden items-center gap-4 whitespace-nowrap md:flex" aria-label="main">
               <SiteNav groups={groups} lang={lang} />
+              <Link href={`/${lang}/search`} aria-label={t.siteSearch.title} title={t.siteSearch.title} className="grid h-8 w-8 place-items-center rounded-full opacity-70 transition hover:bg-white/10 hover:opacity-100">
+                <Icon name="search" className="ico !h-4 !w-4" />
+              </Link>
               <span className="text-sm"><LangSwitcher current={lang} /></span>
             </nav>
             <div className="ml-auto flex items-center gap-3 text-[13px] font-medium md:hidden">
               <Link href={`/${lang}/explore`} className="flex items-center gap-1.5 rounded-full border border-white/25 px-3 py-1.5 hover:bg-white/10">
                 <Icon name="map" className="ico !h-4 !w-4" />
                 {t.nav.explore}
+              </Link>
+              <Link href={`/${lang}/search`} aria-label={t.siteSearch.title} className="grid h-8 w-8 place-items-center rounded-full hover:bg-white/10">
+                <Icon name="search" className="ico !h-4 !w-4" />
               </Link>
               <MobileMenu lang={lang} groups={groups} labels={{ open: t.menu.open, close: t.menu.close }} />
             </div>

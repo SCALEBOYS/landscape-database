@@ -15,6 +15,7 @@ export function siteNav(lang: Locale): NavGroup[] {
       items: [
         { href: L, label: g.home.top, desc: g.home.topDesc, icon: "home" },
         { href: `${L}/news`, label: g.home.news, desc: g.home.newsDesc, icon: "news" },
+        { href: `${L}/search`, label: g.home.search, desc: g.home.searchDesc, icon: "search" },
       ],
     },
     {

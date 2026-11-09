@@ -31,7 +31,7 @@ export function SiteNav({ groups, lang }: { groups: NavGroup[]; lang: string }) 
     return () => document.removeEventListener("pointerdown", close);
   }, [open]);
   const inGroup = (g: NavGroup) =>
-    g.key === "home" ? pathname === `/${lang}` || pathname.startsWith(`/${lang}/news`) : g.items.some((it) => { const path = it.href.split("#")[0]; return path !== `/${lang}` && (pathname === path || pathname.startsWith(`${path}/`)); });
+    g.key === "home" ? pathname === `/${lang}` || pathname.startsWith(`/${lang}/news`) || pathname.startsWith(`/${lang}/search`) : g.items.some((it) => { const path = it.href.split("#")[0]; return path !== `/${lang}` && (pathname === path || pathname.startsWith(`${path}/`)); });
 
   return (
     <ul ref={root} className="flex items-center gap-1 text-[13px] font-semibold tracking-[.08em] lg:gap-2">
