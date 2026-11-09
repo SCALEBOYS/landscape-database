@@ -6,6 +6,7 @@ import { useMemo, useState, useTransition } from "react";
 import { createBrowserSupabase } from "@/lib/supabase-browser";
 
 import { addPhoto } from "../actions";
+import { googleTakenOn, GooglePhotosButton } from "../GooglePhotosButton";
 import { photoPath, readLocation, readTakenOn, stripExif, type ShotLocation } from "../photos";
 
 export type ProjectSpot = { id: string; slug: string; name: string; draft: boolean; lat: number | null; lng: number | null };
@@ -62,7 +63,8 @@ export function BulkPhotos({ projects }: { projects: ProjectSpot[] }) {
     const next: Item[] = [];
     for (const [i, file] of files.entries()) {
       setStatus(`写真を読んでいます（${i + 1}/${files.length}）…`);
-      const [location, takenOn] = await Promise.all([readLocation(file), readTakenOn(file)]);
+      const [location, exifDay] = await Promise.all([readLocation(file), readTakenOn(file)]);
+      const takenOn = exifDay ?? googleTakenOn(file);
       const n = nearest(location, radius);
       next.push({ key: `${file.name}-${file.size}-${file.lastModified}`, file, preview: URL.createObjectURL(file), location, takenOn, ...n, include: true, state: "ready" });
     }
@@ -137,6 +139,10 @@ export function BulkPhotos({ projects }: { projects: ProjectSpot[] }) {
             }}
           />
         </label>
+        <div>
+          <GooglePhotosButton onFiles={(fs) => void add(fs)} disabled={reading} />
+          <p className="mt-1 text-xs text-muted">Google フォトの写真には撮影地点が付かないため、未振り分けに入ります。事例を手で選んでください。</p>
+        </div>
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <label className="flex items-center gap-2">
             振り分ける範囲

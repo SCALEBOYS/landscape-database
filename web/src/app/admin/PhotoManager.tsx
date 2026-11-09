@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 
 import { createBrowserSupabase } from "@/lib/supabase-browser";
 
+import { googleTakenOn, GooglePhotosButton } from "./GooglePhotosButton";
 import { addPhoto, deletePhoto, setPhotoLocation, setPhotoLocationPublic, updatePhoto } from "./actions";
 import { LocationEditor } from "./LocationEditor";
 import { photoPath, readLocation, stripExif } from "./photos";
@@ -96,7 +97,7 @@ export function PhotoManager({
     <section className="mt-6 rounded-md border border-line bg-white p-5">
       <h2 className="mb-1 font-medium">写真</h2>
       <p className="mb-4 text-xs text-muted">
-        自分で撮影した写真だけを使います。アップロード時にブラウザ上で位置情報などの EXIF を削除し、長辺2400pxの JPEG にします。
+        自分で撮影した写真だけを使います。手元のファイルか Google フォトから選べます（Google フォトの写真には撮影地点が付きません）。アップロード時にブラウザ上で位置情報などの EXIF を削除し、長辺2400pxの JPEG にします。
         「人物の写り込みを確認済み」にした写真だけが公開サイトに出ます。
         撮影地点と向きは削除前に読み取って別に記録し、事例ページの地図に出します（写真ごとに非公開にできます）。
       </p>
@@ -106,6 +107,17 @@ export function PhotoManager({
           写真ファイル
           <input type="file" accept="image/jpeg,image/png,image/heic,image/heif,image/webp,.heic,.heif" multiple onChange={(e) => setFiles([...(e.target.files ?? [])])} className="mt-1 block w-full" />
         </label>
+        <div className="sm:col-span-2">
+          <GooglePhotosButton
+            disabled={pending}
+            onFiles={(fs) => {
+              setFiles(fs);
+              const day = fs.map(googleTakenOn).filter((d): d is string => !!d).sort()[0];
+              if (day) setTakenOn(day);
+            }}
+          />
+          {files.length > 0 && <span className="ml-2 text-xs text-muted">選択中: {files.length}枚</span>}
+        </div>
         <label>
           撮影日*
           <input type="date" required value={takenOn} onChange={(e) => setTakenOn(e.target.value)} className="mt-1 w-full rounded-md border border-line bg-white px-3 py-2" />
