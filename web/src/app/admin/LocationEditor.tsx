@@ -18,7 +18,9 @@ export function LocationEditor({
   pending,
   onSave,
   onClose,
+  title,
 }: {
+  title?: string;
   src: string;
   initial: PhotoLocationInput | null;
   center: { lat: number; lng: number } | null;
@@ -81,7 +83,7 @@ export function LocationEditor({
   return (
     <div className="mt-5 rounded-md border border-accent/40 bg-accent/5 p-4 text-sm">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="font-medium">撮影地点の入力</h3>
+        <h3 className="font-medium">{title ?? "撮影地点の入力"}</h3>
         <button type="button" onClick={onClose} className="text-muted hover:text-ink">閉じる</button>
       </div>
       <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">

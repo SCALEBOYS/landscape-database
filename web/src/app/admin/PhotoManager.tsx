@@ -43,6 +43,9 @@ export function PhotoManager({
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   const [locating, setLocating] = useState<string | null>(null);
+  // 撮影地点をまとめて入れる写真（Google フォトから取り込んだ写真は地点が付かないため）
+  const [chosen, setChosen] = useState<Set<string>>(new Set());
+  const [bulkLocating, setBulkLocating] = useState(false);
   const srcOf = (ph: AdminPhoto) => `${supabaseUrl}/storage/v1/object/public/photos/${ph.storage_path}`;
   const editingPhoto = photos.find((ph) => ph.id === editing);
   const locatingPhoto = photos.find((ph) => ph.id === locating);
@@ -139,11 +142,35 @@ export function PhotoManager({
       </div>
 
       {photos.length > 0 && (
-        <ul className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-placeholder/60 px-4 py-2 text-xs">
+          <span className="font-medium">撮影地点をまとめて入れる</span>
+          <button type="button" onClick={() => setChosen(new Set(photos.filter((ph) => !ph.location).map((ph) => ph.id)))} className="text-accent hover:underline">
+            地点のない写真をすべて選ぶ（{photos.filter((ph) => !ph.location).length}）
+          </button>
+          {chosen.size > 0 && (
+            <button type="button" onClick={() => setChosen(new Set())} className="text-muted hover:underline">選択を外す</button>
+          )}
+          <button type="button" disabled={!chosen.size || pending} onClick={() => setBulkLocating(true)} className="ml-auto rounded-md bg-accent px-3 py-1.5 text-white disabled:opacity-40">
+            {chosen.size ? `選んだ${chosen.size}枚の地点を地図で入れる` : "写真を選んでください"}
+          </button>
+        </div>
+      )}
+
+      {photos.length > 0 && (
+        <ul className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3">
           {photos.map((ph) => (
             <li key={ph.id} className="text-xs">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={srcOf(ph)} alt={ph.caption_ja ?? ""} className="aspect-[16/9] w-full rounded object-cover" />
+              <label className={`relative block cursor-pointer rounded outline-offset-2 ${chosen.has(ph.id) ? "outline outline-2 outline-accent" : ""}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={srcOf(ph)} alt={ph.caption_ja ?? ""} className="aspect-[16/9] w-full rounded object-cover" />
+                <input
+                  type="checkbox"
+                  checked={chosen.has(ph.id)}
+                  onChange={() => setChosen((cur) => { const n = new Set(cur); if (n.has(ph.id)) n.delete(ph.id); else n.add(ph.id); return n; })}
+                  aria-label="この写真を選ぶ"
+                  className="absolute left-2 top-2 h-4 w-4 accent-[var(--accent)]"
+                />
+              </label>
               <div className="mt-1 text-muted">{ph.taken_on}{ph.caption_ja ? ` · ${ph.caption_ja}` : ""}</div>
               <div className="mt-1 flex items-center gap-2">
                 <span className={`rounded px-1.5 py-0.5 ${ph.people_checked ? "bg-accent text-white" : "bg-amber-100 text-amber-900"}`}>
@@ -218,6 +245,31 @@ export function PhotoManager({
             setLocating(null);
           })}
           onClose={() => setLocating(null)}
+        />
+      )}
+      {bulkLocating && chosen.size > 0 && (
+        <LocationEditor
+          key="bulk"
+          title={`撮影地点の入力（${chosen.size}枚にまとめて入れる）`}
+          src={srcOf(photos.find((ph) => chosen.has(ph.id))!)}
+          initial={null}
+          center={center}
+          pending={pending}
+          onSave={(loc) =>
+            startTransition(async () => {
+              setStatus("");
+              try {
+                for (const id of chosen) await setPhotoLocation(id, loc);
+                setStatus(`${chosen.size}枚に撮影地点を入れました`);
+                setChosen(new Set());
+                setBulkLocating(false);
+                router.refresh();
+              } catch (e) {
+                setStatus(`失敗しました: ${e instanceof Error ? e.message : String(e)}`);
+              }
+            })
+          }
+          onClose={() => setBulkLocating(false)}
         />
       )}
       {editingPhoto && (
