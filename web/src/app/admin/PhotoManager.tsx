@@ -7,6 +7,7 @@ import { createBrowserSupabase } from "@/lib/supabase-browser";
 
 import { googleTakenOn, GooglePhotosButton } from "./GooglePhotosButton";
 import { addPhoto, deletePhoto, setPhotoLocation, setPhotoLocationPublic, updatePhoto } from "./actions";
+import { CaptionEditor } from "./CaptionEditor";
 import { LocationEditor } from "./LocationEditor";
 import { photoPath, readLocation, stripExif } from "./photos";
 import { PointEditor, type AdminPoint, type PointOption } from "./PointEditor";
@@ -46,6 +47,7 @@ export function PhotoManager({
   // 撮影地点をまとめて入れる写真（Google フォトから取り込んだ写真は地点が付かないため）
   const [chosen, setChosen] = useState<Set<string>>(new Set());
   const [bulkLocating, setBulkLocating] = useState(false);
+  const [captioning, setCaptioning] = useState(false);
   const srcOf = (ph: AdminPhoto) => `${supabaseUrl}/storage/v1/object/public/photos/${ph.storage_path}`;
   const editingPhoto = photos.find((ph) => ph.id === editing);
   const locatingPhoto = photos.find((ph) => ph.id === locating);
@@ -143,16 +145,25 @@ export function PhotoManager({
 
       {photos.length > 0 && (
         <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md bg-placeholder/60 px-4 py-2 text-xs">
-          <span className="font-medium">撮影地点をまとめて入れる</span>
+          <span className="font-medium">選んだ写真をまとめて{chosen.size ? `（${chosen.size}枚）` : ""}</span>
+          <button type="button" onClick={() => setChosen(new Set(photos.map((ph) => ph.id)))} className="text-accent hover:underline">すべて選ぶ</button>
           <button type="button" onClick={() => setChosen(new Set(photos.filter((ph) => !ph.location).map((ph) => ph.id)))} className="text-accent hover:underline">
-            地点のない写真をすべて選ぶ（{photos.filter((ph) => !ph.location).length}）
+            地点のない写真（{photos.filter((ph) => !ph.location).length}）
+          </button>
+          <button type="button" onClick={() => setChosen(new Set(photos.filter((ph) => !ph.caption_ja).map((ph) => ph.id)))} className="text-accent hover:underline">
+            説明文のない写真（{photos.filter((ph) => !ph.caption_ja).length}）
           </button>
           {chosen.size > 0 && (
             <button type="button" onClick={() => setChosen(new Set())} className="text-muted hover:underline">選択を外す</button>
           )}
-          <button type="button" disabled={!chosen.size || pending} onClick={() => setBulkLocating(true)} className="ml-auto rounded-md bg-accent px-3 py-1.5 text-white disabled:opacity-40">
-            {chosen.size ? `選んだ${chosen.size}枚の地点を地図で入れる` : "写真を選んでください"}
-          </button>
+          <span className="ml-auto flex flex-wrap gap-2">
+            <button type="button" disabled={!chosen.size || pending} onClick={() => { setCaptioning(false); setBulkLocating(true); }} className="rounded-md bg-accent px-3 py-1.5 text-white disabled:opacity-40">
+              地点を地図で入れる
+            </button>
+            <button type="button" disabled={!chosen.size || pending} onClick={() => { setBulkLocating(false); setCaptioning(true); }} className="rounded-md border border-accent bg-white px-3 py-1.5 text-accent disabled:opacity-40">
+              ✦ 説明文を入れる（AI 下書き）
+            </button>
+          </span>
         </div>
       )}
 
@@ -270,6 +281,14 @@ export function PhotoManager({
             })
           }
           onClose={() => setBulkLocating(false)}
+        />
+      )}
+      {captioning && chosen.size > 0 && (
+        <CaptionEditor
+          key={[...chosen].join()}
+          projectId={projectId}
+          photos={photos.filter((ph) => chosen.has(ph.id)).map((ph) => ({ id: ph.id, src: srcOf(ph), caption_ja: ph.caption_ja, caption_en: ph.caption_en }))}
+          onClose={() => setCaptioning(false)}
         />
       )}
       {editingPhoto && (

@@ -267,3 +267,137 @@ export async function draftPost(memo: string, kind: "news" | "feature"): Promise
     return { ok: false, message: e instanceof Error ? e.message : String(e) };
   }
 }
+
+const Caption = z.object({ caption_ja: z.string(), caption_en: z.string() });
+export type CaptionResult = { ok: true; caption_ja: string; caption_en: string } | { ok: false; message: string };
+
+type One<T> = T | T[] | null;
+const one = <T,>(v: One<T>) => (Array.isArray(v) ? (v[0] ?? null) : v);
+
+// 写真に添える説明文（日本語・英語）の下書きを作る。保存はしない（管理者が直してから保存する）
+export async function draftPhotoCaption(photoId: string): Promise<CaptionResult> {
+  try {
+    const supabase = await adminClient();
+    const { data: photo, error } = await supabase
+      .from("photos")
+      .select("storage_path, taken_on, project:projects(name_ja, use_category, prefecture, municipality, summary_ja), points:photo_points(note_ja, species:species(name_ja), category:component_categories(name_ja))")
+      .eq("id", photoId)
+      .single();
+    if (error || !photo) throw new Error("写真が見つかりません");
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${photo.storage_path}`, { signal: AbortSignal.timeout(20000) });
+    if (!res.ok) throw new Error(`写真を読めませんでした（${res.status}）`);
+    const buf = Buffer.from(await res.arrayBuffer());
+    if (buf.length > 4.5 * 1024 * 1024) throw new Error("写真が大きすぎます（4.5MB まで）");
+
+    const project = one(photo.project as One<{ name_ja: string; use_category: string; prefecture: string; municipality: string | null; summary_ja: string | null }>);
+    const marks = ((photo.points ?? []) as { note_ja: string | null; species: One<{ name_ja: string }>; category: One<{ name_ja: string }> }[])
+      .map((p) => [one(p.species)?.name_ja ?? one(p.category)?.name_ja, p.note_ja].filter(Boolean).join("（") + (p.note_ja ? "）" : ""))
+      .filter(Boolean);
+    const { data, usage } = await askJson({
+      schema: Caption,
+      effort: "medium",
+      maxTokens: 2000,
+      system: [
+        "あなたはランドスケープ事例のデータベースの編集者です。事例ページの写真に添える短い説明文を書きます。",
+        "caption_ja は日本語で20〜45字。写っている空間（どこを・どの向きから）と、目を引く植栽・舗装・ファニチャー・水景などを、です・ます調ではなく体言止めか簡潔な文で書きます。",
+        "事例の名前は書きません（ページを見ればわかるため）。写真から読み取れないこと（設計意図・年数・評価）は書きません。",
+        "人が写っていても、人については書きません。",
+        "樹種や素材の名前は、下の「写真に付けた印」にあるもの、または写真から確かにわかるものだけを使います。迷うときは「高木」「石張り舗装」のような一般的な言い方にします。",
+        "caption_en は caption_ja と同じ内容の、自然で短い英語です。",
+        "",
+        project ? `事例: ${project.name_ja}（${project.prefecture}${project.municipality ?? ""}、用途 ${project.use_category}）` : "",
+        project?.summary_ja ? `事例の説明: ${project.summary_ja.slice(0, 600)}` : "",
+        marks.length ? `写真に付けた印（確認済み）: ${marks.join("、")}` : "写真に付けた印: なし",
+        `撮影日: ${photo.taken_on}`,
+      ].join("\n"),
+      content: [
+        { type: "image", source: { type: "base64", media_type: "image/jpeg", data: buf.toString("base64") } },
+        { type: "text", text: "この写真の説明文を書いてください。" },
+      ],
+    });
+    await supabase.from("ai_usage").insert({ kind: "photo", client_hash: "admin-caption", input_tokens: usage.input_tokens, output_tokens: usage.output_tokens });
+    return { ok: true, caption_ja: data.caption_ja.trim().slice(0, 120), caption_en: data.caption_en.trim().slice(0, 240) };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false, message: aiErrorMessage(e.code, "ja") };
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+const Issues = z.object({
+  issues: z.array(
+    z.object({
+      project_id: z.string(),
+      field: z.string(),
+      severity: z.enum(["high", "medium", "low"]),
+      problem: z.string(),
+      suggestion: z.string(),
+    }),
+  ),
+});
+export type CheckIssue = z.infer<typeof Issues>["issues"][number] & { name_ja: string };
+export type CheckResult = { ok: true; issues: CheckIssue[] } | { ok: false; message: string };
+
+// 選んだ事例（一度に10件まで）の入力を読み、食い違い・誤りらしいところを挙げる。直すのは管理者
+export async function checkProjects(ids: string[]): Promise<CheckResult> {
+  try {
+    const supabase = await adminClient();
+    const list = ids.filter((id) => /^[0-9a-f-]{36}$/.test(id)).slice(0, 10);
+    if (!list.length) return { ok: true, issues: [] };
+    const [{ data: projects, error }, { data: points }] = await Promise.all([
+      supabase
+        .from("projects")
+        .select(
+          "id, name_ja, name_en, use_category, other_uses, prefecture, municipality, address_ja, completed_year, completion_note, site_area_m2, summary_ja, summary_en, status, credits:project_credits(role, party:parties(name_ja)), plantings:project_plantings(layer, species:species(name_ja)), components:project_components(category:component_categories(name_ja)), awards:project_awards(award_name, award_year), sources(kind, url)",
+        )
+        .in("id", list),
+      supabase.from("project_points").select("id, lat, lng").in("id", list),
+    ]);
+    if (error) throw new Error(error.message);
+    const coords = new Map((points ?? []).map((p) => [p.id as string, `${Number(p.lat).toFixed(5)}, ${Number(p.lng).toFixed(5)}`]));
+    const names = new Map((projects ?? []).map((p) => [p.id as string, p.name_ja as string]));
+    const records = (projects ?? []).map((p) => {
+      const { credits, plantings, components, ...rest } = p as Record<string, unknown> & {
+        credits: { role: string; party: One<{ name_ja: string }> }[];
+        plantings: { layer: string; species: One<{ name_ja: string }> }[];
+        components: { category: One<{ name_ja: string }> }[];
+      };
+      return JSON.stringify({
+        ...rest,
+        coords: coords.get(p.id as string) ?? null,
+        credits: credits.map((c) => `${c.role}: ${one(c.party)?.name_ja ?? "?"}`),
+        plantings: plantings.map((x) => `${one(x.species)?.name_ja ?? "?"}（${x.layer}）`),
+        components: components.map((x) => one(x.category)?.name_ja ?? "?"),
+      });
+    });
+
+    const { data, usage } = await askJson({
+      schema: Issues,
+      effort: "medium",
+      maxTokens: 8000,
+      system: [
+        "あなたはランドスケープ事例のデータベースの校閲者です。下の事例データ（1行1事例の JSON）を読み、入力の誤り・食い違いを見つけます。",
+        "見るところ:",
+        "- 説明文（summary_ja / summary_en）と項目（竣工年・面積・所在地・設計者・受賞・植栽・素材）の食い違い",
+        "- 日本語と英語の説明の内容の違い（片方にしかない事実、数字の違い、訳し漏れ・誤訳）",
+        "- 所在地（prefecture・municipality・address_ja）同士や、座標（coords: 緯度, 経度）との食い違い（座標が別の府県を指す、など）",
+        "- 受賞年が竣工年より明らかに前、面積の桁違いなど、ありえない値",
+        "- name_en の綴り・表記のおかしさ、用途（use_category）と説明の不一致、誤字",
+        "項目が空なだけのもの（未入力）は挙げません（別の画面で見ています）。確かな根拠があるものだけを挙げ、推測で事実を作りません。問題がなければ何も挙げません。",
+        "project_id には JSON の id をそのまま入れます。field は該当する項目名（例: summary_en, completed_year）。",
+        "severity: high=明らかな誤り、medium=食い違いの疑い、low=表記や言い回しの改善。",
+        "problem と suggestion は日本語で短く書きます。suggestion は直し方の案（正しい値がわかるときはその値）です。",
+        "",
+        records.join("\n"),
+      ].join("\n"),
+      content: "この事例データの誤り・食い違いを挙げてください。",
+    });
+    await supabase.from("ai_usage").insert({ kind: "draft", client_hash: "admin-check", input_tokens: usage.input_tokens, output_tokens: usage.output_tokens });
+    return {
+      ok: true,
+      issues: data.issues.filter((i) => names.has(i.project_id)).map((i) => ({ ...i, name_ja: names.get(i.project_id)! })),
+    };
+  } catch (e) {
+    if (e instanceof AiError) return { ok: false, message: aiErrorMessage(e.code, "ja") };
+    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+  }
+}

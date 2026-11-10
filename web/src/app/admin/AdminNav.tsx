@@ -22,6 +22,7 @@ const GROUPS: { label: string; items: Item[] }[] = [
     items: [
       { href: "/admin/ai", label: "AI アシスタント", icon: "spark", exact: true },
       { href: "/admin/ai/bulk", label: "AI でまとめて下書き", icon: "compare" },
+      { href: "/admin/ai/check", label: "入力のチェック", icon: "search" },
     ],
   },
   {

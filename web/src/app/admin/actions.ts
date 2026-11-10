@@ -254,7 +254,12 @@ export async function updatePhoto(id: string, projectId: string, patch: { people
     const { error } = await supabase.from("photos").update({ is_cover: false }).eq("project_id", projectId);
     if (error) throw new Error(error.message);
   }
-  const { error } = await supabase.from("photos").update(patch).eq("id", id);
+  const row = {
+    ...patch,
+    ...(patch.caption_ja !== undefined && { caption_ja: blank(patch.caption_ja) }),
+    ...(patch.caption_en !== undefined && { caption_en: blank(patch.caption_en) }),
+  };
+  const { error } = await supabase.from("photos").update(row).eq("id", id);
   if (error) throw new Error(error.message);
   updateTag("projects");
 }
