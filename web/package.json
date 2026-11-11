@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/fetch-embed-model.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -11,6 +12,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^1.1.0",
     "@google/model-viewer": "4.3.1",
+    "@huggingface/transformers": "^3.7.6",
     "@supabase/ssr": "^0.12.7",
     "@supabase/supabase-js": "^2.118.0",
     "@vercel/analytics": "2.0.1",

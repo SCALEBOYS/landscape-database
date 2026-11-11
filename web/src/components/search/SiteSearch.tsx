@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 
 import { siteAiSearch, type SiteAiResult } from "@/app/actions/site-ai-search";
@@ -13,10 +13,9 @@ const PAGE = 30;
 const fmt = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ""));
 
 // サイト内検索。入れた言葉で、事例・樹種・素材・設計・法令・研究・NEWS をまとめて絞る。
-// 「AI で探す」を押すと、文章の意味から AI が合うページを選び、理由を添えて上に出す
+// 「意味で探す」を押すと、文章の意味が近いページ（ベクトル検索）を上に出す
 export function SiteSearch({ entries, lang, t, ai }: { entries: Entry[]; lang: string; t: T; ai: boolean }) {
   const params = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
   const [q, setQ] = useState(params.get("q") ?? "");
   const [kind, setKind] = useState<Kind | "all">("all");
@@ -37,8 +36,8 @@ export function SiteSearch({ entries, lang, t, ai }: { entries: Entry[]; lang: s
     setShown(PAGE);
     if (kind !== "all") setKind("all");
   };
-  // 検索した言葉は URL に残す（戻る・共有のため）
-  const keep = (v: string) => router.replace(v.trim() ? `${pathname}?q=${encodeURIComponent(v.trim())}` : pathname, { scroll: false });
+  // 検索した言葉は URL に残す（戻る・共有のため）。ページは読み直さない（読み直すと、検索の途中の通信が止まるため）
+  const keep = (v: string) => window.history.replaceState(null, "", v.trim() ? `${pathname}?q=${encodeURIComponent(v.trim())}` : pathname);
   const runAi = (v = q) => {
     if (!v.trim()) return;
     keep(v);
@@ -97,7 +96,7 @@ export function SiteSearch({ entries, lang, t, ai }: { entries: Entry[]; lang: s
         </div>
       )}
 
-      {/* AI のおすすめ */}
+      {/* 意味が近いページ */}
       {(pending || aiResult) && (
         <section className="mt-8" aria-live="polite">
           <h2 className="flex items-center gap-1.5 text-xs font-semibold tracking-[.12em] text-accent">

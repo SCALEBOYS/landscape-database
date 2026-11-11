@@ -44,3 +44,6 @@ next-env.d.ts
 /public/maplibre/
 !.env.local.example
 !.env.production
+
+# 埋め込みモデル（scripts/fetch-embed-model.mjs で取得）
+/models/
