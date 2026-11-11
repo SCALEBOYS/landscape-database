@@ -15,10 +15,15 @@ export type Result = { ok: boolean; message: string };
 export async function renameParty(id: string, name_ja: string, name_en: string): Promise<Result> {
   if (!name_ja.trim()) return { ok: false, message: "名前を入れてください" };
   const supabase = await adminClient();
+  const { data: before } = await supabase.from("parties").select("name_ja").eq("id", id).single();
   const { error } = await supabase.from("parties").update({ name_ja: name_ja.trim(), name_en: name_en.trim() || null }).eq("id", id);
   if (error) return { ok: false, message: error.message };
+  // 前の名前は別名に残す（古い書き方で入れても同じ会社につながる）
+  if (before && before.name_ja !== name_ja.trim()) {
+    await supabase.from("party_aliases").upsert({ party_id: id, alias: before.name_ja, note: "以前の表記" }, { onConflict: "party_id,alias", ignoreDuplicates: true });
+  }
   updateTag("projects");
-  return { ok: true, message: "保存しました" };
+  return { ok: true, message: before && before.name_ja !== name_ja.trim() ? "保存しました（前の名前は別名に残しました）" : "保存しました" };
 }
 
 export async function addAlias(partyId: string, alias: string, note: string): Promise<Result> {

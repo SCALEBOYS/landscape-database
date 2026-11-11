@@ -45,7 +45,7 @@ const EMPTY: ProjectPayload = {
   summary_en: "",
   summary_en_status: "none",
   status: "draft",
-  designers: [],
+  credits: [],
   awards: [],
   sources: [],
   plantings: [],
@@ -80,11 +80,13 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
   const { supabase, user, isAdmin } = await requireUser();
   if (!isAdmin) return <NotAdmin email={user.email ?? ""} />;
 
-  const [speciesRes, categoriesRes, parentsRes, lawsRes] = await Promise.all([
+  const [speciesRes, categoriesRes, parentsRes, lawsRes, partiesRes, programsRes] = await Promise.all([
     supabase.from("species").select("id, name_ja, scientific_name").order("name_ja"),
     supabase.from("component_categories").select("id, kind, name_ja, sort_order").order("kind").order("sort_order"),
     supabase.from("projects").select("id, name_ja").order("name_ja"),
     supabase.from("laws").select("id, kind, name_ja, jurisdiction_ja").order("sort_order"),
+    supabase.from("parties").select("id, name_ja, name_en, aliases:party_aliases(alias)").order("name_ja"),
+    supabase.from("award_programs").select("id, name_ja, name_en, aliases, prizes").order("sort_order"),
   ]);
 
   let initial = EMPTY;
@@ -96,8 +98,8 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
       .from("projects")
       .select(
         `*,
-         credits:project_credits(sort_order, party:parties(name_ja)),
-         awards:project_awards(award_name, award_year),
+         credits:project_credits(sort_order, role, party:parties(id, name_ja)),
+         awards:project_awards(award_name, award_year, program_id, category),
          sources(url),
          plantings:project_plantings(species_id, layer),
          components:project_components(category_id, product_name, maker_name),
@@ -134,10 +136,15 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
       summary_en: s(p.summary_en),
       summary_en_status: p.summary_en_status,
       status: p.status,
-      designers: (p.credits as { sort_order: number; party: { name_ja: string } }[])
+      credits: (p.credits as { sort_order: number; role: string; party: { id: string; name_ja: string } }[])
         .sort((a, b) => a.sort_order - b.sort_order)
-        .map((c) => c.party.name_ja),
-      awards: (p.awards as { award_name: string; award_year: number | null }[]).map((a) => ({ award_name: a.award_name, award_year: s(a.award_year) })),
+        .map((c) => ({ party_id: c.party.id, name: c.party.name_ja, role: c.role })),
+      awards: (p.awards as { award_name: string; award_year: number | null; program_id: string | null; category: string | null }[]).map((a) => ({
+        program_id: a.program_id ?? "",
+        prize: s(a.category),
+        award_name: a.program_id ? "" : a.award_name,
+        award_year: s(a.award_year),
+      })),
       sources: (p.sources as { url: string }[]).map((x) => x.url),
       plantings: p.plantings as ProjectPayload["plantings"],
       components: (p.components as { category_id: string; product_name: string | null; maker_name: string | null }[]).map((c) => ({
@@ -169,7 +176,7 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
   const tabs: EditorTab[] = [
     { key: "basic", label: "基本情報", ...(blank(initial.lat) || blank(initial.completed_year) ? { note: "未入力あり", warn: true } : {}) },
     { key: "text", label: "説明文", ...(blank(initial.summary_ja) ? { note: "なし", warn: true } : initial.summary_en_status !== "reviewed" ? { note: "英訳未確認", warn: true } : {}) },
-    { key: "credits", label: "設計・受賞・出典", note: initial.designers.length ? String(initial.designers.length) : "設計なし", warn: !initial.designers.length },
+    { key: "credits", label: "設計・受賞・出典", note: initial.credits.length ? String(initial.credits.length) : "設計なし", warn: !initial.credits.length },
     { key: "plants", label: "植栽・素材", note: `${initial.plantings.length}・${initial.components.length}`, warn: !initial.plantings.length && !initial.components.length },
     { key: "laws", label: "法令", ...(initial.laws.length ? { note: String(initial.laws.length) } : {}) },
     { key: "photos", label: "写真", note: String(photos.length), warn: !photos.length },
@@ -195,6 +202,8 @@ async function Editor({ params, searchParams }: PageProps<"/admin/projects/[id]"
         species={speciesRes.data ?? []}
         categories={categoriesRes.data ?? []}
         laws={lawsRes.data ?? []}
+        parties={(partiesRes.data ?? []).map((x) => ({ id: x.id, name_ja: x.name_ja, name_en: x.name_en, aliases: (x.aliases as { alias: string }[]).map((a) => a.alias) }))}
+        programs={programsRes.data ?? []}
         parents={(parentsRes.data ?? []).filter((x) => x.id !== initial.id)}
       />
       {initial.id ? (

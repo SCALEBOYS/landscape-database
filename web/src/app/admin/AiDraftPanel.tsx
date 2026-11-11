@@ -4,7 +4,10 @@ import { useState, useTransition } from "react";
 
 import { layerLabels } from "@/lib/i18n";
 
+import type { AwardProgramOption, PartyOption } from "@/lib/names";
+
 import type { ProjectPayload } from "./actions";
+import { toAwards, toCredits } from "./NameEditors";
 import { draftFromSource, type DraftData } from "./ai-actions";
 
 type Master = { id: string; label: string };
@@ -25,7 +28,21 @@ const LABELS: Record<Key, string> = {
 };
 
 // 出典の URL から AI が入力欄の下書きを作る。項目を選んで反映し、確かめてから保存する
-export function AiDraftPanel({ p, apply, species, categories }: { p: ProjectPayload; apply: (patch: Partial<ProjectPayload>) => void; species: Master[]; categories: Master[] }) {
+export function AiDraftPanel({
+  p,
+  apply,
+  species,
+  categories,
+  parties,
+  programs,
+}: {
+  p: ProjectPayload;
+  apply: (patch: Partial<ProjectPayload>) => void;
+  species: Master[];
+  categories: Master[];
+  parties: PartyOption[];
+  programs: AwardProgramOption[];
+}) {
   const [url, setUrl] = useState(p.sources.find((s) => s.trim()) ?? "");
   const [pending, start] = useTransition();
   const [draft, setDraft] = useState<DraftData | null>(null);
@@ -41,9 +58,9 @@ export function AiDraftPanel({ p, apply, species, categories }: { p: ProjectPayl
     if (d.address_ja) v.address_ja = { show: d.address_ja, patch: { address_ja: d.address_ja } };
     if (d.completed_year) v.completed_year = { show: String(d.completed_year), patch: { completed_year: String(d.completed_year), completed_precision: "year", completed_date: "" } };
     if (d.site_area_m2) v.site_area_m2 = { show: `${d.site_area_m2} m²`, patch: { site_area_m2: String(d.site_area_m2) } };
-    if (d.designers.length) v.designers = { show: d.designers.join("、"), patch: { designers: d.designers } };
+    if (d.designers.length) v.designers = { show: d.designers.join("、"), patch: { credits: toCredits(d.designers, parties) } };
     if (d.awards.length)
-      v.awards = { show: d.awards.map((a) => `${a.award_name}${a.award_year ? `（${a.award_year}）` : ""}`).join("、"), patch: { awards: d.awards.map((a) => ({ award_name: a.award_name, award_year: a.award_year ? String(a.award_year) : "" })) } };
+      v.awards = { show: d.awards.map((a) => `${a.award_name}${a.award_year ? `（${a.award_year}）` : ""}`).join("、"), patch: { awards: toAwards(d.awards.map((a) => ({ award_name: a.award_name, award_year: a.award_year ? String(a.award_year) : "" })), programs) } };
     if (d.summary_ja) v.summary_ja = { show: d.summary_ja, patch: { summary_ja: d.summary_ja } };
     if (d.summary_en) v.summary_en = { show: d.summary_en, patch: { summary_en: d.summary_en, summary_en_status: "machine_draft" } };
     if (d.plantings.length)
@@ -55,7 +72,7 @@ export function AiDraftPanel({ p, apply, species, categories }: { p: ProjectPayl
 
   // 今の入力が空の項目だけを、はじめから選んでおく
   const isEmpty = (k: Key) => {
-    const cur = k === "components" ? p.components : k === "plantings" ? p.plantings : k === "awards" ? p.awards : k === "designers" ? p.designers.filter((x) => x.trim()) : String(p[k] ?? "").trim();
+    const cur = k === "components" ? p.components : k === "plantings" ? p.plantings : k === "awards" ? p.awards : k === "designers" ? p.credits : String(p[k] ?? "").trim();
     return Array.isArray(cur) ? cur.length === 0 : cur === "";
   };
 

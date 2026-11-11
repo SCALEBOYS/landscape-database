@@ -5,6 +5,8 @@ import { createHash } from "node:crypto";
 import { updateTag } from "next/cache";
 
 import type { ImportRow } from "@/lib/import-projects";
+import { awardLabel, splitAward, type AwardProgramOption } from "@/lib/names";
+import { loadAwardPrograms, partyResolver } from "@/lib/party-resolve";
 import { requireUser } from "@/lib/supabase-server";
 
 async function adminClient() {
@@ -13,8 +15,6 @@ async function adminClient() {
   return supabase;
 }
 
-// 設計の slug は既存と同じ規則（社名の sha1 先頭10桁）
-const partySlug = (name: string) => "p-" + createHash("sha1").update(name, "utf8").digest("hex").slice(0, 10);
 const slugify = (s: string) =>
   s
     .normalize("NFKD")
@@ -102,6 +102,8 @@ export async function importProjects(rows: ImportRow[]): Promise<ImportResult[]>
   const names = new Set((existing ?? []).map((p) => p.name_ja));
   const slugs = new Set((existing ?? []).map((p) => p.slug));
   const results: ImportResult[] = [];
+  let resolve: Awaited<ReturnType<typeof partyResolver>> | undefined;
+  let programs: AwardProgramOption[] | undefined;
 
   for (const r of rows) {
     if (r.errors.length) {
@@ -146,16 +148,28 @@ export async function importProjects(rows: ImportRow[]): Promise<ImportResult[]>
 
     const designers = [...new Set(r.designers)];
     if (designers.length) {
-      const { data: parties, error: e1 } = await supabase
-        .from("parties")
-        .upsert(designers.map((name) => ({ slug: partySlug(name), name_ja: name })), { onConflict: "slug" })
-        .select("id, slug");
-      if (!e1 && parties) {
-        const bySlug = new Map(parties.map((x) => [x.slug, x.id]));
-        await supabase.from("project_credits").insert(designers.map((name, i) => ({ project_id: id, party_id: bySlug.get(partySlug(name)), role: "landscape_design", sort_order: i })));
-      }
+      try {
+        resolve ??= await partyResolver(supabase);
+        const ids: string[] = [];
+        for (const name of designers) {
+          const pid = await resolve(name);
+          if (!ids.includes(pid)) ids.push(pid);
+        }
+        await supabase.from("project_credits").insert(ids.map((party_id, i) => ({ project_id: id, party_id, role: "landscape_design", sort_order: i })));
+      } catch {}
     }
-    if (r.awards.length) await supabase.from("project_awards").insert(r.awards.map((a) => ({ project_id: id, award_name: a.name, award_year: a.year })));
+    if (r.awards.length) {
+      programs ??= await loadAwardPrograms(supabase);
+      const list = programs;
+      await supabase.from("project_awards").insert(
+        r.awards.map((a) => {
+          const m = splitAward(a.name, list);
+          return m
+            ? { project_id: id, program_id: m.program.id, category: m.prize || null, award_name: awardLabel(m.program.name_ja, m.prize), award_year: a.year }
+            : { project_id: id, award_name: a.name, award_year: a.year };
+        }),
+      );
+    }
     const urls = [...new Set(r.sources)];
     if (urls.length) await supabase.from("sources").insert(urls.map((url) => ({ project_id: id, url, kind: r.awards.length ? "award" : "other" })));
     results.push({ line: r.line, ok: true, message: "下書きで取り込みました", id });

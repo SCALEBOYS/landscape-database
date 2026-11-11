@@ -28,7 +28,7 @@ async function Designers() {
   return (
     <>
       <AdminHeader email={user.email ?? ""} />
-      <h1 className="mb-1 text-xl">設計（会社・人）の名前</h1>
+      <h1 className="mb-1 text-xl">会社・設計者の名前</h1>
       <p className="mb-6 text-sm text-muted">
         表記ゆれ（略称・旧名・人名入りなど）は「別名」に入れると、どの表記で探しても見つかります。同じ会社が別々に登録されているときは「まとめる」で一つにします。似た名前というだけでまとめず、公式の会社概要などで同じ会社か確かめてください。
       </p>

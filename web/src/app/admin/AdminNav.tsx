@@ -35,7 +35,8 @@ const GROUPS: { label: string; items: Item[] }[] = [
   {
     label: "マスタ",
     items: [
-      { href: "/admin/designers", label: "設計の名前", icon: "field-design" },
+      { href: "/admin/designers", label: "会社・設計者の名前", icon: "field-design" },
+      { href: "/admin/awards", label: "賞の名前", icon: "spark" },
       { href: "/admin/materials", label: "素材の分類", icon: "stone" },
       { href: "/admin/species", label: "樹種の写真", icon: "shade" },
     ],

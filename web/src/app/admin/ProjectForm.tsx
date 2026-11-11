@@ -6,6 +6,8 @@ import { categoryLabels, componentKindLabels, layerLabels } from "@/lib/i18n";
 
 import { saveProject, type ProjectPayload } from "./actions";
 import { AiDraftPanel } from "./AiDraftPanel";
+import { AwardsEditor, CreditsEditor } from "./NameEditors";
+import type { AwardProgramOption, PartyOption } from "@/lib/names";
 
 type Species = { id: string; name_ja: string; scientific_name: string };
 type Category = { id: string; kind: string; name_ja: string };
@@ -24,12 +26,16 @@ export function ProjectForm({
   categories,
   parents,
   laws,
+  parties,
+  programs,
 }: {
   initial: ProjectPayload;
   species: Species[];
   categories: Category[];
   parents: Parent[];
   laws: Law[];
+  parties: PartyOption[];
+  programs: AwardProgramOption[];
 }) {
   const [p, setP] = useState(initial);
   const [result, action, pending] = useActionState(saveProject, null);
@@ -72,6 +78,8 @@ export function ProjectForm({
         }}
         species={species.map((sp) => ({ id: sp.id, label: `${sp.name_ja}（${sp.scientific_name}）` }))}
         categories={categories.map((c) => ({ id: c.id, label: c.name_ja }))}
+        parties={parties}
+        programs={programs}
       />
       </div>
 
@@ -203,20 +211,9 @@ export function ProjectForm({
 
       <section data-tab="credits" className={section}>
         <h2 className="mb-4 font-medium">設計・受賞・出典</h2>
-        <label className="block text-sm">
-          設計（1行に1社）
-          <textarea rows={4} className={input} value={p.designers.join("\n")} onChange={(e) => set("designers", e.target.value.split("\n"))} />
-        </label>
-        <div className="mt-4 text-sm">
-          受賞
-          {p.awards.map((a, i) => (
-            <div key={i} className="mt-1 flex gap-2">
-              <input placeholder="賞の名称" className={input} value={a.award_name} onChange={(e) => set("awards", p.awards.map((x, j) => (j === i ? { ...x, award_name: e.target.value } : x)))} />
-              <input placeholder="年" inputMode="numeric" className={`${input} w-24`} value={a.award_year} onChange={(e) => set("awards", p.awards.map((x, j) => (j === i ? { ...x, award_year: e.target.value } : x)))} />
-              <button type="button" onClick={() => set("awards", p.awards.filter((_, j) => j !== i))} className="px-2 text-muted">削除</button>
-            </div>
-          ))}
-          <button type="button" onClick={() => set("awards", [...p.awards, { award_name: "", award_year: "" }])} className="mt-2 text-accent">＋ 受賞を追加</button>
+        <CreditsEditor credits={p.credits} parties={parties} onChange={(c) => set("credits", c)} />
+        <div className="mt-6">
+          <AwardsEditor awards={p.awards} programs={programs} onChange={(a) => set("awards", a)} />
         </div>
         <label className="mt-4 block text-sm">
           出典URL（1行に1つ）

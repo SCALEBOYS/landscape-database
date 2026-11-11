@@ -1,11 +1,11 @@
 "use server";
 
-import { createHash } from "node:crypto";
-
 import { updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { categoryLabels } from "@/lib/i18n";
+import { awardLabel, creditRoleLabels } from "@/lib/names";
+import { partyResolver } from "@/lib/party-resolve";
 
 import { requireUser } from "@/lib/supabase-server";
 
@@ -31,8 +31,9 @@ export type ProjectPayload = {
   summary_en: string;
   summary_en_status: "none" | "machine_draft" | "reviewed";
   status: "draft" | "published";
-  designers: string[];
-  awards: { award_name: string; award_year: string }[];
+  credits: { party_id: string; name: string; role: string }[]; // party_id が空なら name で照合し、なければ新しく登録
+  awards: { program_id: string; prize: string; award_name: string; award_year: string }[]; // award_name は賞のマスタにない古い書き方
+
   sources: string[];
   plantings: { species_id: string; layer: string }[];
   components: { category_id: string; product_name: string; maker_name: string }[];
@@ -53,8 +54,6 @@ export type SaveResult = { ok: boolean; message: string };
 const blank = (v: string) => (v.trim() === "" ? null : v.trim());
 const num = (v: string) => (v.trim() === "" ? null : Number(v));
 
-// 設計者の slug は scripts/load_sample_projects.py と同じ規則（社名の sha1 先頭10桁）
-const partySlug = (name: string) => "p-" + createHash("sha1").update(name, "utf8").digest("hex").slice(0, 10);
 
 async function adminClient() {
   const { supabase, isAdmin } = await requireUser();
@@ -116,29 +115,56 @@ export async function saveProject(_: SaveResult | null, formData: FormData): Pro
     id = data.id as string;
   }
 
-  // 子テーブルは入れ替える
+  // 出典の種類（公式・記事など）は入れ替えても残す
+  const { data: oldSources } = await supabase.from("sources").select("url, kind").eq("project_id", id);
+  const kindByUrl = new Map((oldSources ?? []).map((x) => [x.url as string, x.kind as string]));
+
+  // 関係者: 選ばれた会社はそのまま。名前だけのものは、登録済みの会社（名前・英名・別名）と照合してからつなぐ
+  const credits = p.credits.filter((c) => c.party_id || c.name.trim());
+  const partyIds: string[] = [];
+  try {
+    const resolve = credits.some((c) => !c.party_id) ? await partyResolver(supabase) : null;
+    for (const c of credits) partyIds.push(c.party_id || (await resolve!(c.name)));
+  } catch (e) {
+    return { ok: false, message: (e as Error).message };
+  }
+
+  // 賞: マスタから選んだものは「賞 + 賞の種類」で表示名をそろえる
+  const programIds = [...new Set(p.awards.map((a) => a.program_id).filter(Boolean))];
+  const { data: programs } = programIds.length ? await supabase.from("award_programs").select("id, name_ja").in("id", programIds) : { data: [] };
+  const programName = new Map((programs ?? []).map((x) => [x.id as string, x.name_ja as string]));
+
   for (const table of ["project_credits", "project_awards", "sources", "project_plantings", "project_components", "project_laws"]) {
     const { error } = await supabase.from(table).delete().eq("project_id", id);
     if (error) return { ok: false, message: error.message };
   }
 
-  const designers = [...new Set(p.designers.map((d) => d.trim()).filter(Boolean))];
-  if (designers.length) {
-    const { data: parties, error } = await supabase
-      .from("parties")
-      .upsert(designers.map((name) => ({ slug: partySlug(name), name_ja: name })), { onConflict: "slug" })
-      .select("id, slug");
-    if (error) return { ok: false, message: error.message };
-    const bySlug = new Map(parties.map((x) => [x.slug, x.id]));
-    const { error: e2 } = await supabase.from("project_credits").insert(
-      designers.map((name, i) => ({ project_id: id, party_id: bySlug.get(partySlug(name)), role: "landscape_design", sort_order: i })),
-    );
-    if (e2) return { ok: false, message: e2.message };
-  }
+  const seen = new Set<string>();
+  const creditRows = credits
+    .map((c, i) => ({ project_id: id, party_id: partyIds[i], role: c.role in creditRoleLabels ? c.role : "landscape_design", sort_order: i }))
+    .filter((r) => !seen.has(`${r.party_id}:${r.role}`) && seen.add(`${r.party_id}:${r.role}`));
 
   const inserts: [string, Record<string, unknown>[]][] = [
-    ["project_awards", p.awards.filter((a) => a.award_name.trim()).map((a) => ({ project_id: id, award_name: a.award_name.trim(), award_year: num(a.award_year) }))],
-    ["sources", [...new Set(p.sources.map((u) => u.trim()).filter(Boolean))].map((url) => ({ project_id: id, url, kind: p.awards.length ? "award" : "other" }))],
+    ["project_credits", creditRows],
+    [
+      "project_awards",
+      p.awards
+        .filter((a) => (a.program_id && programName.has(a.program_id)) || a.award_name.trim())
+        .map((a) => {
+          const name = a.program_id ? programName.get(a.program_id) : undefined;
+          return {
+            project_id: id,
+            program_id: name ? a.program_id : null,
+            category: name ? blank(a.prize) : null,
+            award_name: name ? awardLabel(name, a.prize) : a.award_name.trim(),
+            award_year: num(a.award_year),
+          };
+        }),
+    ],
+    [
+      "sources",
+      [...new Set(p.sources.map((u) => u.trim()).filter(Boolean))].map((url) => ({ project_id: id, url, kind: kindByUrl.get(url) ?? (p.awards.length ? "award" : "other") })),
+    ],
     [
       "project_plantings",
       [...new Map(p.plantings.filter((x) => x.species_id).map((x) => [`${x.species_id}:${x.layer}`, x])).values()].map((x) => ({ project_id: id, species_id: x.species_id, layer: x.layer })),

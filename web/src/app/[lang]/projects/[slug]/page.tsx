@@ -28,6 +28,7 @@ import {
 import { satelliteImage } from "@/lib/mapbox";
 import { alternates, jsonLd, SITE_URL } from "@/lib/site";
 import { relatedGroups } from "@/lib/related";
+import { creditRoleLabels } from "@/lib/names";
 import { place, summary, toCard } from "@/lib/view";
 
 export async function generateStaticParams() {
@@ -133,9 +134,12 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
       p.credits.length ? (
         <span className="grid gap-1">
           {p.credits.map((c) => (
-            <Link key={c.party.slug} href={`/${lang}/designers/${c.party.slug}`} className="underline decoration-line underline-offset-4 hover:decoration-ink">
-              {localName(lang, c.party.name_ja, c.party.name_en)}
-            </Link>
+            <span key={`${c.party.slug}-${c.role}`}>
+              <Link href={`/${lang}/designers/${c.party.slug}`} className="underline decoration-line underline-offset-4 hover:decoration-ink">
+                {localName(lang, c.party.name_ja, c.party.name_en)}
+              </Link>
+              {c.role !== "landscape_design" && creditRoleLabels[c.role] ? <span className="ml-2 text-xs text-muted">{creditRoleLabels[c.role][lang]}</span> : null}
+            </span>
           ))}
         </span>
       ) : null,
