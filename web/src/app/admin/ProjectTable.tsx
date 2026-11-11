@@ -2,10 +2,45 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import { Icon } from "@/components/Icon";
 import { CHECKS, type CheckKey } from "@/lib/admin-checks";
+
+import { setProjectStatus } from "./actions";
+
+// 状態の切り替え。保存が終わるまでは選んだ値を薄く表示する
+function StatusSelect({ id, name, status, onChange }: { id: string; name: string; status: ProjectRow["status"]; onChange: (s: ProjectRow["status"]) => void }) {
+  const [pending, start] = useTransition();
+  const [error, setError] = useState("");
+  return (
+    <div>
+      <select
+        aria-label={`${name} の状態`}
+        value={status}
+        disabled={pending}
+        onChange={(e) => {
+          const next = e.target.value as ProjectRow["status"];
+          const prev = status;
+          onChange(next);
+          setError("");
+          start(async () => {
+            const r = await setProjectStatus(id, next);
+            if (!r.ok) {
+              onChange(prev);
+              setError(r.message);
+            }
+          });
+        }}
+        className={`cursor-pointer rounded px-1.5 py-0.5 text-xs disabled:opacity-60 ${status === "published" ? "bg-accent text-white" : "bg-placeholder"}`}
+      >
+        <option value="published">公開</option>
+        <option value="draft">下書き</option>
+      </select>
+      {error ? <p className="mt-1 max-w-32 text-[11px] text-[#b42318]">{error}</p> : null}
+    </div>
+  );
+}
 
 export type ProjectRow = {
   id: string;
@@ -17,16 +52,20 @@ export type ProjectRow = {
   updated_at: string;
   has: Record<CheckKey, boolean>;
   photos: number;
+  thumb: { src: string; aerial: boolean } | null;
 };
 
 
 // 事例の一覧。名前で探す・公開状態・足りない項目で絞り込み、選んだ事例を AI でまとめて下書きへ送れる
-export function ProjectTable({ rows }: { rows: ProjectRow[] }) {
+export function ProjectTable({ rows: initialRows }: { rows: ProjectRow[] }) {
   const router = useRouter();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<"all" | "draft" | "published">("all");
   const [missing, setMissing] = useState<CheckKey | null>(null);
   const [picked, setPicked] = useState<Set<string>>(new Set());
+  // 一覧で切り替えた状態（再読み込みまでの間の表示用）
+  const [changed, setChanged] = useState<Record<string, ProjectRow["status"]>>({});
+  const rows = useMemo(() => initialRows.map((r) => (changed[r.id] ? { ...r, status: changed[r.id] } : r)), [initialRows, changed]);
 
   const list = useMemo(() => {
     const k = q.trim().toLowerCase();
@@ -101,13 +140,20 @@ export function ProjectTable({ rows }: { rows: ProjectRow[] }) {
                   />
                 </td>
                 <td className="p-2">
-                  <Link href={`/admin/projects/${r.id}`} className="font-medium text-ink hover:text-accent hover:underline">{r.name_ja}</Link>
-                  <div className="text-xs text-muted">{r.use}・{r.place}</div>
+                  <div className="flex items-center gap-3">
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/admin/projects/${r.id}`} className="font-medium text-ink hover:text-accent hover:underline">{r.name_ja}</Link>
+                      <div className="text-xs text-muted">{r.use}・{r.place}</div>
+                    </div>
+                    {/* 行の高さ（名称＋所在地の2行）に収まる大きさにする */}
+                    <Link href={`/admin/projects/${r.id}`} tabIndex={-1} aria-hidden className="relative block h-10 w-14 flex-none overflow-hidden rounded bg-placeholder">
+                      {r.thumb ? <img src={r.thumb.src} alt="" loading="lazy" className="h-full w-full object-cover" /> : null}
+                      {r.thumb?.aerial ? <span className="absolute bottom-0 right-0 bg-black/50 px-0.5 text-[8px] leading-tight text-white">航空</span> : null}
+                    </Link>
+                  </div>
                 </td>
                 <td className="p-2 align-top">
-                  <span className={`whitespace-nowrap rounded px-2 py-0.5 text-xs ${r.status === "published" ? "bg-accent text-white" : "bg-placeholder"}`}>
-                    {r.status === "published" ? "公開" : "下書き"}
-                  </span>
+                  <StatusSelect id={r.id} name={r.name_ja} status={r.status} onChange={(s) => setChanged((c) => ({ ...c, [r.id]: s }))} />
                 </td>
                 <td className="p-2">
                   <div className="flex flex-wrap items-center gap-1">

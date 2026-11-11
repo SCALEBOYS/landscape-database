@@ -3,6 +3,8 @@ import { Suspense } from "react";
 
 import { requireUser } from "@/lib/supabase-server";
 import { categoryLabels } from "@/lib/i18n";
+import { photoUrl } from "@/lib/data";
+import { satelliteImage } from "@/lib/mapbox";
 
 import { AdminHeader, NotAdmin } from "./AdminHeader";
 import { ProjectTable, type ProjectRow } from "./ProjectTable";
@@ -22,11 +24,21 @@ async function ProjectList() {
 
   const { data: projects, error } = await supabase
     .from("projects")
-    .select(`id, slug, name_ja, use_category, prefecture, municipality, status, updated_at, ${STATUS_SELECT}`)
+    .select(`id, slug, name_ja, use_category, prefecture, municipality, status, updated_at, cover:photos(storage_path, is_cover, sort_order), ${STATUS_SELECT}`)
     .order("updated_at", { ascending: false });
   if (error) throw error;
-  const { data: points } = await supabase.from("project_points").select("id, lat");
+  const { data: points } = await supabase.from("project_points").select("id, lat, lng");
   const located = new Set((points ?? []).filter((p) => p.lat !== null).map((p) => p.id));
+  const pointOf = new Map((points ?? []).filter((p) => p.lat !== null).map((p) => [p.id, p as { lat: number; lng: number }]));
+  // 名称の横の小さな画像: 表紙の写真、なければ最初の写真、写真がなければ航空写真
+  const thumbOf = (p: { id: string; cover: unknown }) => {
+    const photos = (p.cover as { storage_path: string; is_cover: boolean; sort_order: number }[]).toSorted((a, b) => a.sort_order - b.sort_order);
+    const ph = photos.find((x) => x.is_cover) ?? photos[0];
+    if (ph) return { src: photoUrl(ph.storage_path), aerial: false };
+    const pt = pointOf.get(p.id);
+    const sat = pt ? satelliteImage(pt.lat, pt.lng, { w: 160, h: 112, zoom: 16 }) : null;
+    return sat ? { src: sat, aerial: true } : null;
+  };
   const rows: ProjectRow[] = projects.map((p) => ({
     id: p.id,
     name_ja: p.name_ja,
@@ -37,6 +49,7 @@ async function ProjectList() {
     updated_at: p.updated_at,
     photos: (p.photos as unknown as { count: number }[])[0]?.count ?? 0,
     has: projectChecks(p as unknown as ProjectStatusSource, located.has(p.id)),
+    thumb: thumbOf(p),
   }));
 
   // 直近30日の0件検索を、同じ条件ごとにまとめて多い順に

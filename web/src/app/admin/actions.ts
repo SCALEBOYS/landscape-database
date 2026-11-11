@@ -352,3 +352,16 @@ export async function deleteModel(id: string, storagePath: string) {
   if (storageError) throw new Error(storageError.message);
   updateTag("projects");
 }
+
+// 一覧から公開・下書きを切り替える（初めて公開するときは公開日を入れる）
+export async function setProjectStatus(id: string, status: "draft" | "published"): Promise<SaveResult> {
+  if (status !== "draft" && status !== "published") return { ok: false, message: "状態が正しくありません" };
+  const supabase = await adminClient();
+  const { data: before, error: e1 } = await supabase.from("projects").select("published_at").eq("id", id).single();
+  if (e1) return { ok: false, message: e1.message };
+  const patch = status === "published" && !before.published_at ? { status, published_at: new Date().toISOString() } : { status };
+  const { error } = await supabase.from("projects").update(patch).eq("id", id);
+  if (error) return { ok: false, message: error.message };
+  updateTag("projects");
+  return { ok: true, message: status === "published" ? "公開しました" : "下書きに戻しました" };
+}
