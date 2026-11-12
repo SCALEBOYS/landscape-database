@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { NODE_TYPES, type GraphData, type GraphLink, type GraphNode, type NodeType } from "@/lib/graph-types";
 import { fmt, type GraphText } from "@/lib/i18n";
+import { AERIAL_CREDIT, isAerial } from "@/lib/mapbox";
 
 // 黒い背景の上で見分けやすい色。事例は参考画像にならって桃色
 const COLORS: Record<NodeType, string> = {
@@ -30,6 +31,29 @@ type Mode = "structure" | "similar";
 
 const radius = (n: GraphNode) => (n.type === "project" ? 4 + Math.sqrt(n.degree) * 1.1 : 2.5 + Math.sqrt(n.degree) * 1.7);
 const endId = (v: string | SimNode) => (typeof v === "string" ? v : v.id);
+// 丸の中に出す写真。必要になったときに読み込み、小さな正方形に縮めて覚えておく（毎コマ大きな画像を描かないため）
+const THUMB = 192;
+const thumbs = new Map<string, HTMLCanvasElement | null>();
+function thumbOf(src: string) {
+  const hit = thumbs.get(src);
+  if (hit !== undefined) return hit;
+  thumbs.set(src, null);
+  const im = new Image();
+  im.decoding = "async";
+  im.onload = () => {
+    const c = document.createElement("canvas");
+    c.width = c.height = THUMB;
+    const side = Math.min(im.naturalWidth, im.naturalHeight);
+    c.getContext("2d")?.drawImage(im, (im.naturalWidth - side) / 2, (im.naturalHeight - side) / 2, side, side, 0, 0, THUMB, THUMB);
+    thumbs.set(src, c);
+  };
+  im.src = src;
+  return null;
+}
+// 画面上の丸の半径（px）がこの範囲で、色の丸から写真へ少しずつ入れ替わる
+const PHOTO_FROM = 7;
+const PHOTO_FULL = 16;
+
 // 中心表示で出す丸の上限（2段先まで広げると多くなりすぎるため）
 const FOCUS_LIMIT = 160;
 
@@ -117,6 +141,24 @@ export function GraphView({ data, t }: { data: GraphData; t: GraphText }) {
           ctx.arc(n.x!, n.y!, r, 0, 2 * Math.PI);
           ctx.fillStyle = COLORS[n.type];
           ctx.fill();
+          // 事例の丸は、拡大するにつれて中に写真（まだなければ航空写真）が浮かび上がる。選んだ丸は拡大率によらず写真を出す。色は縁に残す
+          const px = r * scale;
+          if (n.type === "project" && n.img && (px > PHOTO_FROM || n.id === s.selected)) {
+            const th = thumbOf(n.img);
+            if (th) {
+              const a = n.id === s.selected ? 1 : Math.min(1, (px - PHOTO_FROM) / (PHOTO_FULL - PHOTO_FROM));
+              const inner = r - Math.max(1.5 / scale, r * 0.1);
+              ctx.save();
+              ctx.globalAlpha = (dim ? 0.18 : 1) * a;
+              ctx.beginPath();
+              ctx.arc(n.x!, n.y!, inner, 0, 2 * Math.PI);
+              ctx.clip();
+              ctx.drawImage(th, n.x! - inner, n.y! - inner, inner * 2, inner * 2);
+              ctx.restore();
+              ctx.beginPath();
+              ctx.arc(n.x!, n.y!, r, 0, 2 * Math.PI);
+            }
+          }
           if (n.id === s.selected || match) {
             ctx.lineWidth = 2 / scale;
             ctx.strokeStyle = n.id === s.selected ? "#ffffff" : "#ffe066";
@@ -192,6 +234,7 @@ export function GraphView({ data, t }: { data: GraphData; t: GraphText }) {
   }, [view, ready]);
 
   const node = selected ? byId.get(selected) : undefined;
+  const hasAerial = useMemo(() => data.nodes.some((n) => isAerial(n.img)), [data]);
   const needle = q.trim().toLowerCase();
   const results = needle ? data.nodes.filter((n) => n.label.toLowerCase().includes(needle) || n.sub?.toLowerCase().includes(needle)).slice(0, 12) : [];
   const toggleType = (k: NodeType) => setHidden((h) => { const n = new Set(h); if (n.has(k)) n.delete(k); else n.add(k); return n; });
@@ -288,6 +331,7 @@ export function GraphView({ data, t }: { data: GraphData; t: GraphText }) {
         <div className="pointer-events-none absolute bottom-3 left-3 text-[11px] text-white/45 tabular-nums">
           {fmt(t.nodes, view.nodes.length)} · {fmt(t.links, view.links.length)}
         </div>
+        {hasAerial && <div className="pointer-events-none absolute bottom-3 right-3 text-[10px] text-white/40">{AERIAL_CREDIT}</div>}
         {focus && (
           <button type="button" onClick={() => setFocus(false)} className="absolute left-3 top-3 rounded border border-white/25 bg-black/60 px-3 py-1.5 text-xs backdrop-blur hover:bg-white hover:text-black">
             {t.backToAll}
