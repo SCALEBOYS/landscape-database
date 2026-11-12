@@ -97,7 +97,7 @@ export async function siteIndex(lang: Locale): Promise<Entry[]> {
       kind: "law",
       title: name(x.name_ja, x.name_en),
       sub: (en ? x.jurisdiction_en : x.jurisdiction_ja) ?? "",
-      href: `${L}/laws/${x.slug}`,
+      href: `${L}/rule/${x.slug}`,
       image: null,
       text: join([x.name_ja, x.name_en, x.short_ja, x.jurisdiction_ja, x.summary_ja]),
     });

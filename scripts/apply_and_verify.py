@@ -19,7 +19,7 @@ SEEDS = [ROOT / "supabase" / "seed.sql", ROOT / "supabase" / "seed_species.sql"]
 TABLES = [
     "admins", "projects", "project_private_notes", "parties", "project_credits", "species",
     "species_aliases", "project_plantings", "component_categories", "project_components",
-    "photos", "sources", "project_awards", "laws", "project_laws", "photo_points", "project_models", "photo_locations", "methods", "papers", "paper_methods", "paper_projects", "paper_species", "paper_categories", "search_misses", "party_aliases", "inquiries", "posts", "ai_usage", "page_views", "award_programs",
+    "photos", "sources", "project_awards", "laws", "project_laws", "photo_points", "project_models", "photo_locations", "methods", "papers", "paper_methods", "paper_projects", "paper_species", "paper_categories", "search_misses", "party_aliases", "inquiries", "posts", "ai_usage", "page_views", "award_programs", "law_links", "paper_laws",
 ]
 
 
@@ -96,7 +96,7 @@ def verify(conn) -> bool:
         results.append(check("樹種の表記ゆれ", n == 186, f"{n} 件"))
         cur.execute("select kind, count(*) from laws group by kind")
         laws = dict(cur.fetchall())
-        results.append(check("法令マスタ（法律・制度・条例）", laws == {"law": 9, "system": 7, "ordinance": 5}, str(laws)))
+        results.append(check("法令マスタ（法律・制度・条例）", laws == {"law": 15, "system": 23, "ordinance": 5}, str(laws)))
         cur.execute("select s.name_ja from species_aliases a join species s on s.id = a.species_id where a.alias = '欅'")
         row = cur.fetchone()
         results.append(check("表記ゆれ検索（欅 → ケヤキ）", row is not None and row[0] == "ケヤキ"))

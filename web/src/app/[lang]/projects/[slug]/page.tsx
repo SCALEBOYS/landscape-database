@@ -29,6 +29,7 @@ import { satelliteImage } from "@/lib/mapbox";
 import { alternates, jsonLd, SITE_URL } from "@/lib/site";
 import { relatedGroups } from "@/lib/related";
 import { creditRoleLabels } from "@/lib/names";
+import { ROLE_COLORS, ROLES } from "@/lib/rule";
 import { place, summary, toCard } from "@/lib/view";
 
 export async function generateStaticParams() {
@@ -242,13 +243,13 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
             {p.laws.length > 0 && (
               <Section title={dict.laws.section}>
                 <ul className="grid gap-3">
-                  {p.laws.map(({ law, note_ja, note_en, source_url }) => {
+                  {p.laws.map(({ law, note_ja, note_en, source_url, role, decided_year }) => {
                     const note = lang === "en" ? note_en : note_ja;
                     return (
                       <li key={law.slug} className="grid gap-1 border-b border-line pb-3">
                         <span className="flex flex-wrap items-baseline gap-x-2">
-                          <span className="text-[11px] text-muted">{dict.laws.kinds[law.kind]}</span>
-                          <Link href={`/${lang}/laws/${law.slug}`} className="font-medium hover:underline">{localName(lang, law.name_ja, law.name_en)}</Link>
+                          <span className="text-[11px]" style={{ color: ROLE_COLORS[role] }}>{ROLES[role]?.mark} {ROLES[role]?.[lang]}{decided_year ? ` ${decided_year}` : ""}</span>
+                          <Link href={`/${lang}/rule/${law.slug}`} className="font-medium hover:underline">{localName(lang, law.name_ja, law.name_en)}</Link>
                           {law.kind === "ordinance" && <span className="text-xs text-muted">{lang === "en" ? law.jurisdiction_en ?? law.jurisdiction_ja : law.jurisdiction_ja}</span>}
                         </span>
                         {note && <span className="text-sm leading-relaxed">{note}</span>}

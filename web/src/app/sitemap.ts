@@ -13,7 +13,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/explore",
     "/species",
     "/designers",
-    "/laws",
+    "/rule",
     "/research",
     "/graph",
     "/projects",
@@ -24,7 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...projects.map((p) => `/projects/${p.slug}`),
     ...species.map((s) => `/species/${s.slug}`),
     ...designers.map((d) => `/designers/${d.party.slug}`),
-    ...laws.map((l) => `/laws/${l.slug}`),
+    ...laws.map((l) => `/rule/${l.slug}`),
     ...research.methods.map((m) => `/research/methods/${m.slug}`),
     ...research.papers.map((p) => `/research/papers/${p.slug}`),
   ];

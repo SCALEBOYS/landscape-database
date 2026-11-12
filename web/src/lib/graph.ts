@@ -45,7 +45,7 @@ export async function getGraph(lang: Locale): Promise<GraphData> {
       link(add({ id: `species:${s.slug}`, type: "species", label: localName(lang, s.name_ja, s.name_en), sub: s.scientific_name, href: `/${lang}/species/${s.slug}` }));
     }
     for (const { law } of p.laws) {
-      link(add({ id: `law:${law.slug}`, type: "law", label: localName(lang, law.name_ja, law.name_en), href: `/${lang}/laws/${law.slug}`, summary: lawSummary.get(law.slug) }));
+      link(add({ id: `law:${law.slug}`, type: "law", label: localName(lang, law.name_ja, law.name_en), href: `/${lang}/rule/${law.slug}`, summary: lawSummary.get(law.slug) }));
     }
     for (const u of [p.use_category, ...(p.other_uses ?? []).filter((x) => x !== p.use_category)]) {
       link(add({ id: `use:${u}`, type: "use", label: label(categoryLabels, u, lang), href: `/${lang}/explore?uses=${u}` }));

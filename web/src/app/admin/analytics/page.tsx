@@ -22,7 +22,7 @@ const DEVICE: Record<string, string> = { desktop: "PC", mobile: "スマホ", tab
 // 固定のページの名前（事例・樹種などは名前を引く）
 const FIXED: Record<string, string> = {
   "": "HOME", "/projects": "事例から探す", "/explore": "地図から探す", "/materials": "素材から探す", "/species": "樹種から探す", "/designers": "設計から探す",
-  "/compare": "事例を比較する", "/research": "研究を探す", "/laws": "法令", "/graph": "つながり", "/ask": "AIに聞く", "/data": "DATA", "/data/photos": "写真",
+  "/compare": "事例を比較する", "/research": "研究を探す", "/rule": "RULE（法令）", "/graph": "つながり", "/ask": "AIに聞く", "/data": "DATA", "/data/photos": "写真",
   "/data/models": "3D モデル", "/news": "NEWS", "/about": "このサイトについて", "/contact": "お問い合わせ", "/terms": "利用規約", "/privacy": "プライバシーポリシー",
 };
 

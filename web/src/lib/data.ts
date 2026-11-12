@@ -61,7 +61,7 @@ export type Project = {
   }[];
   awards: { award_name: string; award_year: number | null }[];
   sources: { url: string; title: string | null; kind: string }[];
-  laws: { note_ja: string | null; note_en: string | null; source_url: string | null; sort_order: number; law: LawRef }[];
+  laws: { note_ja: string | null; note_en: string | null; source_url: string | null; sort_order: number; role: "system" | "decision" | "zone"; decided_year: number | null; law: LawRef }[];
   models: ProjectModel[];
 };
 
@@ -101,7 +101,7 @@ const PROJECT_SELECT = `
   awards:project_awards(award_name, award_year),
   sources(url, title, kind),
   models:project_models(storage_path, file_name, caption_ja, caption_en, offset_east_m, offset_north_m, altitude_m, rotation_deg, scale, show_on_map, sort_order),
-  laws:project_laws(note_ja, note_en, source_url, sort_order, law:laws(slug, kind, name_ja, name_en, short_ja, short_en, jurisdiction_ja, jurisdiction_en))
+  laws:project_laws(note_ja, note_en, source_url, sort_order, role, decided_year, law:laws(slug, kind, name_ja, name_en, short_ja, short_en, jurisdiction_ja, jurisdiction_en))
 `;
 
 export async function getProjects(): Promise<Project[]> {

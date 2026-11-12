@@ -14,6 +14,13 @@ const nextConfig: NextConfig = {
     "*": ["node_modules/onnxruntime-node/bin/napi-v3/darwin/**", "node_modules/onnxruntime-node/bin/napi-v3/win32/**", "node_modules/onnxruntime-node/bin/napi-v3/linux/arm64/**", "node_modules/onnxruntime-web/**"],
   },
   partialPrefetching: true,
+  // 法令のページは RESEARCH から RULE タブへ移した
+  async redirects() {
+    return [
+      { source: "/:lang(ja|en)/laws", destination: "/:lang/rule", permanent: true },
+      { source: "/:lang(ja|en)/laws/:slug", destination: "/:lang/rule/:slug", permanent: true },
+    ];
+  },
   turbopack: {
     rules: {
       "*.css": {

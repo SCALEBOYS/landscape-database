@@ -2,7 +2,23 @@
 import { getDictionary, type Locale } from "./i18n";
 
 export type NavItem = { href: string; label: string; desc: string; icon: string };
-export type NavGroup = { key: "home" | "project" | "research" | "data"; label: string; href: string; items: NavItem[] };
+export type NavGroup = { key: "home" | "project" | "rule" | "research" | "data"; label: string; href: string; items: NavItem[] };
+
+// RULE タブ（法律・制度・都市計画）の項目
+const RULE_NAV = {
+  ja: [
+    ["", "制度の地図", "やりたいこと・分野から制度を探す", "law-law"],
+    ["#timeline", "年表", "法律と制度ができた流れと事例", "news"],
+    ["#matrix", "事例 × 制度", "どの事例がどの制度で実現したか", "grid"],
+    ["#research", "研究から見る", "制度の効果や課題を扱った研究", "field-perception"],
+  ],
+  en: [
+    ["", "Map of systems", "Find systems by purpose or field", "law-law"],
+    ["#timeline", "Timeline", "How laws and systems evolved", "news"],
+    ["#matrix", "Projects × systems", "Which systems each project used", "grid"],
+    ["#research", "Research", "Studies on these systems", "field-perception"],
+  ],
+} as const;
 
 export function siteNav(lang: Locale): NavGroup[] {
   const g = getDictionary(lang).groups;
@@ -32,6 +48,12 @@ export function siteNav(lang: Locale): NavGroup[] {
       ],
     },
     {
+      key: "rule",
+      label: "RULE",
+      href: `${L}/rule`,
+      items: RULE_NAV[lang].map(([hash, label, desc, icon]) => ({ href: `${L}/rule${hash}`, label, desc, icon })),
+    },
+    {
       key: "research",
       label: g.research.label,
       href: `${L}/research`,
@@ -39,7 +61,6 @@ export function siteNav(lang: Locale): NavGroup[] {
         { href: `${L}/research`, label: g.research.search, desc: g.research.searchDesc, icon: "search" },
         { href: `${L}/research#methods`, label: g.research.methods, desc: g.research.methodsDesc, icon: "field-perception" },
         { href: `${L}/research#papers`, label: g.research.papers, desc: g.research.papersDesc, icon: "news" },
-        { href: `${L}/laws`, label: g.research.laws, desc: g.research.lawsDesc, icon: "law-law" },
         { href: `${L}/ask`, label: g.research.ask, desc: g.research.askDesc, icon: "spark" },
       ],
     },

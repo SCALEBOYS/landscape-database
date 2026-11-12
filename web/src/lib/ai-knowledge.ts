@@ -28,7 +28,7 @@ export async function siteKnowledge(lang: Locale) {
   const usage = new Map<string, number>();
   for (const p of projects) for (const pl of p.plantings) usage.set(pl.species.slug, (usage.get(pl.species.slug) ?? 0) + 1);
   const speciesLines = species.map((s) => line([`[${s.name_ja}](${L}/species/${s.slug})`, s.scientific_name, s.family_ja, s.evergreen === null ? null : s.evergreen ? "常緑" : "落葉", usage.get(s.slug) ? `${usage.get(s.slug)}件の事例` : null]));
-  const lawLines = laws.map((x) => line([`[${x.name_ja}](${L}/laws/${x.slug})`, x.jurisdiction_ja, x.summary_ja]));
+  const lawLines = laws.map((x) => line([`[${x.name_ja}](${L}/rule/${x.slug})`, x.jurisdiction_ja, x.summary_ja]));
   const materialLines = materials.map((m) => line([`${m.name_ja}`, m.projects.length ? `事例: ${m.projects.map((p) => p.name_ja).join("、")}` : "事例なし"]));
   const methodLines = methods.map((m) => line([`[${m.name_ja}](${L}/research/methods/${m.slug})`, m.summary_ja, m.review_status === "draft" ? "確認前の下書き" : null]));
   const paperLines = papers.map((p) =>
