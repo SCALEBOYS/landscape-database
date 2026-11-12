@@ -54,6 +54,10 @@ export default async function SpeciesIndex({ params }: PageProps<"/[lang]/specie
           forms={forms}
           t={{ ...t, evergreen: dict.species.evergreen, deciduous: dict.species.deciduous, usedCount: lang === "en" ? "{n} projects" : "{n}件の事例" }}
         />
+  <p className="mt-8 text-xs text-muted">
+          {lang === "en" ? "Japanese names, scientific names and families follow YList (Yonekura & Kajita, version of 2021-05-14)." : "和名・学名・科名は「植物和名ー学名インデックス YList」（米倉浩司・梶田忠、2021-05-14 版）によります。"}{" "}
+          <a href="http://ylist.info/" target="_blank" rel="noopener noreferrer" className="underline hover:text-ink">ylist.info</a>
+        </p>
       </div>
     </>
   );

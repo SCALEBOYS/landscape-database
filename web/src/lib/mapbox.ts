@@ -22,3 +22,7 @@ export function satelliteImage(lat: number, lng: number, { w = 640, h = 360, zoo
   if (!MAPBOX_TOKEN) return null;
   return `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/${lng},${lat},${zoom},0/${w}x${h}@2x?access_token=${MAPBOX_TOKEN}`;
 }
+
+// 航空写真の静止画は上下を切り取って見せる場所があり、画像に入っているクレジットが隠れる。その近くに文字でも出す
+export const AERIAL_CREDIT = "© Mapbox © OpenStreetMap © Maxar";
+export const isAerial = (src: string | null | undefined) => !!src && src.includes("api.mapbox.com");

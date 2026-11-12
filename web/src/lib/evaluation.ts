@@ -55,7 +55,7 @@ export const EVAL_T = {
   ja: {
     title: "評価の軸",
     sub: "受賞の講評から読む",
-    lead: "賞の講評で「何が評価されたか」を、10 の軸に分けて並べました。講評の文章そのものではなく、要点を短くまとめたものです。くわしくは出典の講評を読んでください。",
+    lead: "賞の講評で「何が評価されたか」を、10 の軸に分けて並べました。講評の文章そのものではなく、要点を短くまとめたものです。どの軸に入れるかは運営者の読み取りで、審査員による分類ではありません。くわしくは出典の講評を読んでください。",
     stats: { points: "評価された点", projects: "事例", programs: "賞", concerns: "課題・期待" },
     overview: "軸の全体像",
     overviewLead: "軸を選ぶと、下の表とことばがその軸に絞られます。",
@@ -74,7 +74,7 @@ export const EVAL_T = {
   en: {
     title: "What juries valued",
     sub: "Read from award comments",
-    lead: "What award juries valued in each project, sorted into ten axes. These are short summaries in our own words, not the comments themselves; follow the sources for the full text. Summaries are in Japanese.",
+    lead: "What award juries valued in each project, sorted into ten axes. These are short summaries in our own words, not the comments themselves, and the sorting into axes is our own reading, not the juries’; follow the sources for the full text. Summaries are in Japanese.",
     stats: { points: "Points valued", projects: "Projects", programs: "Awards", concerns: "Concerns / hopes" },
     overview: "Overview of axes",
     overviewLead: "Pick an axis to filter the table and the notes below.",

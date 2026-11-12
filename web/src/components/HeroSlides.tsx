@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { AERIAL_CREDIT, isAerial } from "@/lib/mapbox";
 
 // href は画像を押したときの行き先（事例・樹種・素材のページ）
 export type Slide = { href: string; name: string; caption: string; img: string };
@@ -47,6 +48,7 @@ export function HeroSlides({ slides, labels }: { slides: Slide[]; labels: { paus
       >
         <b className="block text-sm font-medium">{cur.name}</b>
         {cur.caption}
+        {isAerial(cur.img) && <span className="block text-[10px] text-white/70">{AERIAL_CREDIT}</span>}
       </Link>
       {n > 1 && (
         <div className="absolute bottom-[64px] right-4 z-10 flex items-center gap-2 md:right-8">

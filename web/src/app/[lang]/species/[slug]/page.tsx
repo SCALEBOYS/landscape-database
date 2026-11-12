@@ -87,6 +87,10 @@ export default async function SpeciesPage({ params }: PageProps<"/[lang]/species
           </>
         )}
       </dl>
+      <p className="mt-4 text-[11px] text-muted">
+        {lang === "en" ? "Japanese names, scientific names and families follow YList (Yonekura & Kajita, version of 2021-05-14)." : "和名・学名・科名は「植物和名ー学名インデックス YList」（米倉浩司・梶田忠、2021-05-14 版）によります。"}{" "}
+        <a href="http://ylist.info/" target="_blank" rel="noopener noreferrer" className="underline hover:text-ink">ylist.info</a>
+      </p>
 
       <section className="mt-12">
         <h2 className="mb-6 border-b border-line pb-2 text-lg font-medium">{t.species.usedIn}</h2>

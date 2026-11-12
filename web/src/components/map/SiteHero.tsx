@@ -6,7 +6,7 @@ import type { Map as MapboxMap } from "mapbox-gl";
 import { useEffect, useRef, useState } from "react";
 
 import { mapModelUrl } from "@/lib/map-model";
-import { MAPBOX_TOKEN, MODEL_CONFIG, SATELLITE_CONFIG, satelliteImage, STYLE_MAP, STYLE_SATELLITE } from "@/lib/mapbox";
+import { AERIAL_CREDIT, isAerial, MAPBOX_TOKEN, MODEL_CONFIG, SATELLITE_CONFIG, satelliteImage, STYLE_MAP, STYLE_SATELLITE } from "@/lib/mapbox";
 
 type Mode = "photo" | "3d" | "flat";
 type Labels = { photo: string; d3: string; flat: string; note: string; view: string };
@@ -148,6 +148,7 @@ export function SiteHero({
       </div>
       <div className="shade" />
       {!photo && canMap && <span className="hnote">{labels.note}</span>}
+      {mode === "photo" && isAerial(still) && <span className="absolute bottom-1.5 right-3 z-[4] text-[10px] text-white/70">{AERIAL_CREDIT}</span>}
       {modes.length > 1 && (
         <div className="hctl" role="group" aria-label={labels.view}>
           {modes.map((k) => (
