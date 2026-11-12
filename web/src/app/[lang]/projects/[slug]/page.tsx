@@ -30,6 +30,7 @@ import { alternates, jsonLd, SITE_URL } from "@/lib/site";
 import { relatedGroups } from "@/lib/related";
 import { creditRoleLabels } from "@/lib/names";
 import { ROLE_COLORS, ROLES } from "@/lib/rule";
+import { AXES, AXIS_GROUPS, getEvaluations } from "@/lib/evaluation";
 import { place, summary, toCard } from "@/lib/view";
 
 export async function generateStaticParams() {
@@ -85,7 +86,8 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
   const elements = elementsOf(p);
 
   // 関連する事例（設計・用途・年代・場所が近いもの）と、位置の小さな地図
-  const [projects, research] = await Promise.all([getProjects(), getResearch()]);
+  const [projects, research, evalAll] = await Promise.all([getProjects(), getResearch(), getEvaluations()]);
+  const evals = evalAll.filter((e) => e.project.slug === slug);
   const papers = research.papers.filter((pa) => pa.projects.some((x) => x.project.slug === p.slug));
   const related = relatedGroups(p, projects, lang);
   const mapItems = (await getBrowseItems(lang)).filter((it) => it.slug === p.slug && it.lat !== null);
@@ -237,6 +239,34 @@ export default async function ProjectPage({ params }: PageProps<"/[lang]/project
                     </Link>
                   ))}
                 </div>
+              </Section>
+            )}
+
+            {evals.length > 0 && (
+              <Section title={lang === "en" ? "WHAT JURIES VALUED" : "受賞で評価された点"}>
+                <ul className="grid gap-2">
+                  {evals.map((e, i) => {
+                    const ax = AXES.find((a) => a.key === e.axis);
+                    const g = AXIS_GROUPS[ax?.group ?? "space"];
+                    return (
+                      <li key={i} className="grid gap-0.5 border-b border-line pb-2 sm:grid-cols-[11em_1fr] sm:gap-4">
+                        <span className="text-[11px] font-medium" style={{ color: g.color }}>
+                          {e.stance === "concern" ? "○" : "●"} {ax?.[lang] ?? e.axis}
+                          {e.stance === "concern" ? <span className="ml-1 font-normal text-muted">{lang === "en" ? "(concern)" : "（課題・期待）"}</span> : null}
+                        </span>
+                        <span className="text-sm leading-relaxed">{lang === "en" ? e.point_en ?? e.point_ja : e.point_ja}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
+                  {[...new Map(evals.filter((e) => e.source_url).map((e) => [e.source_url!, e])).values()].map((e) => (
+                    <a key={e.source_url} href={e.source_url!} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                      {lang === "en" ? "Source" : "出典"}: {e.program ? localName(lang, e.program.name_ja, e.program.name_en) : new URL(e.source_url!).hostname}
+                    </a>
+                  ))}
+                  <Link href={`/${lang}/evaluation`} className="text-accent hover:underline">{lang === "en" ? "All axes →" : "評価の軸を見る →"}</Link>
+                </p>
               </Section>
             )}
 

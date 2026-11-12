@@ -61,6 +61,7 @@ export function siteNav(lang: Locale): NavGroup[] {
         { href: `${L}/research`, label: g.research.search, desc: g.research.searchDesc, icon: "search" },
         { href: `${L}/research#methods`, label: g.research.methods, desc: g.research.methodsDesc, icon: "field-perception" },
         { href: `${L}/research#papers`, label: g.research.papers, desc: g.research.papersDesc, icon: "news" },
+        { href: `${L}/evaluation`, label: lang === "en" ? "What juries valued" : "評価の軸", desc: lang === "en" ? "Read from award comments" : "受賞の講評で何が評価されたか", icon: "spark" },
         { href: `${L}/ask`, label: g.research.ask, desc: g.research.askDesc, icon: "spark" },
       ],
     },
