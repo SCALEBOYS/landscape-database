@@ -22,6 +22,7 @@ export const ELEMENTS = [
 
 export const REGIONS: { key: string; ja: string; en: string; prefectures: string[] }[] = [
   { key: "kansai", ja: "関西", en: "Kansai", prefectures: ["大阪府", "京都府", "兵庫県", "滋賀県", "奈良県", "和歌山県"] },
+  { key: "tokai", ja: "東海", en: "Tokai", prefectures: ["愛知県", "岐阜県", "三重県", "静岡県"] },
 ];
 
 export function elementsOf(p: Project): string[] {

@@ -829,6 +829,10 @@ export const prefectureEn: Record<string, string> = {
   滋賀県: "Shiga",
   奈良県: "Nara",
   和歌山県: "Wakayama",
+  愛知県: "Aichi",
+  岐阜県: "Gifu",
+  三重県: "Mie",
+  静岡県: "Shizuoka",
 };
 
 export type BrowseText = Dict["browse"];

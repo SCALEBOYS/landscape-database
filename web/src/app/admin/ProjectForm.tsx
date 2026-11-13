@@ -16,7 +16,7 @@ type Law = { id: string; kind: string; name_ja: string; jurisdiction_ja: string 
 
 const LAW_KINDS: [string, string][] = [["law", "法律"], ["system", "制度"], ["ordinance", "条例"]];
 
-const PREFECTURES = ["大阪府", "兵庫県", "京都府", "滋賀県", "奈良県", "和歌山県"];
+const PREFECTURES = ["大阪府", "兵庫県", "京都府", "滋賀県", "奈良県", "和歌山県", "愛知県", "岐阜県", "三重県", "静岡県"];
 const input = "mt-1 w-full rounded-md border border-line bg-white px-3 py-2 text-sm";
 const section = "rounded-md border border-line bg-white p-5";
 

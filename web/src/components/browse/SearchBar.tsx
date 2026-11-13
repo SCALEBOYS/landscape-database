@@ -178,10 +178,10 @@ function useSuggestions(items: BrowseItem[], q: string, t: BrowseText) {
 }
 
 function RegionPop({ items, filters, update, t, lang, onClose }: Omit<Props, "years"> & { onClose: () => void }) {
-  const region = REGIONS[0];
   const count = (f: (it: BrowseItem) => boolean) => items.filter(f).length;
-  const available = region.prefectures.filter((p) => items.some((it) => it.pref === p));
-  const allOn = available.length > 0 && available.every((p) => filters.prefs.includes(p));
+  // 事例のある都道府県だけを選べる。関西は全府県を並べ、ほかの地方は事例のある県だけを出す
+  const regions = REGIONS.map((r) => ({ ...r, available: r.prefectures.filter((p) => items.some((it) => it.pref === p)) })).filter((r, i) => i === 0 || r.available.length > 0);
+  const prefList = regions.flatMap((r, i) => (i === 0 ? r.prefectures : r.available));
   const munis = [...new Set(items.filter((it) => it.muni && (!filters.prefs.length || filters.prefs.includes(it.pref))).map((it) => it.muni))].sort((a, b) =>
     a.localeCompare(b, "ja"),
   );
@@ -193,11 +193,17 @@ function RegionPop({ items, filters, update, t, lang, onClose }: Omit<Props, "ye
       <div className="rcols">
         <div>
           <h4>{t.regionCol}</h4>
-          <label className="opt">
-            <input type="checkbox" checked={allOn} onChange={() => update({ prefs: allOn ? [] : available, munis: [] })} />
-            {lang === "en" ? region.en : region.ja}
-            <span className="c">{count((it) => region.prefectures.includes(it.pref))}</span>
-          </label>
+          {regions.map((region) => {
+            const allOn = region.available.length > 0 && region.available.every((p) => filters.prefs.includes(p));
+            const others = filters.prefs.filter((p) => !region.prefectures.includes(p));
+            return (
+              <label key={region.key} className="opt">
+                <input type="checkbox" checked={allOn} onChange={() => update({ prefs: allOn ? others : [...others, ...region.available], munis: [] })} />
+                {lang === "en" ? region.en : region.ja}
+                <span className="c">{count((it) => region.prefectures.includes(it.pref))}</span>
+              </label>
+            );
+          })}
           <label className="opt dim">
             <input type="checkbox" disabled />
             {lang === "en" ? "Kanto" : "関東"}
@@ -206,7 +212,7 @@ function RegionPop({ items, filters, update, t, lang, onClose }: Omit<Props, "ye
         </div>
         <div>
           <h4>{t.prefCol}</h4>
-          {region.prefectures.map((p) => {
+          {prefList.map((p) => {
             const c = count((it) => it.pref === p);
             return (
               <label key={p} className={`opt ${c ? "" : "dim"}`}>
